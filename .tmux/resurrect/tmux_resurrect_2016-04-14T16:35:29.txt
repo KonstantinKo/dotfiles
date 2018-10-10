@@ -1,0 +1,14 @@
+pane	0	0	:~	0	:	0	:/Users/tino	1	zsh	:
+pane	0	1	:clarat	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	1	:clarat	0	:	1	:/Users/tino	0	zsh	:
+pane	0	1	:clarat	0	:	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	1	:clarat	0	:	3	:/Users/tino	1	ruby	:foreman: master   
+pane	0	2	:vim	1	:*	0	:/Data/Programmierung/ruby/rails_projects/claradmin	1	vim	:vim .
+pane	0	2	:vim	1	:*	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	vim	:vim .
+pane	0	2	:vim	1	:*	2	:/Data/Programmierung/ruby/rails_projects/claradmin	0	ruby	:/Users/tino/.rvm/rubies/ruby-2.3.0/bin/ruby bin/rails s
+pane	0	3	:~	0	:-	0	:/Users/tino	1	zsh	:
+window	0	0	0	:	c75e,272x75,0,0,1
+window	0	1	0	:	361d,272x75,0,0[272x57,0,0,2,272x17,0,58{86x17,0,58,3,117x17,87,58,4,67x17,205,58,5}]
+window	0	2	1	:*	5ad7,272x75,0,0[272x57,0,0,9,272x17,0,58{136x17,0,58,6,135x17,137,58,7}]
+window	0	3	0	:-	63df,272x75,0,0,10
+state	0	

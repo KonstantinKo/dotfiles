@@ -1,0 +1,25 @@
+pane	0	0	:nvim	0	:	0	:/Data/Programmierung/js/meteor/adventuremaster	1	nvim	:nvim packages/behavior3/src/index.js
+pane	0	0	:nvim	0	:	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:nvim	0	:	2	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	1	:behavior	0	:	0	:/Data/Programmierung/js/node/behavior3js	1	nvim	:nvim package.json
+pane	0	2	:clarat	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat	0	nvim	:nvim config/routes.rb
+pane	0	2	:clarat	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:	3	:/Users/tino	1	ruby	:foreman: master   
+pane	0	3	:claradmin	0	:	0	:/Data/Programmierung/ruby/rails_projects/claradmin	0	nvim	:nvim Gemfile
+pane	0	3	:claradmin	0	:	1	:/Data/Programmierung/ruby/rails_projects/claradmin	1	zsh	:
+pane	0	3	:claradmin	0	:	2	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	4	:d21	1	:*	0	:/Data/Programmierung/ruby/rails_projects/d21	1	nvim	:nvim README.md
+pane	0	4	:d21	1	:*	1	:/Data/Programmierung/ruby/rails_projects/d21	0	zsh	:
+pane	0	4	:d21	1	:*	2	:/Data/Programmierung/ruby/rails_projects/d21	0	ruby	:foreman: master     
+pane	0	5	:~	0	:-	0	:/Users/tino	1	nvim	:nvim .vimrc
+pane	0	6	:clarat_base	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	zsh	:
+window	0	0	0	:	72ea,204x63,0,0[204x45,0,0,1,204x17,0,46{135x17,0,46,2,68x17,136,46,3}]
+window	0	1	0	:	bca1,204x63,0,0,4
+window	0	2	0	:	d822,204x63,0,0[204x45,0,0,5,204x17,0,46{77x17,0,46,6,85x17,78,46,7,40x17,164,46,8}]
+window	0	3	0	:	4706,204x63,0,0[204x45,0,0,9,204x17,0,46{109x17,0,46,10,94x17,110,46,11}]
+window	0	4	1	:*	8307,204x63,0,0{134x63,0,0[134x50,0,0,12,134x12,0,51,13],69x63,135,0,14}
+window	0	5	0	:-	5e84,204x63,0,0,15
+window	0	6	0	:	5803,204x63,0,0[204x58,0,0,16,204x4,0,59,17]
+state	0	

@@ -1,0 +1,40 @@
+pane	0	0	:zsh	0	:	0	:/Data/Programmierung/Python/fillorkill/newsscraper/alpha	0	nvim	:nvim .
+pane	0	0	:zsh	0	:	1	:/Data/Programmierung/Python/fillorkill	1	zsh	:
+pane	0	1	:elixir	0	:	0	:/Data/Programmierung/elixir/bitdrops/bitdrops	0	nvim	:nvim .
+pane	0	1	:elixir	0	:	1	:/Data/Programmierung/elixir/bitdrops/bitdrops	1	zsh	:
+pane	0	2	:clarat	1	:*	0	:/Data/Programmierung/ruby/rails_projects/hbg-local	0	nvim	:nvim Gemfile
+pane	0	2	:clarat	1	:*	1	:/Users/tino	0	zsh	:
+pane	0	2	:clarat	1	:*	2	:/Data/Programmierung/ruby/rails_projects/hbg-local	1	zsh	:
+pane	0	3	:claradmin	0	:-	0	:/Data/Programmierung/ruby/rails_projects/claradmin	0	nvim	:nvim .
+pane	0	3	:claradmin	0	:-	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	3	:claradmin	0	:-	2	:/Data/Programmierung/ruby/rails_projects/claradmin	1	zsh	:
+pane	0	4	:d21	0	:	0	:/Data/Programmierung/ruby/rails_projects/d21	0	nvim	:nvim .
+pane	0	4	:d21	0	:	1	:/Data/Programmierung/ruby/rails_projects/d21	1	zsh	:
+pane	0	4	:d21	0	:	2	:/Data/Programmierung/ruby/rails_projects/d21/client	0	zsh	:
+pane	0	5	:~	0	:	0	:/Users/tino	1	nvim	:nvim .vimrc
+pane	0	6	:clarat_base	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	zsh	:
+pane	0	7	:rform	0	:	0	:/Data/Programmierung/js/node/rform	0	nvim	:nvim package.json
+pane	0	7	:rform	0	:	1	:/Data/Programmierung/js/node/rform	0	zsh	:
+pane	0	7	:rform	0	:	2	:/Data/Programmierung/js/node/rform	1	zsh	:
+pane	0	8	:nn	0	:	0	:/Data/Programmierung/octave/MLStanford/machine-learning-ex2/ex2	1	zsh	:
+pane	0	9	:aether(node)	0	:	0	:/Data/Programmierung/js/node/aether	1	nvim	:nvim package.js
+pane	0	9	:aether(node)	0	:	1	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	0	9	:aether(node)	0	:	2	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	1	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+pane	2	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+pane	3	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+window	0	0	0	:	d1f5,364x101,0,0[364x66,0,0,1,364x34,0,67,2]
+window	0	1	0	:	0c7b,364x101,0,0[364x58,0,0,3,364x42,0,59,4]
+window	0	2	1	:*	27f5,364x101,0,0[364x62,0,0,5,364x38,0,63{182x38,0,63,6,181x38,183,63,7}]
+window	0	3	0	:-	f862,364x101,0,0[364x59,0,0,8,364x41,0,60{182x41,0,60,9,181x41,183,60,10}]
+window	0	4	0	:	2b15,364x101,0,0{207x101,0,0[207x58,0,0,11,207x42,0,59,12],156x101,208,0,13}
+window	0	5	0	:	445b,364x101,0,0,14
+window	0	6	0	:	5b49,364x101,0,0[364x58,0,0,15,364x42,0,59,16]
+window	0	7	0	:	83cd,364x101,0,0[364x58,0,0,17,364x42,0,59{182x42,0,59,18,181x42,183,59,19}]
+window	0	8	0	:	c457,364x101,0,0,20
+window	0	9	0	:	73b5,364x101,0,0[364x58,0,0,21,364x42,0,59{182x42,0,59,22,181x42,183,59,23}]
+window	1	0	1	:*	c45b,364x101,0,0,24
+window	2	0	1	:*	c45c,364x101,0,0,25
+window	3	0	1	:*	c45d,364x101,0,0,26
+state	0	

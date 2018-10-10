@@ -1,0 +1,38 @@
+pane	0	0	:nvim	0	:	0	:/Data/Programmierung/js/meteor/adventuremaster	1	nvim	:nvim package.json
+pane	0	0	:nvim	0	:	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:nvim	0	:	2	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	1	:elixir	0	:	0	:/Data/Programmierung/elixir/aether	0	nvim	:nvim .
+pane	0	1	:elixir	0	:	1	:/Data/Programmierung/elixir/aether	1	zsh	:
+pane	0	2	:clarat	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat	0	nvim	:nvim config/routes.rb
+pane	0	2	:clarat	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat	1	zsh	:
+pane	0	2	:clarat	0	:	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:	3	:/Users/tino	0	ruby	:foreman: master   
+pane	0	3	:claradmin	0	:-	0	:/Data/Programmierung/ruby/rails_projects/claradmin	0	nvim	:nvim .
+pane	0	3	:claradmin	0	:-	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	node	:npm  
+pane	0	3	:claradmin	0	:-	2	:/Data/Programmierung/ruby/rails_projects/claradmin	1	zsh	:
+pane	0	4	:d21	1	:*	0	:/Data/Programmierung/ruby/rails_projects/d21	0	nvim	:nvim README.md
+pane	0	4	:d21	1	:*	1	:/Data/Programmierung/ruby/rails_projects/d21	0	zsh	:
+pane	0	4	:d21	1	:*	2	:/Data/Programmierung/ruby/rails_projects/d21/client	1	zsh	:
+pane	0	5	:~	0	:	0	:/Users/tino	1	zsh	:
+pane	0	6	:clarat_base	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	zsh	:
+pane	0	7	:rform	0	:	0	:/Data/Programmierung/js/node/rform	0	nvim	:nvim package.json
+pane	0	7	:rform	0	:	1	:/Data/Programmierung/js/node/rform	0	node	:npm   
+pane	0	7	:rform	0	:	2	:/Data/Programmierung/js/node/rform	1	zsh	:
+pane	0	8	:nn	0	:	0	:/Data/Programmierung/octave/MLStanford/machine-learning-ex1/ex1	1	octave-4.2.0	:octave
+pane	0	9	:aether(node)	0	:	0	:/Data/Programmierung/js/node/aether	1	nvim	:nvim package.js
+pane	0	9	:aether(node)	0	:	1	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	0	9	:aether(node)	0	:	2	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	1	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+window	0	0	0	:	58e7,204x63,0,0[204x41,0,0,1,204x21,0,42{137x21,0,42,2,66x21,138,42,3}]
+window	0	1	0	:	6ee1,204x63,0,0[204x41,0,0,4,204x21,0,42,5]
+window	0	2	0	:	f1f3,204x63,0,0[204x41,0,0,6,204x21,0,42{72x21,0,42,7,85x21,73,42,8,45x21,159,42,9}]
+window	0	3	0	:-	ed32,204x63,0,0[204x41,0,0,10,204x21,0,42{111x21,0,42,11,92x21,112,42,12}]
+window	0	4	1	:*	183e,204x63,0,0{127x63,0,0[127x47,0,0,13,127x15,0,48,14],76x63,128,0,15}
+window	0	5	0	:	5e85,204x63,0,0,16
+window	0	6	0	:	174b,204x63,0,0[204x41,0,0,17,204x21,0,42,18]
+window	0	7	0	:	4555,204x63,0,0[204x41,0,0,19,204x21,0,42{102x21,0,42,20,101x21,103,42,21}]
+window	0	8	0	:	de82,204x63,0,0,23
+window	0	9	0	:	2545,204x63,0,0[204x41,0,0,24,204x21,0,42{102x21,0,42,25,101x21,103,42,26}]
+window	1	0	1	:*	de86,204x63,0,0,27
+state	0	1

@@ -1,0 +1,22 @@
+pane	0	0	:..venturemaster	0	:	0	:/Data/Programmierung/js/meteor/adventuremaster	1	nvim	:nvim packages/behavior3/src/index.js
+pane	0	0	:..venturemaster	0	:	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:..venturemaster	0	:	2	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	1	:behavior	0	:	0	:/Data/Programmierung/js/node/behavior3js	1	nvim	:nvim package.json
+pane	0	2	:..ojects/clarat	0	:-	0	:/Data/Programmierung/ruby/rails_projects/clarat	1	nvim	:nvim config/routes.rb
+pane	0	2	:..ojects/clarat	0	:-	1	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:..ojects/clarat	0	:-	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:..ojects/clarat	0	:-	3	:/Users/tino	0	zsh	:
+pane	0	3	:claradmin	0	:	0	:/Data/Programmierung/ruby/rails_projects/claradmin	1	nvim	:nvim Gemfile
+pane	0	3	:claradmin	0	:	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	3	:claradmin	0	:	2	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	4	:.._projects/d21	1	:*	0	:/Data/Programmierung/ruby/rails_projects/d21	0	nvim	:nvim README.md
+pane	0	4	:.._projects/d21	1	:*	1	:/Data/Programmierung/ruby/rails_projects/d21	0	ruby	:/Users/tino/.rvm/rubies/ruby-2.3.0/bin/ruby bin/rails s
+pane	0	4	:.._projects/d21	1	:*	2	:/Data/Programmierung/ruby/rails_projects/d21	1	zsh	:
+pane	0	5	:nvim	0	:	0	:/Users/tino	1	nvim	:nvim .vimrc
+window	0	0	0	:	e382,272x75,0,0[272x49,0,0,0,272x25,0,50{169x25,0,50,1,102x25,170,50,5}]
+window	0	1	0	:	c75f,272x75,0,0,2
+window	0	2	0	:-	35bb,272x75,0,0[272x49,0,0,12,272x25,0,50{98x25,0,50,13,108x25,99,50,15,64x25,208,50,14}]
+window	0	3	0	:	410a,272x75,0,0[272x49,0,0,16,272x25,0,50{143x25,0,50,17,128x25,144,50,18}]
+window	0	4	1	:*	94d6,272x75,0,0{204x75,0,0[204x57,0,0,19,204x17,0,58,29],67x75,205,0,28}
+window	0	5	0	:	e3e2,272x75,0,0,23
+state	0	

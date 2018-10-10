@@ -1,0 +1,29 @@
+pane	0	0	:zsh	0	:	0	:/Data/Programmierung/js/meteor/adventuremaster	0	nvim	:nvim packages/behavior3/src/index.js
+pane	0	0	:zsh	0	:	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:zsh	0	:	2	:/Data/Programmierung/js/meteor/adventuremaster	1	zsh	:
+pane	0	1	:behavior	0	:	0	:/Data/Programmierung/js/node/behavior3js	1	nvim	:nvim package.json
+pane	0	2	:clarat	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat	0	nvim	:nvim config/routes.rb
+pane	0	2	:clarat	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat	1	zsh	:
+pane	0	2	:clarat	0	:	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:	3	:/Users/tino	0	ruby	:foreman: master   
+pane	0	3	:claradmin	1	:*	0	:/Data/Programmierung/ruby/rails_projects/claradmin	1	nvim	:nvim Gemfile
+pane	0	3	:claradmin	1	:*	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	node	:npm  
+pane	0	3	:claradmin	1	:*	2	:/Data/Programmierung/ruby/rails_projects/claradmin	0	ruby	:/Users/tino/.rvm/rubies/ruby-2.3.0/bin/ruby bin/rails c
+pane	0	4	:d21	0	:	0	:/Data/Programmierung/ruby/rails_projects/d21	0	nvim	:nvim README.md
+pane	0	4	:d21	0	:	1	:/Data/Programmierung/ruby/rails_projects/d21	0	zsh	:
+pane	0	4	:d21	0	:	2	:/Data/Programmierung/ruby/rails_projects/d21	1	zsh	:
+pane	0	5	:~	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat-songquiz	1	zsh	:
+pane	0	6	:clarat_base	0	:-	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	0	:-	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	zsh	:
+pane	0	7	:zsh	0	:	0	:/Data/Programmierung/js/node/jayform	1	zsh	:
+pane	1	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+window	0	0	0	:	7722,204x63,0,0[204x45,0,0,1,204x17,0,46{137x17,0,46,2,66x17,138,46,3}]
+window	0	1	0	:	bca1,204x63,0,0,4
+window	0	2	0	:	c6ba,204x63,0,0[204x45,0,0,5,204x17,0,46{74x17,0,46,6,86x17,75,46,7,42x17,162,46,8}]
+window	0	3	1	:*	9d15,204x63,0,0[204x44,0,0,9,204x18,0,45{111x18,0,45,10,92x18,112,45,11}]
+window	0	4	0	:	7673,204x63,0,0{133x63,0,0[133x50,0,0,12,133x12,0,51,13],70x63,134,0,14}
+window	0	5	0	:	5e84,204x63,0,0,15
+window	0	6	0	:-	e209,204x63,0,0[204x45,0,0,16,204x17,0,46,17]
+window	0	7	0	:	5e87,204x63,0,0,18
+window	1	0	1	:*	6988,204x59,0,0,19
+state	0	1

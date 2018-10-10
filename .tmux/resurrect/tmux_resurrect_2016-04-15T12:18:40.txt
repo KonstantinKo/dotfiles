@@ -1,0 +1,6 @@
+pane	0	0	:meteor	1	:*	0	:/Data/Programmierung/js/meteor/adventuremaster	1	nvim	:nvim packages/aether/lib/command/command.coffee
+pane	0	0	:meteor	1	:*	1	:/Data/Programmierung/js/meteor/adventuremaster	0	node	:/Users/tino/.meteor/packages/meteor-tool/.1.1.8.1cv65g1++os.osx.x86_64+web.browser+web.cordova/mt-os.osx.x86_64/dev_bundle/bin/node /Users/tino/.meteor/packages/meteor-tool/.1.1.8.1cv65g1++os.osx.x86_64+web.browser+web.cordova/mt-os.osx.x86_64/tools/index.js
+pane	0	1	:~	0	:-	0	:/Users/tino	1	zsh	:
+window	0	0	1	:*	8258,204x63,0,0[204x51,0,0,0,204x11,0,52,3]
+window	0	1	0	:-	bc9e,204x63,0,0,1
+state	0	

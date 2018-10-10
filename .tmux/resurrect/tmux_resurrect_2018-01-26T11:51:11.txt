@@ -1,0 +1,40 @@
+pane	0	0	:zsh	0	:-	0	:/Data/Programmierung/Python/fillorkill/newsscraper/alpha	0	nvim	:nvim .
+pane	0	0	:zsh	0	:-	1	:/Data/Programmierung/Python/fillorkill	1	zsh	:
+pane	0	1	:elixir	1	:*	0	:/Data/Programmierung/elixir/bitdrops/bitdrops	0	nvim	:nvim .
+pane	0	1	:elixir	1	:*	1	:/Data/Programmierung/elixir/bitdrops/bitdrops	1	zsh	:
+pane	0	2	:clarat	0	:	0	:/Data/Programmierung/ethereum/boom	0	nvim	:nvim .
+pane	0	2	:clarat	0	:	1	:/Data/Programmierung/ethereum/talenter/web	0	zsh	:
+pane	0	2	:clarat	0	:	2	:/Data/Programmierung/ethereum/boom	1	zsh	:
+pane	0	3	:claradmin	0	:	0	:/Data/Programmierung/ruby/rails_projects/claradmin	0	nvim	:nvim .
+pane	0	3	:claradmin	0	:	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	3	:claradmin	0	:	2	:/Data/Programmierung/ruby/rails_projects/claradmin	1	zsh	:irb 
+pane	0	4	:d21	0	:	0	:/Data/Programmierung/ruby/rails_projects/d21	0	nvim	:nvim .
+pane	0	4	:d21	0	:	1	:/Data/Programmierung/ruby/rails_projects/d21	1	zsh	:
+pane	0	4	:d21	0	:	2	:/Data/Programmierung/ruby/rails_projects/d21/client	0	zsh	:
+pane	0	5	:~	0	:	0	:/Users/tino	1	nvim	:nvim .vimrc
+pane	0	6	:clarat_base	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	zsh	:
+pane	0	7	:rform	0	:	0	:/Data/Programmierung/js/node/rform	0	nvim	:nvim package.json
+pane	0	7	:rform	0	:	1	:/Data/Programmierung/js/node/rform	0	zsh	:
+pane	0	7	:rform	0	:	2	:/Data/Programmierung/js/node/rform	1	zsh	:
+pane	0	8	:nn	0	:	0	:/Data/Programmierung/octave/MLStanford/machine-learning-ex2/ex2	1	zsh	:
+pane	0	9	:aether(node)	0	:	0	:/Data/Programmierung/js/node/aether	1	nvim	:nvim package.js
+pane	0	9	:aether(node)	0	:	1	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	0	9	:aether(node)	0	:	2	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	1	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+pane	2	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+pane	3	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+window	0	0	0	:-	7175,204x63,0,0[204x47,0,0,1,204x15,0,48,42]
+window	0	1	1	:*	6ce1,204x63,0,0[204x39,0,0,4,204x23,0,40,5]
+window	0	2	0	:	5f85,204x63,0,0[204x43,0,0,8,204x19,0,44{102x19,0,44,37,101x19,103,44,38}]
+window	0	3	0	:	c369,204x63,0,0[204x40,0,0,12,204x22,0,41{102x22,0,41,31,101x22,103,41,33}]
+window	0	4	0	:	9a81,204x63,0,0{127x63,0,0[127x39,0,0,15,127x23,0,40,16],76x63,128,0,17}
+window	0	5	0	:	5e87,204x63,0,0,18
+window	0	6	0	:	4749,204x63,0,0[204x39,0,0,19,204x23,0,40,20]
+window	0	7	0	:	ad97,204x63,0,0[204x39,0,0,21,204x23,0,40{102x23,0,40,22,101x23,103,40,23}]
+window	0	8	0	:	de83,204x63,0,0,24
+window	0	9	0	:	2da9,204x63,0,0[204x39,0,0,25,204x23,0,40{102x23,0,40,26,101x23,103,40,27}]
+window	1	0	1	:*	e3e7,272x75,0,0,28
+window	2	0	1	:*	63e4,272x75,0,0,34
+window	3	0	1	:*	e3e0,272x75,0,0,40
+state	0	

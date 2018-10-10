@@ -1,0 +1,40 @@
+pane	0	0	:nvim	0	:	0	:/Data/Programmierung/ruby/rails_projects/govolunteer/api	1	nvim	:nvim Gemfile
+pane	0	0	:nvim	0	:	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:nvim	0	:	2	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	1	:elixir	0	:	0	:/Data/Programmierung/elixir/marvin	1	nvim	:nvim .
+pane	0	1	:elixir	0	:	1	:/Data/Programmierung/elixir/marvin/apps/ability	0	zsh	:
+pane	0	1	:elixir	0	:	2	:/Data/Programmierung/elixir/marvin/apps	0	zsh	:
+pane	0	1	:elixir	0	:	3	:/Data/Programmierung/elixir	0	zsh	:
+pane	0	2	:clarat	0	:-	0	:/Data/Programmierung/ruby/rails_projects/clarat	0	nvim	:nvim Gemfile
+pane	0	2	:clarat	0	:-	1	:/Data/Programmierung/ruby/rails_projects/clarat	1	zsh	:
+pane	0	2	:clarat	0	:-	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:-	3	:/Users/tino	0	ruby	:foreman: master   
+pane	0	3	:claradmin	1	:*	0	:/Data/Programmierung/ruby/rails_projects/claradmin	1	nvim	:nvim .
+pane	0	3	:claradmin	1	:*	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	ruby	:puma 3.10.0 (tcp://0.0.0.0:3000) [claradmin]  
+pane	0	3	:claradmin	1	:*	2	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	4	:d21	0	:	0	:/Data/Programmierung/ruby/rails_projects/d21	0	nvim	:nvim README.md
+pane	0	4	:d21	0	:	1	:/Data/Programmierung/ruby/rails_projects/d21	1	zsh	:
+pane	0	4	:d21	0	:	2	:/Data/Programmierung/ruby/rails_projects/d21/client	0	zsh	:
+pane	0	5	:~	0	:	0	:/Users/tino	1	zsh	:
+pane	0	6	:clarat_base	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	zsh	:
+pane	0	7	:rform	0	:	0	:/Data/Programmierung/js/node/rform	0	nvim	:nvim package.json
+pane	0	7	:rform	0	:	1	:/Data/Programmierung/js/node/rform	0	node	:npm   
+pane	0	7	:rform	0	:	2	:/Data/Programmierung/js/node/rform	1	zsh	:
+pane	0	8	:nn	0	:	0	:/Data/Programmierung/octave/MLStanford/machine-learning-ex2/ex2	1	zsh	:
+pane	0	9	:aether(node)	0	:	0	:/Data/Programmierung/js/node/aether	1	nvim	:nvim package.js
+pane	0	9	:aether(node)	0	:	1	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	0	9	:aether(node)	0	:	2	:/Data/Programmierung/js/node/aether	0	zsh	:
+pane	1	0	:zsh	1	:*	0	:/Users/tino	1	zsh	:
+window	0	0	0	:	3349,364x101,0,0[364x59,0,0,1,364x41,0,60{217x41,0,60,2,146x41,218,60,3}]
+window	0	1	0	:	219f,364x101,0,0[364x59,0,0,4,364x41,0,60{156x41,0,60,5,104x41,157,60,6,102x41,262,60,7}]
+window	0	2	0	:-	34db,364x101,0,0[364x59,0,0,8,364x41,0,60{126x41,0,60,9,139x41,127,60,10,97x41,267,60,11}]
+window	0	3	1	:*	6c9f,364x101,0,0[364x68,0,0,12,364x32,0,69{182x32,0,69,31,181x32,183,69,32}]
+window	0	4	0	:	8978,364x101,0,0{207x101,0,0[207x59,0,0,15,207x41,0,60,16],156x101,208,0,17}
+window	0	5	0	:	445f,364x101,0,0,18
+window	0	6	0	:	14ca,364x101,0,0[364x59,0,0,19,364x41,0,60,20]
+window	0	7	0	:	f382,364x101,0,0[364x59,0,0,21,364x41,0,60{182x41,0,60,22,181x41,183,60,23}]
+window	0	8	0	:	c45b,364x101,0,0,24
+window	0	9	0	:	7394,364x101,0,0[364x59,0,0,25,364x41,0,60{182x41,0,60,26,181x41,183,60,27}]
+window	1	0	1	:*	c45f,364x101,0,0,28
+state	0	1

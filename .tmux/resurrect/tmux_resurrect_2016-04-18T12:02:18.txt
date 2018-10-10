@@ -1,0 +1,12 @@
+pane	0	0	:..venturemaster	0	:-	0	:/Data/Programmierung/js/meteor/adventuremaster	1	nvim	:nvim packages/behavior3/src/index.js
+pane	0	0	:..venturemaster	0	:-	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:..venturemaster	0	:-	2	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	1	:..e/behavior3js	0	:!	0	:/Data/Programmierung/js/node/behavior3js	0	nvim	:nvim package.json
+pane	0	1	:..e/behavior3js	0	:!	1	:/Data/Programmierung/js/node/behavior3js	1	zsh	:
+pane	0	2	:rails	1	:*	0	:/Data/Programmierung/ruby/rails_projects/clarat	0	nvim	:nvim .
+pane	0	2	:rails	1	:*	1	:/Data/Programmierung/ruby/rails_projects/clarat	0	ruby	:/Users/tino/.rvm/rubies/ruby-2.2.2/bin/ruby bin/rails s
+pane	0	2	:rails	1	:*	2	:/Users/tino	1	zsh	:
+window	0	0	0	:-	9f6f,272x75,0,0[272x57,0,0,0,272x17,0,58{168x17,0,58,1,103x17,169,58,5}]
+window	0	1	0	:!	38ce,272x75,0,0[272x43,0,0,2,272x31,0,44,11]
+window	0	2	1	:*	e365,272x75,0,0[272x53,0,0,12,272x21,0,54{189x21,0,54,13,82x21,190,54,14}]
+state	0	

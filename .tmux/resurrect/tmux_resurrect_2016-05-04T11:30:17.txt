@@ -1,0 +1,28 @@
+pane	0	0	:..venturemaster	0	:	0	:/Data/Programmierung/js/meteor/adventuremaster	1	nvim	:nvim packages/behavior3/src/index.js
+pane	0	0	:..venturemaster	0	:	1	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	0	:..venturemaster	0	:	2	:/Data/Programmierung/js/meteor/adventuremaster	0	zsh	:
+pane	0	1	:behavior	0	:	0	:/Data/Programmierung/js/node/behavior3js	1	nvim	:nvim package.json
+pane	0	2	:clarat	0	:	0	:/Data/Programmierung/ruby/rails_projects/clarat	1	nvim	:nvim config/routes.rb
+pane	0	2	:clarat	0	:	1	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:	2	:/Data/Programmierung/ruby/rails_projects/clarat	0	zsh	:
+pane	0	2	:clarat	0	:	3	:/Users/tino	0	zsh	:
+pane	0	3	:claradmin	0	:	0	:/Data/Programmierung/ruby/rails_projects/claradmin	1	nvim	:nvim Gemfile
+pane	0	3	:claradmin	0	:	1	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	3	:claradmin	0	:	2	:/Data/Programmierung/ruby/rails_projects/claradmin	0	zsh	:
+pane	0	4	:d21	0	:	0	:/Data/Programmierung/ruby/rails_projects/d21	1	nvim	:nvim README.md
+nvim README.md
+nvim README.md
+nvim README.md
+pane	0	4	:d21	0	:	1	:/Data/Programmierung/ruby/rails_projects/d21	0	ruby	:puma 3.4.0 (tcp://localhost:3000) [d21]   
+pane	0	4	:d21	0	:	2	:/Data/Programmierung/ruby/rails_projects/d21	0	zsh	:
+pane	0	5	:~	0	:-	0	:/Users/tino	1	nvim	:nvim .vimrc
+pane	0	6	:clarat_base	1	:*	0	:/Data/Programmierung/ruby/rails_projects/clarat_base	0	nvim	:nvim Gemfile
+pane	0	6	:clarat_base	1	:*	1	:/Data/Programmierung/ruby/rails_projects/clarat_base	1	ruby	:ruby /Users/tino/.rvm/gems/ruby-2.3.0@global/bin/bundle  
+window	0	0	0	:	dae1,272x75,0,0[272x50,0,0,0,272x24,0,51{169x24,0,51,1,102x24,170,51,5}]
+window	0	1	0	:	c75f,272x75,0,0,2
+window	0	2	0	:	6e40,272x75,0,0[272x50,0,0,12,272x24,0,51{99x24,0,51,13,108x24,100,51,15,63x24,209,51,14}]
+window	0	3	0	:	46da,272x75,0,0[272x50,0,0,16,272x24,0,51{143x24,0,51,17,128x24,144,51,18}]
+window	0	4	0	:	af83,272x75,0,0{156x75,0,0[156x60,0,0,19,156x14,0,61,29],115x75,157,0,28}
+window	0	5	0	:-	e3e2,272x75,0,0,23
+window	0	6	1	:*	797f,272x75,0,0[272x63,0,0,33,272x11,0,64,34]
+state	0	
