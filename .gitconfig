@@ -1,0 +1,19 @@
+[user]
+	name = Konstantin K
+	email = konstantin.koss@gmail.com
+[alias]
+	co = checkout
+	st = status
+	cda = cd ~/ruby/rails_projects/sample_app
+	pfush = push --force-with-lease
+	pfusch = push --force-with-lease
+        squash = !"f() { NL=$1; GIT_EDITOR=\"sed -i '2,$NL s/pick/squash/;/# This is the 2nd commit message:/,$ {d}'\"; git rebase -i HEAD~$NL; }; f"
+[core]
+	editor = nvim
+[github]
+	user = KonstantinKo
+	token = 0c27b2c783bd609fdb1ed126bcdf4391
+[push]
+	default = simple
+[heroku]
+	account = personal
