@@ -83,7 +83,7 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias cda='cd /Data/Programmierung/js/meteor/adventuremaster'
 alias cdc='cd /Data/Programmierung/ruby/rails_projects/clarat'
-alias cdd='cd /Data/Programmierung/ruby/rails_projects/d21'
+alias cdd='cd /Users/Shared/Data/'
 alias cde='cd /Data/Programmierung/elixir/'
 alias cdex='cd ~/exercism/'
 alias cdf='cd /Data/Programmierung/ruby/rails_projects/fairmondo'
@@ -118,3 +118,10 @@ export NVM_DIR="/Users/tino/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 
 eval "$(pyenv init -)" # Pyenv
+
+[ -f "/Users/tino/.ghcup/env" ] && source "/Users/tino/.ghcup/env" # ghcup-env
+PATH="~/.ghcup/bin:$PATH"
+
+. $HOME/.asdf/asdf.sh
+
+. $HOME/.asdf/completions/asdf.bash
