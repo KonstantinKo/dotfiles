@@ -1,0 +1,3 @@
+# OSX specific fragments
+.DS_Store
+*/**/.DS_Store
