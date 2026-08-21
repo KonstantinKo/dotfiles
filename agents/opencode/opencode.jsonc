@@ -1,0 +1,90 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "plugin": [
+    "@thecto/opencode-debug-plugin@latest",
+    "opencode-claude-memory",
+    "@mohak34/opencode-notifier@latest",
+    "/Users/konstantin/.config/opencode/plugins/dev-env-mcp-token.js"
+  ],
+  "mcp": {
+    "coord-mcp": {
+      "type": "remote",
+      "url": "https://coord.doinstruct.dev/mcp"
+    },
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "enabled": true
+    },
+    "dev-env-machines": {
+      "type": "remote",
+      "url": "https://mcp.doinstruct.dev/api/mcp/machines",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer ${DEV_ENV_MCP_TOKEN}"
+      }
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "enabled": true
+    },
+    "launchdarkly": {
+      "type": "remote",
+      "url": "https://mcp.launchdarkly.com/mcp/launchdarkly",
+      "enabled": true,
+      "oauth": {
+        "scope": "reader writer observability"
+      }
+    },
+    "linear": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://mcp.linear.app/mcp",
+        "--transport",
+        "http-first"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    }
+  },
+  "tools": {
+    "coord-mcp_*": true,
+    "dev-env-machines_*": false,
+    "launchdarkly_*": false,
+    "linear_*": false,
+    "playwright_*": false
+  },
+  "command": {
+    "prime": {
+      "description": "Prime codebase context.",
+      "template": "# Prime\n\nPrime current repo context before doing deeper work.\n\n## Workflow\n\n1. Inspect tracked file structure with git.\n2. Read root `README.md` if present.\n3. Check current branch.\n4. If branch is not `main`, compare it to `main`:\n   - diff/stat from merge-base\n   - commits on branch\n   - key changed files, sampled if diff is large\n5. Return concise summary, under 400 words.\n\n## Report\n\nInclude:\n\n- What repo is: apps, packages, stack, purpose.\n- Current branch name.\n- What current branch changes vs `main`.\n- Scope and progress: commits, files/lines touched, WIP or review-ready signals.\n- Key files/areas touched.\n\nUse terse style. No fluff."
+    },
+    "quickreview": {
+      "description": "Independent review of current changes.",
+      "template": "# Quickreview\n\nLoad the `quickreview` skill. Review current changes from a fresh independent read-only `opencode run` session, validate every finding locally, fix only verified issues, run relevant checks, then report verified findings and rejected noise.\n\nUse `$ARGUMENTS` as scope when provided; otherwise review current working-tree or branch changes."
+    },
+    "quickreview-pr": {
+      "description": "Fresh-context branch review for PRs.",
+      "template": "# Quickreview PR\n\nLoad the `quickreview` skill. Determine the true merge base, review only branch-owned diff through a fresh independent read-only `opencode run` session, then validate every finding locally. Report verified findings sorted by path and line. Mention rejected findings only when useful.\n\nUse `$ARGUMENTS` for PR/base scope when provided."
+    }
+  },
+  "permission": {
+    "external_directory": {
+      "*": "ask",
+      "/Users/konstantin/.agents/commands/**": "allow",
+      "/Users/konstantin/projects/obsidian/agentdesk/**": "allow"
+    }
+  },
+  "lsp": true
+}

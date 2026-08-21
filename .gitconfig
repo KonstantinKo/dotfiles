@@ -1,19 +1,15 @@
+# This is Git's per-user configuration file.
 [user]
-	name = Konstantin K
-	email = konstantin.koss@gmail.com
+	email = konstantin.koss@doinstruct.com
+# Please adapt and uncomment the following lines:
+#	name = Konstantin Koss
+#	email = konstantin.koss@doinstruct.com
+[init]
+	defaultBranch = main
 [alias]
-	co = checkout
-	st = status
-	cda = cd ~/ruby/rails_projects/sample_app
 	pfush = push --force-with-lease
-	pfusch = push --force-with-lease
-        squash = !"f() { NL=$1; GIT_EDITOR=\"sed -i '2,$NL s/pick/squash/;/# This is the 2nd commit message:/,$ {d}'\"; git rebase -i HEAD~$NL; }; f"
-[core]
-	editor = nvim
-[github]
-	user = KonstantinKo
-	token = 0c27b2c783bd609fdb1ed126bcdf4391
+	pfushx = push --force
 [push]
-	default = simple
-[heroku]
-	account = personal
+	default = current
+[coderabbit]
+	machineId = cli/7535c59e3e69445cab6ff0930a56d791

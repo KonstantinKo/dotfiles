@@ -1,0 +1,24 @@
+# skill-name: comma-separated tools that get a symlink
+autotune: claude
+babysit-prs: claude
+clonedeps: opencode
+coord-connect: claude
+deepwork: opencode
+design-parity: claude
+desk: claude,opencode
+desk-end: claude,opencode
+desk-log: claude,opencode
+desk-pr: claude
+desk-work: claude,opencode
+evening: claude
+feature-ship: claude
+morning: claude
+pr-announce: claude
+pr-linear-refresh: claude
+quickreview: opencode
+rca-fix: claude
+reflect: opencode
+review-pr-silent: claude
+simplify: opencode
+week: claude
+worktrees: opencode

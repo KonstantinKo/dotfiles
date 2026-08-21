@@ -1,3 +1,5 @@
-# OSX specific fragments
 .DS_Store
-*/**/.DS_Store
+**/.DS_Store
+node_modules/
+*.pre-dotfiles
+.npmrc

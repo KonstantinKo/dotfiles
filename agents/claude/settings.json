@@ -1,0 +1,147 @@
+{
+  "env": {
+    "GITHUB_TOKEN": ""
+  },
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "opus",
+  "deniedMcpServers": [
+    {
+      "serverName": "claude.ai Crowdin"
+    },
+    {
+      "serverName": "claude.ai Hyperline"
+    },
+    {
+      "serverName": "claude.ai docustomer"
+    },
+    {
+      "serverName": "claude.ai Personio"
+    },
+    {
+      "serverName": "claude.ai Ashby"
+    },
+    {
+      "serverName": "claude.ai GitHub"
+    },
+    {
+      "serverName": "claude.ai GitHub (2)"
+    },
+    {
+      "serverName": "claude.ai LaunchDarkly"
+    },
+    {
+      "serverName": "claude.ai Clay"
+    },
+    {
+      "serverName": "claude.ai Planhat"
+    },
+    {
+      "serverName": "claude.ai Microsoft 365"
+    },
+    {
+      "serverName": "claude.ai Metaview"
+    },
+    {
+      "serverName": "claude.ai Genius Monitor"
+    },
+    {
+      "serverName": "claude.ai PandaDoc"
+    },
+    {
+      "serverName": "claude.ai Mintlify"
+    },
+    {
+      "serverName": "claude.ai Supabase"
+    },
+    {
+      "serverName": "claude.ai Granola"
+    },
+    {
+      "serverName": "claude.ai Datadog"
+    },
+    {
+      "serverName": "claude.ai Mixpanel"
+    },
+    {
+      "serverName": "claude.ai Mixpanel (2)"
+    },
+    {
+      "serverName": "claude.ai Miro"
+    },
+    {
+      "serverName": "claude.ai monday.com"
+    },
+    {
+      "serverName": "claude.ai Intercom"
+    },
+    {
+      "serverName": "claude.ai HubSpot"
+    },
+    {
+      "serverName": "claude.ai Canva"
+    },
+    {
+      "serverName": "claude.ai Box"
+    },
+    {
+      "serverName": "claude.ai Atlassian"
+    },
+    {
+      "serverName": "claude.ai Spotify"
+    },
+    {
+      "serverName": "claude.ai Excalidraw"
+    },
+    {
+      "serverName": "claude.ai AWS Marketplace"
+    },
+    {
+      "serverName": "claude.ai Context7"
+    },
+    {
+      "serverName": "claude.ai Figma"
+    }
+  ],
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"/Users/konstantin/.claude/statusline.sh\""
+  },
+  "enabledPlugins": {
+    "claude-debug-plugin@pzep1-claudecode-debug-mode": true,
+    "playwright@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "figma@claude-plugins-official": false,
+    "claude-obsidian@claude-obsidian-marketplace": true,
+    "caveman@caveman": true,
+    "omp-worker@dsa-local": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-obsidian-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "AgriciDaniel/claude-obsidian"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "dsa-local": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/konstantin/projects/dsa"
+      }
+    }
+  },
+  "effortLevel": "xhigh",
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "terminalProgressBarEnabled": false,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
+}
