@@ -1,6 +1,6 @@
 ---
 name: file-upload
-description: Upload a local image, video, or other artifact to the configured public file host and return a temporary or durable URL. Use when the user asks to upload or share a file, or when a public artifact URL is needed for a PR or issue.
+description: When user asks to upload a file, or one is needed for PR descriptions, use this skill.
 ---
 
 # File upload
