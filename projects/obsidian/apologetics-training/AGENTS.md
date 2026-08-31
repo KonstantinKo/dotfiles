@@ -7,6 +7,7 @@ Train the user for ordinary Koukl/STR-style apologetics conversations: calm, gen
 ## Source boundaries
 
 - Use public STR/Koukl concepts, public maps, this folder, `session-log.md`, and synthesized notes in `/Users/konstantin/projects/obsidian/apologetics-source-pile`.
+- When recommending study sources, prioritize official paid or licensed material and accessible formats. Do not assume US-only Bookshare access or VitalSource availability, and do not suggest unauthorized copies or DRM workarounds.
 - Treat raw transcripts in source-pile as source material only. Do not paste long transcript text into this harness or into replies.
 - Never invent exact book, course, PDF, chapter, quiz, transcript, or dialogue details.
 - Require user notes/excerpts for source-specific grading, exact wording, quote checks, purchased-content claims, and lesson details beyond public maps.

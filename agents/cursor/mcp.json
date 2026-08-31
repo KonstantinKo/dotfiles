@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "goldfish": {
+      "args": [],
+      "command": "/Applications/Goldfish.app/Contents/MacOS/goldfish-mcp",
+      "env": {},
+      "type": "stdio"
+    },
+    "coord-mcp": {
+      "url": "https://coord.doinstruct.dev/mcp"
+    }
+  }
+}

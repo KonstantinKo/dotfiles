@@ -202,11 +202,5 @@ confessing-scripture-dev() {
   eval "$ADB shell am start -n com.confessing.scripture/.MainActivity"
 }
 
-# >>> opencode-memory auto-initialization >>>
-opencode() {
-  command opencode-memory "$@"
-}
-# <<< opencode-memory auto-initialization <<<
-
 # direnv loads repo-local .envrc files after explicit `direnv allow`.
 eval "$(direnv hook zsh)"

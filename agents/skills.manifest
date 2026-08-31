@@ -2,7 +2,7 @@
 autotune: claude
 babysit-prs: claude
 clonedeps: opencode
-coord-connect: claude
+coord-connect: claude,cursor
 deepwork: opencode
 design-parity: claude
 desk: claude,opencode
@@ -10,7 +10,6 @@ desk-end: claude,opencode
 desk-log: claude,opencode
 desk-pr: claude
 desk-work: claude,opencode
-evening: claude
 feature-ship: claude
 morning: claude
 pr-announce: claude
@@ -22,3 +21,4 @@ review-pr-silent: claude
 simplify: opencode
 week: claude
 worktrees: opencode
+ensuremerge: claude,opencode,cursor

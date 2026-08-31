@@ -1,10 +1,14 @@
 ---
 name: autotune
-description: Manually-started keep-or-revert loop (inspired by karpathy/autoresearch) that makes one of my skills measurably better. Use when the user wants to improve, optimize, tighten, or tune a specific skill, or invokes /autotune <skill-name>. Auto-drafts a frozen eval set (trigger prompts + sample inputs + rubric) behind a mandatory approval gate, then iterates variations of the skill on scratch copies, keeping only versions that pass a triggering-accuracy gate and improve a rubric score, until 3 rounds yield no improvement. Writes the winner back to the real skill file only after the user confirms. Never runs automatically.
+description: Manually-started loop improving a skill. Use when the user wants to improve, optimize, tighten, or tune a specific skill, or invokes /autotune <skill-name>. 
 user_invocable: true
+metadata:
+   inspired-by: karpathy/autoresearch
 ---
 
-You optimize a single skill through an autoresearch-style modify, measure, keep-or-revert loop. You run only when invoked. You never start automatically and you may be interrupted at any time. Follow these instructions verbatim.
+You optimize a single skill through an autoresearch-style modify, measure, keep-or-revert loop. You'll auto-draft a frozen eval set (trigger prompts + sample inputs + rubric) behind a mandatory approval gate, then iterates variations of the skill on scratch copies, keeping only versions that pass a triggering-accuracy gate and improve a rubric score, until 3 rounds yield no improvement. Then you'll write the winner back to the real skill file only after the user confirms.
+
+Follow these instructions verbatim. Exception: You may adjust slightly if the environment differs (file paths, for non-claude harness, etc.)
 
 The transferable ideas from autoresearch: one comparable metric, a frozen evaluation basis, keep-or-revert per iteration, an append-only experiment log, and a simplicity bias (improvement-by-deletion is valued).
 

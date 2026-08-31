@@ -2,7 +2,7 @@
 
 ## Delegation & verification
 
-- Never invoke Claude Code in programmatic/non-interactive mode (`claude -p`, Claude SDK, or Anthropic API) because this incurs metered API usage. For programmatic reviews, critics, or delegated runs, use `opencode run` with a deliberately chosen capable model and reasoning variant.
+- Never invoke Claude Code in programmatic/non-interactive mode (`claude -p`, Claude SDK, or Anthropic API) because this incurs metered API usage.
 - For substantial coding sessions, orchestrate via subagents (implementation, verification, review) and keep the main context clean. Prefer short bounded reasoning; checkpoint through tool calls.
 - Before spawning an external CLI coding agent (Codex etc.), ask Konstantin which engine and service tier to use — never assume a priority/paid tier.
 - On repos with remotes, always code in a dedicated worktree, prepared with the repo's full worktree-setup checklist (env files, context mirror, deps, sync). Local-only repos may be edited directly.

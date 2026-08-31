@@ -5,7 +5,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "claude-fable-5[1m]",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Crowdin"
@@ -115,7 +115,7 @@
     "figma@claude-plugins-official": false,
     "claude-obsidian@claude-obsidian-marketplace": true,
     "caveman@caveman": true,
-    "omp-worker@dsa-local": true
+    "dsa@dsa-local": true
   },
   "extraKnownMarketplaces": {
     "claude-obsidian-marketplace": {
@@ -142,6 +142,7 @@
   "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
   "terminalProgressBarEnabled": false,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true
 }

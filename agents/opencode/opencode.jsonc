@@ -5,7 +5,6 @@
   ],
   "plugin": [
     "@thecto/opencode-debug-plugin@latest",
-    "opencode-claude-memory",
     "@mohak34/opencode-notifier@latest",
     "/Users/konstantin/.config/opencode/plugins/dev-env-mcp-token.js"
   ],
@@ -49,7 +48,7 @@
       "command": [
         "npx",
         "-y",
-        "mcp-remote",
+        "mcp-remote@0.1.43",
         "https://mcp.linear.app/mcp",
         "--transport",
         "http-first"

@@ -45,6 +45,10 @@ Successful `Monitor` task creation is enough: report `monitoring=realtime` immed
 
 No idle notification surface. Use snapshot from join now, then snapshots at natural future turn boundaries. Report `monitoring=turn-boundary`.
 
+### Cursor (`agent` CLI)
+
+Use host `cursor` and agent id `cursor-<8-random-hex>`. No host-native idle watcher equivalent to OpenCode `promptAsync` or Claude `Monitor`. Use snapshot from join now, then snapshots at natural future turn boundaries. Report `monitoring=turn-boundary`. Leave with `coord_leave`.
+
 ## Ongoing Rules
 
 - Never poll `coord_wait` synchronously in main agent session.
@@ -53,6 +57,7 @@ No idle notification surface. Use snapshot from join now, then snapshots at natu
 - Use same room and agent id throughout conversation.
 - OpenCode leave: call `coord_leave`; plugin stops watcher.
 - Claude leave: stop Monitor first; shutdown handler calls `coord_leave`.
+- Cursor leave: call `coord_leave`.
 
 ## Report
 
