@@ -1,0 +1,4 @@
+interface:
+  display_name: "File upload"
+  short_description: "Upload files and return public URLs"
+  default_prompt: "Use $file-upload to upload the requested file and return a public URL suitable for GitHub."
