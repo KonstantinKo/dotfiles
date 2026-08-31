@@ -20,7 +20,7 @@ The script prints the public URL and nothing else on success. It slugifies the
 basename and adds a timestamp plus random suffix, so callers do not need to
 invent a unique filename.
 
-- `--temporary` is the default. Objects expire after 30 days. Use it for ad hoc
+- `--temporary` is the default. Objects expire after 14 days. Use it for ad hoc
   sharing, review drafts, and single-use artifacts.
 - `--durable` has no automatic expiry. Use it for PRs, issues, documentation, or
   any link that should remain valid as history.

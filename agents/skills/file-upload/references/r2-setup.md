@@ -25,7 +25,7 @@ bucket approaches 10 GB, because usage beyond the allowance is billed.
    `FILE_PUBLIC_BASE_URL` is the public bucket origin, with no trailing path.
    `FILE_UPLOAD_PREFIX` can override the normal `temporary` or `durable` prefix.
 
-Configure a lifecycle rule that expires `temporary/` objects after 30 days. Do
+Configure a lifecycle rule that expires `temporary/` objects after 14 days. Do
 not apply expiry to `durable/`; those URLs may be referenced by historical PRs,
 issues, and documentation.
 

@@ -41,12 +41,14 @@ When the request asks for a hosted, published, or shareable document:
 
 1. Write the HTML locally at a stable absolute path outside the repository unless
    the user requests a tracked location.
-2. Run `npx --yes postplan upload <absolute-path>`.
-3. Return both the local path and the URL printed by Postplan.
+2. Run `npx --yes postplan whoami` to verify the stored API key before publishing.
+3. Run `npx --yes postplan upload <absolute-path>`.
+4. Return both the local path and the URL printed by Postplan.
 
 Uploading the same absolute path updates its existing draft URL. Use `--new` only
-when the user requests a separate draft. If Postplan reports missing credentials,
-ask the user to run `npx postplan auth login`, then retry after they confirm.
+when the user requests a separate draft. If `whoami` or upload reports missing,
+invalid, or revoked credentials, do not attempt an anonymous upload. Ask the user
+to run `npx postplan auth login`, then retry after they confirm.
 
 If validation fails, fix the document and retry once. If the same failure
 persists, report it rather than weakening requested functionality or repeatedly
