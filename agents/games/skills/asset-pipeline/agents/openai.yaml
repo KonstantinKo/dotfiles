@@ -1,0 +1,3 @@
+interface:
+  display_name: "Asset Pipeline"
+  short_description: "Route preview and production-ready 3D assets"

@@ -1,0 +1,72 @@
+# Seed for ~/.codex-games/config.toml (codg: private game dev, Blender MCP, no day-job tools).
+# Copied once by install.sh; Codex writes project trust entries here afterwards.
+# Work skills never reach this home: install.sh links only games/ and shared/ skills here.
+plan_mode_reasoning_effort = "xhigh"
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
+approvals_reviewer = "auto_review"
+
+# Yolo mode: no approval prompts, no sandbox. Private hobby projects only.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "context-used", "five-hour-limit", "weekly-limit", "total-input-tokens", "total-output-tokens", "estimated-thread-cost", "task-progress"]
+status_line_use_colors = true
+
+[features]
+rmcp_client = true
+child_agents_md = true
+multi_agent = true
+
+[notice]
+hide_full_access_warning = true
+
+# Needs Blender open with the "MCP for Blender" add-on server started (N panel).
+# Pinned to match the add-on installed by `uvx blender-mcp@<version> install-addon`.
+[mcp_servers.blender]
+command = "uvx"
+args = ["blender-mcp==1.9.1"]
+env = { DISABLE_TELEMETRY = "true" }
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+# Up-to-date Unity/Godot/library API docs.
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+startup_timeout_sec = 60
+
+# Engine MCPs connect once their editor is open with the add-on installed.
+# `codg unity-ab` swaps MCP for Unity (CoplayDev) for AnkleBreaker, for A/B testing.
+[mcp_servers.godot]
+command = "uvx"
+args = ["godot-ai==4.0.4", "attach", "--disable-telemetry"]
+env = { GODOT_AI_DISABLE_TELEMETRY = "true" }
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[mcp_servers.unity_anklebreaker]
+enabled = false
+command = "npx"
+args = ["-y", "anklebreaker-unity-mcp@2.35.6"]
+env = { UNITY_MCP_COMPACT_TOOLS = "1" }
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[mcp_servers.unity_coplay]
+command = "uvx"
+args = ["--from", "mcpforunityserver==10.2.0", "mcp-for-unity", "--transport", "stdio"]
+env = { UNITY_MCP_DISABLE_TELEMETRY = "true", UNITY_MCP_SKIP_STARTUP_CONNECT = "1", FASTMCP_SHOW_SERVER_BANNER = "false", FASTMCP_CHECK_FOR_UPDATES = "off" }
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+# Pay-per-use Fal.ai asset generation. The wrapper reads an API-scope key from
+# macOS Keychain and pins a known-compatible fal-mcp-server/MCP SDK pair.
+[mcp_servers.fal]
+command = "/Users/konstantin/.local/bin/fal-mcp-codg"
+startup_timeout_sec = 60
+tool_timeout_sec = 900
+
+[projects."/Users/konstantin/projects/other/games"]
+trust_level = "trusted"

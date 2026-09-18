@@ -1,0 +1,4 @@
+interface:
+  display_name: "Concept to Reality"
+  short_description: "Match concept art in 3D through visual correction loops"
+  default_prompt: "Use $concept-to-reality to reconstruct the selected reference with matched-view and spatial evidence, honoring the requested endpoint or assigned batch boundary."

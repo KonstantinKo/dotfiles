@@ -1,0 +1,25 @@
+#!/bin/zsh
+set -euo pipefail
+
+# Prefer a one-off environment override, otherwise read the private API key from
+# the user's login keychain. The secret never appears in Codex's config file.
+if [[ -z "${FAL_KEY:-}" ]]; then
+  FAL_KEY="$(security find-generic-password -a "$USER" -s "fal.ai (codg)" -w 2>/dev/null || true)"
+fi
+
+if [[ -z "${FAL_KEY:-}" ]]; then
+  print -u2 'fal-mcp-codg: no fal.ai key found.'
+  print -u2 'Store one securely with:'
+  print -u2 '  security add-generic-password -U -a "$USER" -s "fal.ai (codg)" -w'
+  exit 78
+fi
+
+export FAL_KEY
+
+# fal-mcp-server 1.18.0 is incompatible with the newest unconstrained `mcp`
+# package, but its checked-in lockfile uses 1.13.1. Pin both until upstream
+# constrains or updates the dependency.
+exec /Users/konstantin/.local/bin/uvx \
+  --with mcp==1.13.1 \
+  --from fal-mcp-server==1.18.0 \
+  fal-mcp

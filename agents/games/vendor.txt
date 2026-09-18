@@ -1,0 +1,11 @@
+# Third-party skills linked into ~/.codex-games/skills by install.sh.
+# Format: <github owner/repo> <path-in-repo>
+Unity-Technologies/skills skills/audio-setup-mixers
+Unity-Technologies/skills skills/initialize-ai-navigation
+Unity-Technologies/skills skills/physics-3d-collision
+Unity-Technologies/skills skills/shader-graph-create-custom-node
+Unity-Technologies/skills skills/ui
+Unity-Technologies/skills skills/ui-uitk
+Unity-Technologies/skills skills/unity-cli
+Unity-Technologies/skills skills/unity-package-management
+Unity-Technologies/skills skills/urp-postprocessing
