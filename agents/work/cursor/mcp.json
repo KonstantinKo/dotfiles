@@ -8,6 +8,18 @@
     },
     "coord-mcp": {
       "url": "https://coord.doinstruct.dev/mcp"
+    },
+    "unityMCP": {
+      "command": "/Users/konstantin/.local/bin/uvx",
+      "args": [
+        "--offline",
+        "--from",
+        "mcpforunityserver==10.2.0",
+        "mcp-for-unity",
+        "--transport",
+        "stdio"
+      ],
+      "type": "stdio"
     }
   }
 }
