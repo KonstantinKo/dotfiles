@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend design"
+  short_description: "Distinctive, non-templated visual design for UI"
+  default_prompt: "Use $frontend-design to give this UI a deliberate aesthetic direction before writing code."
