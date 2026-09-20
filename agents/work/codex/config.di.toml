@@ -1,0 +1,40 @@
+# Seed for ~/.codex-di/config.toml (company Codex account, Linear/Slack allowed).
+# Copied once by install.sh; Codex writes project trust entries here afterwards.
+plan_mode_reasoning_effort = "xhigh"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "max"
+approvals_reviewer = "auto_review"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "context-used", "five-hour-limit", "weekly-limit", "total-input-tokens", "total-output-tokens", "estimated-thread-cost", "task-progress"]
+status_line_use_colors = true
+
+[features]
+rmcp_client = true
+child_agents_md = true
+multi_agent = true
+plugin_hooks = true
+plugins = true
+
+[features.multi_agent_v2]
+max_concurrent_threads_per_session = 10000
+
+[notice]
+hide_full_access_warning = true
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+oauth_resource = "https://mcp.figma.com/mcp"
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+oauth_resource = "https://mcp.linear.app/mcp"
+
+[plugins."figma@openai-curated"]
+enabled = true
+
+[plugins."linear@openai-curated"]
+enabled = true
+
+[plugins."slack@openai-curated"]
+enabled = true

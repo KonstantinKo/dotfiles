@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "unity": {
+      "command": "uvx",
+      "args": ["--from", "mcpforunityserver==10.2.0", "mcp-for-unity", "--transport", "stdio"],
+      "env": {
+        "UNITY_MCP_DISABLE_TELEMETRY": "true",
+        "UNITY_MCP_SKIP_STARTUP_CONNECT": "1",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "FASTMCP_CHECK_FOR_UPDATES": "off"
+      }
+    }
+  }
+}

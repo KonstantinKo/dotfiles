@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "unity": {
+      "command": "npx",
+      "args": ["-y", "anklebreaker-unity-mcp@2.35.6"],
+      "env": { "UNITY_MCP_COMPACT_TOOLS": "1" }
+    }
+  }
+}
