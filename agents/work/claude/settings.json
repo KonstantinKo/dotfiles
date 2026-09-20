@@ -5,7 +5,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Crowdin"
@@ -104,6 +104,20 @@
       "serverName": "claude.ai Figma"
     }
   ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/konstantin/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "bash \"/Users/konstantin/.claude/statusline.sh\""
@@ -113,17 +127,12 @@
     "playwright@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "figma@claude-plugins-official": false,
-    "claude-obsidian@claude-obsidian-marketplace": true,
     "caveman@caveman": true,
-    "dsa@dsa-local": true
+    "dsa@dsa-local": true,
+    "code-review@claude-plugins-official": true,
+    "claude-obsidian@agricidaniel-claude-obsidian": true
   },
   "extraKnownMarketplaces": {
-    "claude-obsidian-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "AgriciDaniel/claude-obsidian"
-      }
-    },
     "caveman": {
       "source": {
         "source": "github",
@@ -135,12 +144,30 @@
         "source": "directory",
         "path": "/Users/konstantin/projects/dsa"
       }
+    },
+    "agricidaniel-claude-obsidian": {
+      "source": {
+        "source": "github",
+        "repo": "AgriciDaniel/claude-obsidian"
+      }
+    },
+    "pzep1-claudecode-debug-mode": {
+      "source": {
+        "source": "github",
+        "repo": "pzep1/claudecode-debug-mode"
+      }
     }
   },
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "high"
+    }
+  },
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
   "terminalProgressBarEnabled": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
