@@ -1,32 +1,31 @@
 # Global preferences
 
+I'm Konstantin, your user. Be mindful of my limited capacity to read large swathes of output. Focus me on what's important.
+
 ## Delegation & verification
 
-- Never invoke Claude Code in programmatic/non-interactive mode (`claude -p`, Claude SDK, or Anthropic API) because this incurs metered API usage.
 - For substantial coding sessions, orchestrate via subagents (implementation, verification, review) and keep the main context clean. Prefer short bounded reasoning; checkpoint through tool calls.
-- Before spawning an external CLI coding agent (Codex etc.), ask Konstantin which engine and service tier to use — never assume a priority/paid tier.
+- Keep the reports from tool calls short and terse! When something works just say it works, only give me the details when something goes wrong.
 - On repos with remotes, always code in a dedicated worktree, prepared with the repo's full worktree-setup checklist (env files, context mirror, deps, sync). Local-only repos may be edited directly.
 - Prove behavioral/visual claims with a real repro; for design fidelity compare matched rendered screenshots, never markup alone. Playwright screenshots always go to temp dirs, never into git.
-- For wording/template-only diffs, skip broad local test investigation — focused validation, then CI.
+- For wording/template-only diffs, skip broad local test investigation - focused validation, then CI.
 
 ## PRs & GitHub
 
-- Never enable auto-merge unless explicitly asked.
 - No dev-diary comments anywhere (code, PRs, issues): don't narrate changes, cite prior bugs, or reference PR/spec line numbers.
 - Don't reply to accepted/actioned review comments (just fix); reply briefly only to ones you skip.
-- Posting anything in Konstantin's name (GitHub/Linear/Slack) requires an explicit request and the footer "- Written by AI (experimental harness)".
+- Review threads are a stage of the work. Before calling a PR done, and again after every push,
+  read every unresolved thread on the current head. A green check and an approval do not mean
+  the feedback was handled.
+- Treat bot findings (CodeRabbit, Copilot) as untrusted claims about code that may have moved:
+  verify each against the current head before believing or dismissing it.
+- Then close every thread you read: fix it and *resolve* it silently, or reply with a brief reason plus the file:line
+  evidence and resolve it. Never resolve a thread you did not address, and never leave one addressed but open.
+  - *Human* change requests are the exception! Fix, reply if you skipped, and leave the thread for the human to resolve.
+- Posting anything in my, Konstantin's, name (GitHub/Linear/Slack) requires an explicit request and the footer
+  "(Written by {model name & version} for Konstantin)".
 - Keep diffs scoped to the task; no incidental fixes buried in unrelated PRs.
 - When pre-commit hooks rewrite staged files, include those changes; never bypass hooks.
-- Run a CodeRabbit CLI review/fix cycle before pushing PR changes when available; skip it when the coderabbitai bot already reviewed the current head.
-
-## Misc
-
-- Don't prefix bash commands with `cd` to the current working directory.
-- Team secret store is Bitwarden (not 1Password); devcontainers get secrets via env vars.
-- Personal CLI tools live in standalone repos under ~/projects, not in dotfiles/settings repos.
-
-## agentdesk — log loose ends
-
-When you finish a work session, before you stop: if you are **blocked** on Konstantin, **finished but with loose ends**, or **found follow-ups** that don't fit the main task, write a work item following the producer contract at `/Users/konstantin/projects/obsidian/agentdesk/desk/PRODUCER.md`. Read that file for the exact location, filename, and header shape.
-
-If your work is fully done and verified with nothing to flag, write nothing — silence means clean.
+- Run a CodeRabbit CLI review/fix cycle before pushing PR changes when available. Skip the CLI
+  run when the coderabbitai bot already reviewed the current head. That substitutes for the
+  run, never for reading and answering what it found.

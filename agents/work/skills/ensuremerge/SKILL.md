@@ -35,7 +35,7 @@ Being queued, having auto-merge enabled, or having green checks is not completio
 - Preserve unrelated changes. Never reset, discard, overwrite, or stash another person's work.
 - Never remove a dirty worktree or a branch with unique unpushed work.
 - Do not deploy.
-- Do not post GitHub comments unless the human explicitly asks in this session.
+- Do not post GitHub comments unless the human explicitly asks in this session or other standing instructions about handling review comments allow it.
 - Use `env -u GITHUB_TOKEN -u GH_TOKEN gh ...` for every ad-hoc GitHub CLI command (scripts already do this).
 - Prefer squash merge unless repository policy or the PR explicitly requires another allowed method. When the base branch has a **merge queue** (`pr-status.sh` prints `merge_queue=yes`), the queue owns the method: enqueue with `gh pr merge <n> --auto` and **no method flag** (`--squash`/`--merge`/`--rebase` are rejected with "The merge strategy for main is set by the merge queue"), never merge directly, and do not ask the human which strategy to use.
 - Destructive git operations (worktree remove, branch delete, checkout switches) stay in the main session — never delegate them to subagents.
