@@ -11,8 +11,7 @@ Create one self-contained HTML file capped at 512 KB.
 
 - Write it like a working document, not a landing page: dense, scannable; 
   no: hero, decorative chrome, or marketing voice.
-- Default to true black (`#000`), white primary text, and dark gray secondary
-  surfaces or accents unless the user requests another direction.
+- Create a design that fits the topic.
 - Make it mobile-readable with a responsive viewport and fluid layout.
 - Use semantic HTML, inline CSS, inline SVG, and HTTPS or data-URL images.
 - Use a classic inline script only when interactivity materially improves the
