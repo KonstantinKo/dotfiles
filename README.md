@@ -73,7 +73,7 @@ Local audio for the agent: `game-sfx` / `game-music` in `~/.local/bin` (models u
 (plus `games/CLAUDE.md`, which maps the Codex model names it uses — Astra → Fable, Luna → Sonnet,
 every other GPT model → Opus), same games + shared skills, the `prompts/` linked as slash
 commands, and no work skills, MCPs or plugins. Claude-only pieces live in
-`agents/games/claude/`: `settings.json` (Fable, bypass permissions, caveman only) and
+`agents/games/claude/`: `settings.json` (Fable, bypass permissions) and
 `mcp/{base,unity-coplay,unity-anklebreaker}.json`. `clag` is a shell function in `~/.zshenv`
 that starts Claude with `CLAUDE_CONFIG_DIR=~/.claude-games` and
 `--mcp-config base.json unity-coplay.json --strict-mcp-config`; `clag unity-ab` swaps the Unity

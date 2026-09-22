@@ -7,20 +7,10 @@
     "defaultMode": "bypassPermissions"
   },
   "model": "fable",
+  "outputStyle": "Concise",
   "statusLine": {
     "type": "command",
     "command": "bash \"/Users/konstantin/.claude-games/statusline.sh\""
-  },
-  "enabledPlugins": {
-    "caveman@caveman": true
-  },
-  "extraKnownMarketplaces": {
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
-      }
-    }
   },
   "effortLevel": "high",
   "tui": "fullscreen",

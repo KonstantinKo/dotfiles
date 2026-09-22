@@ -6,6 +6,7 @@
     "defaultMode": "auto"
   },
   "model": "opus[1m]",
+  "outputStyle": "Concise",
   "deniedMcpServers": [
     {
       "serverName": "claude.ai Crowdin"
@@ -127,18 +128,11 @@
     "playwright@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "figma@claude-plugins-official": false,
-    "caveman@caveman": true,
     "dsa@dsa-local": true,
     "code-review@claude-plugins-official": true,
     "claude-obsidian@agricidaniel-claude-obsidian": true
   },
   "extraKnownMarketplaces": {
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
-      }
-    },
     "dsa-local": {
       "source": {
         "source": "directory",
