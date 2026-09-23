@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 from backlot.models import ModelSpec
 from backlot.providers.base import BaseProvider, GenRequest, GenResult, ProviderError, build_arguments
 
+DEFAULT_TIMEOUT_S = 900.0
+POLL_INTERVAL_S = 1.0
 _MEDIA_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4", ".mov", ".webm", ".mp3", ".wav", ".ogg", ".flac", ".m4a"}
 _URL_KEYS = ("images", "image", "video", "audio", "output", "outputs", "file", "audio_file", "video_file", "image_file")
 
@@ -84,15 +86,32 @@ class FalProvider(BaseProvider):
         except Exception as exc:  # noqa: BLE001 - fal_client raises many exception types
             raise ProviderError(f"upload of {path.name} failed: {_short(exc)}") from exc
 
+    @property
+    def timeout_s(self) -> float:
+        return float(self.config.get("timeout_s") or DEFAULT_TIMEOUT_S)
+
     def _subscribe(self, model: ModelSpec, req: GenRequest) -> tuple[Any, str, float]:
+        """submit, hand the request id to the caller (recorded before any waiting), then poll
+        the status until completed or `timeout_s`; the result is only read when it is complete."""
         client = self._client()
         if not model.endpoint:
             raise ProviderError(f"model {model.id} has no endpoint")
         args = build_arguments(model, req, self._upload)
         start = time.time()
+        request_id = ""
         try:
             handler = client.submit(model.endpoint, arguments=args)
-            request_id = getattr(handler, "request_id", "")
+            request_id = str(getattr(handler, "request_id", "") or "")
+            if req.on_submit and request_id:
+                req.on_submit(request_id)
+            deadline = start + self.timeout_s
+            while not isinstance(handler.status(), client.Completed):
+                if time.time() >= deadline:
+                    raise ProviderError(
+                        f"{model.endpoint} request {request_id} still running after {self.timeout_s:.0f} s "
+                        "(providers.fal.timeout_s in studio.yaml); `backlot recover <take>` fetches it once it finishes"
+                    )
+                time.sleep(POLL_INTERVAL_S)
             result = handler.get()
         except ProviderError:
             raise
@@ -106,11 +125,28 @@ class FalProvider(BaseProvider):
 
     def run(self, model: ModelSpec, req: GenRequest) -> GenResult:
         result, request_id, seconds = self._subscribe(model, req)
-        urls = extract_media(result)
-        if not urls:
-            raise ProviderError(f"no media in fal response: {str(result)[:300]}")
-        files = [download(url, req.workdir, f"out{i if i else ''}") for i, url in enumerate(urls)]
+        files = _download_all(result, req.workdir)
         return GenResult(files=files, job_id=request_id, seconds=seconds, raw=result)
+
+    def fetch(self, endpoint: str, request_id: str, workdir: Path) -> GenResult:
+        client = self._client()
+        try:
+            status = client.status(endpoint, request_id)
+            if not isinstance(status, client.Completed):
+                raise ProviderError(f"request {request_id} on {endpoint} is {type(status).__name__.lower()}; try again later")
+            result = client.result(endpoint, request_id)
+        except ProviderError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise ProviderError(f"{endpoint} result {request_id} failed: {_short(exc)}") from exc
+        return GenResult(files=_download_all(result, workdir), job_id=request_id, raw=result)
+
+
+def _download_all(result: Any, workdir: Path) -> list[Path]:
+    urls = extract_media(result)
+    if not urls:
+        raise ProviderError(f"no media in fal response: {str(result)[:300]}")
+    return [download(url, workdir, f"out{i if i else ''}") for i, url in enumerate(urls)]
 
 
 def _short(exc: BaseException) -> str:

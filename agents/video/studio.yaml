@@ -2,6 +2,11 @@
 vault: ~/projects/obsidian/Backlot
 projects_root: ~/projects/video
 currency: EUR
+# Money gates; a project's project.yaml overrides each key.
+defaults:
+  confirm_over_eur: 0     # ask above this estimate (0 = always ask)
+  max_call_eur: 1.0       # refuse a single call above this
+  escalate_pct: 80        # ask when a run would push spend past this share of budget_eur
 providers:
   fal:
     keychain_service: fal-api

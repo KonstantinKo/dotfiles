@@ -22,6 +22,7 @@ Turn a one-sentence idea into a scaffolded project (vault + project dir) with a 
    - Budget in EUR (default from `studio.yaml`; say the number back).
 2. Pick a slug: lowercase, hyphens, no dates. Confirm it.
 3. Run `backlot init <slug> --format <f> --fps <n> --res <WxH> --budget <eur>`. Relay the one-line result.
+   `init` must leave `~/projects/video/<slug>/.claude/settings.json` in place (copy or link of `~/dotfiles/agents/video/claude/settings.json`): it holds the spend-confirmation hook, and Claude Code does not read settings from the parent directory. Until the CLI does this, run `make` in `~/dotfiles` after init.
 4. `cd ~/projects/video/<slug>`.
 5. Fill `Projects/<slug>/Brief.md` from the interview using the `brief` skill's layout. Leave unknowns as open questions at the bottom.
 6. If the user handed over material (PDF, deck, URL, footage), run the `ingest` skill now.

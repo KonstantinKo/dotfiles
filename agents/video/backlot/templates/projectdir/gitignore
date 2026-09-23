@@ -3,8 +3,6 @@ takes/**/*.wav
 takes/**/*.mp3
 takes/**/*.mp4
 renders/
-inputs/**/*.mp4
-inputs/**/*.mov
-inputs/**/*.wav
-inputs/**/*.mp3
+inputs/**
+!inputs/README.md
 .DS_Store

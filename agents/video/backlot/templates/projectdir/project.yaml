@@ -5,6 +5,9 @@ fps: {{fps}}
 resolution: {{resolution}}
 budget_eur: {{budget_eur}}
 ask_before_generate: true
+confirm_over_eur: 0      # confirm every call above this estimate (0 = always)
+max_call_eur: 1.0        # refuse a single provider call above this unless --force
+escalate_pct: 80         # status flags escalation at this share of the budget
 models:
   image: null
   video: null

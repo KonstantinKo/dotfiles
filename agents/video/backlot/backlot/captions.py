@@ -9,7 +9,8 @@ from typing import Any
 
 from backlot import ffmpeg, takes as takes_mod, vault
 from backlot.config import Studio
-from backlot.errors import EXIT_BUDGET, BacklotError
+from backlot.errors import BacklotError
+from backlot.gen import guard
 from backlot.models import find_model, load_models
 from backlot.overlays import Cue, write_srt
 from backlot.project import Project
@@ -91,7 +92,8 @@ def _audio_source(src: Path, tmp: Path) -> Path:
     return src
 
 
-def run_captions(studio: Studio, project: Project, ref: str, model_id: str | None) -> dict[str, Any]:
+def run_captions(studio: Studio, project: Project, ref: str, model_id: str | None, *, yes: bool = False, dry_run: bool = False, force: bool = False) -> dict[str, Any]:
+    """Same spend path as gen: estimate -> guard (budget, max call, confirmation) -> provider."""
     model = _stt_model(studio, model_id)
     src = takes_mod.resolve_media(project, ref)
     is_take = takes_mod.meta_path(project, ref).exists()
@@ -101,10 +103,13 @@ def run_captions(studio: Studio, project: Project, ref: str, model_id: str | Non
         audio = _audio_source(src, Path(tmp))
         req = GenRequest(audio=audio, params={}, duration_s=ffmpeg.duration(audio) or None, workdir=Path(tmp))
         try:
-            cost = provider.estimate(model, req)
-            spent = takes_mod.spent_eur(project)
-            if project.budget_eur and spent + cost > project.budget_eur:
-                raise BacklotError(f"budget exceeded: {spent:.3f} + {cost:.3f} > {project.budget_eur:.2f} EUR", code=EXIT_BUDGET)
+            cost = round(float(provider.estimate(model, req)), 4)
+        except ProviderError as exc:
+            raise BacklotError(f"{model.provider}: {exc}") from exc
+        info = {"model": model.id, "provider": model.provider, "kind": "stt", "src": ref}
+        guard(studio, project, info, per_call=cost, total=cost, spent=takes_mod.spent_eur(project),
+              yes=yes, dry_run=dry_run, force=force, label=f"captions {ref} ({model.id})")
+        try:
             result = provider.call_json(model, req)
         except ProviderError as exc:
             raise BacklotError(f"{model.provider}: {exc}") from exc

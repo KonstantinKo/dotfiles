@@ -43,16 +43,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("kind", help="image|video|music|sfx|upscale (or img|vid|mus|up)")
     s.add_argument("--model", help="model id (default from project.yaml models.<kind>)")
     s.add_argument("--prompt", default="")
-    s.add_argument("--image", help="path or take id used as image input")
-    s.add_argument("--audio", help="path or take id used as audio input")
-    s.add_argument("--video", help="path or take id used as video input (lipsync, video upscale)")
+    s.add_argument("--image", action="append", default=[], help="path or take id used as image input (repeatable when the model's arg_map target is a list)")
+    s.add_argument("--audio", action="append", default=[], help="path or take id used as audio input (repeatable)")
+    s.add_argument("--video", action="append", default=[], help="path or take id used as video input (repeatable; lipsync, video upscale)")
+    s.add_argument("--end-image", dest="end_image", help="path or take id for models with an end_image input")
     s.add_argument("--shot")
     s.add_argument("--n", type=int, default=1)
     s.add_argument("--param", action="append", default=[], metavar="K=V")
-    s.add_argument("--parent", metavar="TAKE", help="make a variation of this take (id.<n>)")
+    s.add_argument("--parent", metavar="TAKE", help="make a variation of this take (id.<n>); must be the same kind")
     s.add_argument("--depends-on", default="", metavar="NOTES", help="comma-separated Context notes, e.g. Cast/Mia,Locations/Bar")
     s.add_argument("--dry-run", action="store_true", help="only print the estimate")
     s.add_argument("--yes", action="store_true", help="skip the confirmation step")
+    s.add_argument("--force", action="store_true", help="allow a single call above max_call_eur")
 
     s = sub.add_parser("tts", parents=[common], help="generate a voice-over take (kind vo)")
     s.add_argument("--model")
@@ -66,11 +68,21 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--depends-on", default="", metavar="NOTES")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--yes", action="store_true")
+    s.add_argument("--force", action="store_true")
+
+    s = sub.add_parser("batch", parents=[common], help="run a plan.yaml of gen/tts requests with one cost table and one --yes")
+    s.add_argument("plan", help="YAML with `requests:` (fields as the gen/tts flags)")
+    s.add_argument("--dry-run", action="store_true")
+    s.add_argument("--yes", action="store_true")
+    s.add_argument("--force", action="store_true")
+
+    s = sub.add_parser("recover", parents=[common], help="fetch a failed/pending take's result by its provider request id")
+    s.add_argument("take")
 
     s = sub.add_parser("takes", parents=[common], help="list takes")
     s.add_argument("--shot")
     s.add_argument("--kind")
-    s.add_argument("--status")
+    s.add_argument("--status", help="new|approved|rejected|stale|pending|failed")
     s.add_argument("--stale", action="store_true")
 
     s = sub.add_parser("show", parents=[common], help="show one take")
@@ -85,13 +97,24 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("take")
     s.add_argument("--reason", required=True)
 
-    s = sub.add_parser("stale", parents=[common], help="mark takes/shots depending on a Context note as stale")
+    s = sub.add_parser("stale", parents=[common], help="mark takes/shots (and dependent Context notes) depending on a Context note as stale")
     s.add_argument("note", help="Context note name, e.g. Cast/Mia or Mia")
     s.add_argument("--reason", required=True)
+    s.add_argument("--dry-run", action="store_true", help="print what would be marked")
 
     s = sub.add_parser("captions", parents=[common], help="speech-to-text -> .srt + words json next to the take")
     s.add_argument("src", help="take id or audio/video file")
     s.add_argument("--model", help="stt model id (default: first active stt model)")
+    s.add_argument("--dry-run", action="store_true")
+    s.add_argument("--yes", action="store_true")
+    s.add_argument("--force", action="store_true")
+
+    s = sub.add_parser("sheet", parents=[common], help="contact sheet of a shot's takes -> renders/sheets/<shot>.jpg + shot note `## Candidates`")
+    s.add_argument("--shot", required=True)
+    s.add_argument("--kind", help="img|vid (default both)")
+
+    s = sub.add_parser("stage", parents=[common], help="check the gate for the project's current stage")
+    s.add_argument("--advance", action="store_true", help="move `status` to the next stage when the gate passes")
 
     s = sub.add_parser("render", parents=[common], help="render edit/timeline.yaml with ffmpeg")
     s.add_argument("timeline", nargs="?", help="timeline YAML (default edit/timeline.yaml)")
@@ -166,9 +189,26 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
     if cmd == "approve":
         from backlot.decisions import approve
 
-        info = approve(_project(args), args.take, args.reason, args.lock)
-        out.line(f"approved {info['take']}" + (f" (shot {info['shot']})" if info["shot"] else "") + (f" · locked {args.lock}" if args.lock else ""), info, "green")
+        info = approve(_project(args), args.take, args.reason, args.lock, _studio())
+        out.line(f"approved {info['take']}" + (f" (shot {info['shot']})" if info["shot"] else "") + (f" · locked {args.lock}" if args.lock else "")
+                 + (" · model promoted to active" if info.get("model_promoted") else ""), info, "green")
         return EXIT_OK
+    if cmd == "batch":
+        return cmd_batch(args, out)
+    if cmd == "recover":
+        from backlot.gen import recover
+
+        take = recover(_studio(), _project(args), args.take)
+        out.line(f"recovered {take.take}  {take.model}  {take.cost_eur:.3f} EUR  {take.file}", take.to_dict(), "green")
+        return EXIT_OK
+    if cmd == "sheet":
+        from backlot.sheet import contact_sheet
+
+        info = contact_sheet(_project(args), args.shot, args.kind)
+        out.line(f"sheet {info['sheet']} ({len(info['takes'])} takes) · embedded in Shots/{args.shot}.md", info, "green")
+        return EXIT_OK
+    if cmd == "stage":
+        return cmd_stage(args, out)
     if cmd == "reject":
         from backlot.decisions import reject
 
@@ -178,13 +218,14 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
     if cmd == "stale":
         from backlot.decisions import stale
 
-        info = stale(_project(args), args.note, args.reason)
-        out.line(f"stale {info['note']}: takes {', '.join(info['takes']) or '-'} · shots {', '.join(info['shots']) or '-'}", info, "yellow")
+        info = stale(_project(args), args.note, args.reason, dry_run=args.dry_run)
+        prefix = "dry-run: would mark stale" if args.dry_run else "stale"
+        out.line(f"{prefix} {info['note']}: takes {', '.join(info['takes']) or '-'} · shots {', '.join(info['shots']) or '-'} · context {', '.join(info['context']) or '-'}", info, "yellow")
         return EXIT_OK
     if cmd == "captions":
         from backlot.captions import run_captions
 
-        info = run_captions(_studio(), _project(args), args.src, args.model)
+        info = run_captions(_studio(), _project(args), args.src, args.model, yes=args.yes, dry_run=args.dry_run, force=args.force)
         out.line(f"captions {info['srt']} ({info['cues']} cues, {info['cost_eur']:.3f} EUR)", info, "green")
         return EXIT_OK
     if cmd == "render":
@@ -206,7 +247,7 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
     if cmd == "status":
         from backlot.vault import write_status
 
-        text = write_status(_project(args))
+        text = write_status(_project(args), _studio())
         out.line(text.rstrip(), {"status": text})
         return EXIT_OK
     if cmd == "cost":
@@ -264,9 +305,10 @@ def cmd_gen(args: argparse.Namespace, out: Printer) -> int:
         prompt="" if is_tts else args.prompt,
         text=text,
         voice=getattr(args, "voice", ""),
-        image=getattr(args, "image", None),
-        audio=getattr(args, "audio", None),
-        video=getattr(args, "video", None),
+        image=getattr(args, "image", None) or None,
+        audio=getattr(args, "audio", None) or None,
+        video=getattr(args, "video", None) or None,
+        end_image=getattr(args, "end_image", None),
         shot=args.shot,
         n=args.n,
         params=parse_params(args.param),
@@ -274,12 +316,37 @@ def cmd_gen(args: argparse.Namespace, out: Printer) -> int:
         depends_on=[d.strip() for d in args.depends_on.split(",") if d.strip()],
         dry_run=args.dry_run,
         yes=args.yes,
+        force=args.force,
     )
     outcome = execute(_studio(), project, opts)
     rows = [f"created shot {s}" for s in outcome.created_shots]
     rows += [f"{t.take}  {t.model}  {t.cost_eur:.3f} EUR  {t.file}" + (f"  shot {t.shot}" if t.shot else "") for t in outcome.takes]
     out.lines(rows, [t.to_dict() for t in outcome.takes])
     return EXIT_OK
+
+
+def cmd_batch(args: argparse.Namespace, out: Printer) -> int:
+    from backlot.batch import run_batch
+
+    info = run_batch(_studio(), _project(args), Path(args.plan), yes=args.yes, dry_run=args.dry_run, force=args.force)
+    rows = list(info["table"]) + [f"takes: {', '.join(info['takes']) or '-'}"]
+    if info["error"]:
+        rows.append(f"stopped at request #{info['failed_at']}: {info['error']}")
+    out.lines(rows, info)
+    return EXIT_ERROR if info["error"] else EXIT_OK
+
+
+def cmd_stage(args: argparse.Namespace, out: Printer) -> int:
+    from backlot.stages import advance, check
+
+    project = _project(args)
+    info = advance(project) if args.advance else check(project)
+    if info["passed"]:
+        text = f"stage {info['stage']}: pass" + (f" -> advanced to {info['next']}" if info.get("advanced") else (f" (next: {info['next']})" if info["next"] else " (final)"))
+        out.line(text, info, "green")
+        return EXIT_OK
+    out.line(f"stage {info['stage']}: FAIL - " + "; ".join(info["missing"]), info, "yellow")
+    return EXIT_ERROR
 
 
 def cmd_takes(args: argparse.Namespace, out: Printer) -> int:
@@ -293,7 +360,7 @@ def cmd_takes(args: argparse.Namespace, out: Printer) -> int:
         if (not args.shot or t.shot == args.shot) and (not kind or t.kind == kind)
         and (not args.status or t.status == args.status) and (not args.stale or t.status == "stale")
     ]
-    color = {"approved": "green", "rejected": "dim", "stale": "yellow"}
+    color = {"approved": "green", "rejected": "dim", "stale": "yellow", "pending": "cyan", "failed": "red"}
     lines = [out.color(f"{t.take:12} {t.kind:8} {t.status:9} {t.shot or '-':6} {t.model:24} {t.cost_eur:.3f}", color.get(t.status, "")) for t in rows]
     out.lines(lines or ["no takes"], [t.to_dict() for t in rows])
     return EXIT_OK

@@ -14,6 +14,9 @@ from backlot.errors import BacklotError
 from backlot.frontmatter import load_yaml
 
 
+THRESHOLDS = {"confirm_over_eur": 0.0, "max_call_eur": 1.0, "escalate_pct": 80.0}
+
+
 @dataclass
 class Project:
     root: Path
@@ -53,6 +56,24 @@ class Project:
     @property
     def ask_before_generate(self) -> bool:
         return bool(self.data.get("ask_before_generate", True))
+
+    def threshold(self, key: str, studio: Studio | None = None) -> float:
+        """project.yaml value, else studio.yaml `defaults:`, else the built-in default."""
+        value = self.data.get(key)
+        if value is None and studio is not None:
+            value = studio.defaults.get(key)
+        if value is None:
+            value = THRESHOLDS[key]
+        try:
+            return float(value)
+        except (TypeError, ValueError) as exc:
+            raise BacklotError(f"{key} must be a number, got {value!r}") from exc
+
+    @property
+    def vault_prefix(self) -> str:
+        """Vault-root-relative folder of the project (`Projects/<slug>`), for unambiguous wikilinks."""
+        vp = self.vault_project
+        return f"{vp.parent.name}/{vp.name}"
 
     @property
     def fps(self) -> int:

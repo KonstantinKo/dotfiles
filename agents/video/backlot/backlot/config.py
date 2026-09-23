@@ -22,6 +22,7 @@ class Studio:
     projects_root: Path
     currency: str = "EUR"
     providers: dict[str, dict[str, Any]] = field(default_factory=dict)
+    defaults: dict[str, Any] = field(default_factory=dict)
 
     def provider_config(self, name: str) -> dict[str, Any]:
         return dict(self.providers.get(name) or {})
@@ -48,4 +49,5 @@ def load_studio(path: Path | None = None) -> Studio:
         projects_root=Path(str(raw["projects_root"])).expanduser(),
         currency=str(raw.get("currency", "EUR")),
         providers=dict(raw.get("providers") or {}),
+        defaults=dict(raw.get("defaults") or {}),
     )

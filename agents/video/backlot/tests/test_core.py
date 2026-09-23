@@ -69,8 +69,8 @@ def test_gen_requires_confirmation_then_generates(project):
     note = project["vault_project"] / "Takes" / "img-001.md"
     fm, body = frontmatter.read(note)
     assert fm["status"] == "new" and fm["shot"] == "S010" and fm["depends_on"] == ["Cast/Mia"] and fm["model"] == "fake-image"
-    assert "![[_thumbs/img-001.jpg]]" in body and "a red cube" in body
-    assert fm["type"] == "take" and fm["kind"] == "img" and fm["thumb"] == "[[_thumbs/img-001.jpg]]" and fm["created"]
+    assert "![[Projects/demo/_thumbs/img-001.jpg]]" in body and "a red cube" in body
+    assert fm["type"] == "take" and fm["kind"] == "img" and fm["thumb"] == "[[Projects/demo/_thumbs/img-001.jpg]]" and fm["created"]
     assert (project["vault_project"] / "_thumbs" / "img-001.jpg").exists()
     home, _ = frontmatter.read(project["vault_project"] / "demo.md")
     assert home["spent_eur"] == 0.5
@@ -124,8 +124,9 @@ def test_per_second_estimate_and_image_input(project):
 def test_tts_and_waveform_thumb(project):
     code, data = run_json("tts", "--model", "fake-tts", "--voice", "v1", "--text", "hello there", "--yes", "--shot", "S010")
     assert code == 0 and data[0]["take"] == "vo-001" and data[0]["cost_eur"] == pytest.approx(0.011)
-    assert (project["vault_project"] / "_thumbs" / "vo-001.png").exists()
-    assert "![[_thumbs/vo-001.png]]" in (project["vault_project"] / "Takes" / "vo-001.md").read_text()
+    assert (project["vault_project"] / "_thumbs" / "vo-001.jpg").exists() and not (project["vault_project"] / "_thumbs" / "vo-001.png").exists()
+    fm, body = frontmatter.read(project["vault_project"] / "Takes" / "vo-001.md")
+    assert "![[Projects/demo/_thumbs/vo-001.jpg]]" in body and fm["thumb"] == "[[Projects/demo/_thumbs/vo-001.jpg]]"
 
 
 def test_approve_reject_and_lock(project):
@@ -198,7 +199,7 @@ def test_models_listing(studio):
 
 def test_captions(project):
     run_json("tts", "--model", "fake-tts", "--text", "hello world this is a test", "--yes")
-    code, data = run_json("captions", "vo-001", "--model", "fake-stt")
+    code, data = run_json("captions", "vo-001", "--model", "fake-stt", "--yes")
     assert code == 0 and data["cues"] >= 1
     srt = Path(data["srt"])
     assert srt == project["root"] / "takes" / "vo-001" / "out.srt"

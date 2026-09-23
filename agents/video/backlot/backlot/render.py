@@ -12,7 +12,7 @@ import yaml
 
 from backlot import ffmpeg
 from backlot.errors import BacklotError
-from backlot.overlays import parse_srt, render_text_png
+from backlot.overlays import Cue, parse_srt, render_text_png, write_srt
 from backlot.project import Project
 from backlot.ids import is_take_id
 from backlot.takes import load_take, resolve_media
@@ -45,6 +45,7 @@ class Track:
     duck_db: float = -10.0
     out: float | None = None
     fade_out_s: float = 0.0
+    start: float = 0.0
 
 
 @dataclass
@@ -55,13 +56,14 @@ class Plan:
     fit: str
     clips: list[Clip]
     tracks: list[Track]
-    captions: Path | None
+    captions: list[Cue] | None
     titles: list[dict[str, Any]]
     crf: int
     speed: str
     abr: str
     total: float = 0.0
     overlays: list[tuple[Path, float, float]] = field(default_factory=list)
+    burn_captions: bool = True
 
 
 def _res(text: str) -> tuple[int, int]:
@@ -102,6 +104,33 @@ def _caption_src(project: Project, ref: str) -> Path:
     raise BacklotError(f"no .srt found for {ref!r}; run `backlot captions {ref} --model <stt>` first")
 
 
+def _shifted(path: Path, offset: float) -> list[Cue]:
+    return [Cue(c.start + offset, c.end + offset, c.text) for c in parse_srt(path.read_text(encoding="utf-8"))]
+
+
+def build_captions(project: Project, timeline: dict[str, Any]) -> list[Cue] | None:
+    """`captions: {from: vo}` merges every `track: vo` audio row's .srt shifted by its `at`;
+    `captions: {src: X}` takes one file, shifted by X's `at` when X is a row of the audio list."""
+    caps = timeline.get("captions") or {}
+    if not caps:
+        return None
+    rows = list(timeline.get("audio") or [])
+    cues: list[Cue] = []
+    if caps.get("src"):
+        ref = str(caps["src"])
+        at = next((float(a.get("at") or 0.0) for a in rows if str(a.get("src")) == ref), 0.0)
+        cues = _shifted(_caption_src(project, ref), at)
+    elif str(caps.get("from") or "").lower() == "vo":
+        vo_rows = [a for a in rows if str(a.get("track") or "") == "vo"]
+        if not vo_rows:
+            raise BacklotError("captions: {from: vo} but the audio list has no `track: vo` rows")
+        for a in vo_rows:
+            cues += _shifted(_caption_src(project, str(a["src"])), float(a.get("at") or 0.0))
+    else:
+        raise BacklotError("captions needs `src: <take|file.srt>` or `from: vo`")
+    return sorted(cues, key=lambda c: (c.start, c.end))
+
+
 def load_timeline(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise BacklotError(f"timeline not found: {path}")
@@ -117,9 +146,13 @@ def build_plan(project: Project, timeline: dict[str, Any], preset: str | None, w
     fps = int(timeline.get("fps") or project.fps)
     blocked: list[str] | None = None if allow_stale else []
     clips: list[Clip] = []
-    for item in timeline["video"]:
+    clip_tracks: list[Track] = []
+    position = 0.0
+    for i, item in enumerate(timeline["video"]):
         path = _src(project, item["src"], blocked)
         kind = media_kind(path)
+        if i > 0 and (clips[-1].transition or {}).get("type", "xfade") == "xfade" and clips[-1].transition:
+            position -= float((clips[-1].transition or {}).get("duration") or 0.5)
         if kind == "image":
             dur = float(item.get("duration") or 3.0)
             clips.append(Clip(path=path, still=True, duration=dur, motion=item.get("motion"), transition=item.get("transition")))
@@ -130,8 +163,13 @@ def build_plan(project: Project, timeline: dict[str, Any], preset: str | None, w
             if dur <= 0:
                 raise BacklotError(f"clip {item['src']} has non-positive duration")
             clips.append(Clip(path=path, still=False, duration=dur, start=start, transition=item.get("transition")))
+            if item.get("audio") in ("keep", True):
+                if not any(st.get("codec_type") == "audio" for st in ffmpeg.probe(path).get("streams") or []):
+                    raise BacklotError(f"clip {item['src']} has `audio: keep` but no audio stream")
+                clip_tracks.append(Track(name=f"clip{i}", path=path, at=round(position, 3), start=start, out=start + dur, gain_db=float(item.get("gain_db") or 0.0)))
         else:
             raise BacklotError(f"clip {item['src']} is not an image or video")
+        position += clips[-1].duration
     tracks = [
         Track(
             name=str(a.get("track") or f"t{i}"), path=_src(project, a["src"], blocked), at=float(a.get("at") or 0.0),
@@ -139,7 +177,7 @@ def build_plan(project: Project, timeline: dict[str, Any], preset: str | None, w
             out=float(a["out"]) if a.get("out") is not None else None, fade_out_s=float(a.get("fade_out_s") or 0.0),
         )
         for i, a in enumerate(timeline.get("audio") or [])
-    ]
+    ] + clip_tracks
     for track in tracks:
         if track.out is not None and track.out <= 0:
             raise BacklotError(f"audio track {track.name}: out must be positive")
@@ -147,11 +185,10 @@ def build_plan(project: Project, timeline: dict[str, Any], preset: str | None, w
             raise BacklotError(f"audio track {track.name}: fade_out_s must not be negative")
     _check_blocked(blocked or [])
     caps = timeline.get("captions") or {}
-    captions = _caption_src(project, str(caps["src"])) if caps and caps.get("burn", True) and caps.get("src") else None
     plan = Plan(
         width=width, height=height, fps=fps, fit=settings.get("fit", "pad"), clips=clips, tracks=tracks,
-        captions=captions, titles=list(timeline.get("titles") or []), crf=int(settings.get("crf", 20)),
-        speed=str(settings.get("speed", "medium")), abr=str(settings.get("abr", "192k")),
+        captions=build_captions(project, timeline), titles=list(timeline.get("titles") or []), crf=int(settings.get("crf", 20)),
+        speed=str(settings.get("speed", "medium")), abr=str(settings.get("abr", "192k")), burn_captions=bool(caps.get("burn", True)),
     )
     total = 0.0
     for i, clip in enumerate(clips):
@@ -171,8 +208,8 @@ def _prepare_overlays(plan: Plan, workdir: Path) -> None:
         png, _, _ = render_text_png(str(title.get("text", "")), plan.width, plan.height, workdir / f"title{n}.png", style=str(title.get("style") or "lower-third"))
         plan.overlays.append((png, at, at + dur))
         n += 1
-    if plan.captions:
-        cues = parse_srt(plan.captions.read_text(encoding="utf-8"))
+    if plan.captions and plan.burn_captions:
+        cues = plan.captions
         if len(cues) > 300:
             raise BacklotError(f"too many caption cues to burn ({len(cues)}); merge cues first")
         for cue in cues:
@@ -248,10 +285,11 @@ def build_command(plan: Plan, output: Path) -> list[str]:
             inputs += ["-i", str(track.path)]
             ms = int(round(track.at * 1000))
             chain = f"[{idx}:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"
-            if track.out is not None:
-                chain += f",atrim=end={track.out:.3f},asetpts=PTS-STARTPTS"
+            if track.out is not None or track.start > 0:
+                trim = f"atrim=start={track.start:.3f}" + (f":end={track.out:.3f}" if track.out is not None else "")
+                chain += f",{trim},asetpts=PTS-STARTPTS"
             if track.fade_out_s > 0:
-                end = track.out if track.out is not None else ffmpeg.duration(track.path)
+                end = (track.out if track.out is not None else ffmpeg.duration(track.path)) - track.start
                 chain += f",afade=t=out:st={max(end - track.fade_out_s, 0):.3f}:d={track.fade_out_s:.3f}"
             filters.append(f"{chain},volume={track.gain_db:+.1f}dB,adelay={ms}|{ms}[a{k}]")
             by_name[track.name] = k
@@ -307,4 +345,6 @@ def render(project: Project, timeline_path: Path | None, output: Path | None, pr
         if dry_run:
             return output, shlex.join(cmd), plan.total
         ffmpeg.run(cmd)
+        if plan.captions is not None:
+            write_srt(plan.captions, output.with_suffix(".srt"))
     return output, shlex.join(cmd), plan.total

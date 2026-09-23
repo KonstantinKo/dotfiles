@@ -19,7 +19,7 @@ Keep the catalog the CLI reads accurate, and choose models with the same rules e
 `backlot models --kind video` lists active and untested models with tier, provider and cost (untested are marked; `--all` adds disabled ones). Open the note for strengths, limits and prompt tips before choosing. `status: untested` means nobody has run it here; the first run is a test at lite settings with the user's yes.
 
 ## Choosing
-Filter by kind, inputs, duration, resolution; tier by lock state; rank by strengths. Full rules in `generate/references/model-routing.md`. State the chosen model and the reason in one line when presenting an estimate.
+Filter by kind, inputs, duration, resolution; tier by lock state; rank by strengths. Full rules in `generate/references/model-routing.md`. State the chosen model and the reason in one line when presenting an estimate. Models whose note lists `image` more than once in `inputs` (multi-reference) take a repeated `--image`; check `optional_inputs` before promising image-to-video. For a set of takes, write a batch plan and quote `backlot batch --dry-run`; compare options with `backlot sheet`; a failed take is retried with `backlot recover <take>`, never re-generated under a new ID.
 
 ## Adding a model note
 1. Copy `_templates/Model.md` to `Studio/Models/<id>.md`. The `id` is the file name and what `--model` takes.

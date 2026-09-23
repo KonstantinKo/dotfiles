@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
+from datetime import date
+from pathlib import Path
 from typing import Any
 
+from backlot import frontmatter
 from backlot import takes as takes_mod
 from backlot import vault
+from backlot.config import Studio
 from backlot.errors import BacklotError
+from backlot.models import load_models
 from backlot.project import Project
+from backlot.takes import Take
 
 
-def approve(project: Project, take_id: str, reason: str, lock: str | None = None) -> dict[str, Any]:
+def approve(project: Project, take_id: str, reason: str, lock: str | None = None, studio: Studio | None = None) -> dict[str, Any]:
+    take = takes_mod.load_take(project, take_id)
+    if take.status in takes_mod.UNFINISHED:
+        raise BacklotError(f"take {take_id} is {take.status}; recover or discard it before approving")
     take = takes_mod.set_status(project, take_id, "approved", reason)
     vault.set_take_note_status(project, take_id, "approved", reason)
     vault.record_approval_on_shot(project, take)
@@ -19,8 +28,31 @@ def approve(project: Project, take_id: str, reason: str, lock: str | None = None
         locked = vault.lock_context(project, lock, take_id)
         vault.prepend_decision(project, "lock", lock.split("/")[-1], reason, extra=f"-> {take_id}")
     vault.prepend_decision(project, "approve", take_id, reason, extra=f"({take.shot})" if take.shot else "")
-    vault.write_status(project)
-    return {"take": take_id, "status": "approved", "shot": take.shot, "locked": str(locked) if locked else None}
+    promoted = promote_model(studio, take) if studio else None
+    vault.write_status(project, studio)
+    return {"take": take_id, "status": "approved", "shot": take.shot, "locked": str(locked) if locked else None, "model_promoted": str(promoted) if promoted else None}
+
+
+def promote_model(studio: Studio, take: Take) -> Path | None:
+    """First approval of an `untested` model makes it `active` and records what was observed."""
+    models, _ = load_models(studio.vault)
+    model = next((m for m in models if m.id == take.model), None)
+    if model is None or model.path is None or model.status != "untested":
+        return None
+    frontmatter.update(model.path, status="active")
+    data, body = frontmatter.read(model.path)
+    line = f"- {date.today().isoformat()} · {take.take} · {take.seconds:.1f} s · {take.cost_eur:.3f} EUR"
+    lines = body.rstrip("\n").split("\n")
+    anchor = next((i for i, l in enumerate(lines) if l.strip().lower() == "## observed"), None)
+    if anchor is None:
+        lines += ["", "## Observed", "", line]
+    else:
+        end = next((i for i in range(anchor + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+        while end > anchor + 1 and not lines[end - 1].strip():
+            end -= 1
+        lines.insert(end, line)
+    frontmatter.write(model.path, data, "\n".join(lines) + "\n")
+    return model.path
 
 
 def reject(project: Project, take_id: str, reason: str) -> dict[str, Any]:
@@ -31,27 +63,36 @@ def reject(project: Project, take_id: str, reason: str) -> dict[str, Any]:
     return {"take": take_id, "status": "rejected", "shot": take.shot}
 
 
-def stale(project: Project, note: str, reason: str) -> dict[str, Any]:
+def stale(project: Project, note: str, reason: str, dry_run: bool = False) -> dict[str, Any]:
+    """Mark everything that depends on a Context note, through dependent Context notes too."""
     target = vault.context_note(project, note)
-    stale_takes: list[str] = []
-    for take in takes_mod.list_takes(project):
-        if take.status == "stale":
-            continue
-        if any(vault.note_matches(dep, target, project) for dep in take.depends_on):
-            takes_mod.set_status(project, take.take, "stale", reason)
-            vault.set_take_note_status(project, take.take, "stale", reason)
-            stale_takes.append(take.take)
+    dependents = vault.context_dependents(project, target)
+    targets = [target, *dependents]
+
+    def depends(names: list[str]) -> bool:
+        return any(vault.note_matches(str(n), t, project) for n in names for t in targets)
+
+    stale_takes = [t.take for t in takes_mod.list_takes(project) if t.status != "stale" and depends(t.depends_on)]
     stale_shots: list[str] = []
     for shot in vault.load_shots(project):
         if shot.get("status") == "stale":
             continue
-        deps = shot.get("depends_on") or []
         refs = {shot.get("board_take"), shot.get("video_take"), shot.get("vo_take")}
-        if any(vault.note_matches(str(d), target, project) for d in deps) or refs & set(stale_takes):
-            vault.update_shot(project, str(shot["shot"]), status="stale")
+        if depends(shot.get("depends_on") or []) or refs & set(stale_takes):
             stale_shots.append(str(shot["shot"]))
-    if not stale_takes and not stale_shots:
-        raise BacklotError(f"nothing depends on {target.stem!r}", code=0, data={"note": target.stem, "takes": [], "shots": []})
-    vault.prepend_decision(project, "stale", target.stem, reason, extra=f"-> {len(stale_takes)} takes, {len(stale_shots)} shots")
+    context = [str(p.relative_to(project.vault_project / "Context").with_suffix("")) for p in dependents]
+    info = {"note": target.stem, "takes": stale_takes, "shots": stale_shots, "context": context, "dry_run": dry_run}
+    if not stale_takes and not stale_shots and not dependents:
+        raise BacklotError(f"nothing depends on {target.stem!r}", code=0, data=info)
+    if dry_run:
+        return info
+    for tid in stale_takes:
+        takes_mod.set_status(project, tid, "stale", reason)
+        vault.set_take_note_status(project, tid, "stale", reason)
+    for sid in stale_shots:
+        vault.update_shot(project, sid, status="stale")
+    for path in dependents:
+        frontmatter.update(path, stale=True, stale_reason=reason)
+    vault.prepend_decision(project, "stale", target.stem, reason, extra=f"-> {len(stale_takes)} takes, {len(stale_shots)} shots, {len(dependents)} context notes")
     vault.write_status(project)
-    return {"note": target.stem, "takes": stale_takes, "shots": stale_shots}
+    return info

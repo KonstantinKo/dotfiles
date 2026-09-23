@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import shutil
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 import yaml
 
@@ -16,7 +18,8 @@ from backlot.ids import TAKE_ID_RE as _ID_RE
 from backlot.ids import validate_take_id
 from backlot.project import Project
 
-STATUSES = ("new", "approved", "rejected", "stale")
+STATUSES = ("pending", "failed", "new", "approved", "rejected", "stale")
+UNFINISHED = ("pending", "failed")
 
 
 @dataclass
@@ -35,9 +38,11 @@ class Take:
     params: dict[str, Any] = field(default_factory=dict)
     created: str = ""
     voice: str | None = None
-    job_id: str = ""
+    request_id: str = ""
+    endpoint: str = ""
     seconds: float = 0.0
     reason: str | None = None
+    error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -61,6 +66,18 @@ def take_dir(project: Project, take_id: str) -> Path:
 
 def meta_path(project: Project, take_id: str) -> Path:
     return take_dir(project, take_id) / "meta.yaml"
+
+
+@contextmanager
+def locked(project: Project) -> Iterator[None]:
+    """Exclusive lock on takes/.lock: id allocation, reservation and saving happen under it."""
+    project.takes_dir.mkdir(parents=True, exist_ok=True)
+    with (project.takes_dir / ".lock").open("a+") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
 
 
 def existing_ids(project: Project) -> list[str]:
@@ -98,6 +115,24 @@ def list_takes(project: Project) -> list[Take]:
     return sorted(takes, key=lambda t: (parse_id(t.take)[0], parse_id(t.take)[1], parse_id(t.take)[2] or 0))
 
 
+def reserve_take(project: Project, take: Take) -> Take:
+    """Write takes/<id>/meta.yaml with status pending so the estimate counts as spent before the provider runs."""
+    folder = take_dir(project, take.take)
+    folder.mkdir(parents=True, exist_ok=True)
+    take.status = "pending"
+    take.created = take.created or datetime.now(timezone.utc).isoformat(timespec="seconds")
+    (folder / "prompt.txt").write_text(take.prompt or take.params.get("text", "") or "", encoding="utf-8")
+    write_meta(project, take)
+    return take
+
+
+def discard_take(project: Project, take_id: str) -> None:
+    """Drop a reservation that never reached the provider (nothing was billed)."""
+    folder = take_dir(project, take_id)
+    if folder.is_dir():
+        shutil.rmtree(folder)
+
+
 def save_take(project: Project, take: Take, media: Path, raw: Any = None) -> Take:
     """Move media into takes/<id>/out.<ext>, write meta.yaml + prompt.txt, append manifest."""
     folder = take_dir(project, take.take)
@@ -106,6 +141,8 @@ def save_take(project: Project, take: Take, media: Path, raw: Any = None) -> Tak
     if media.resolve() != target.resolve():
         shutil.move(str(media), str(target))
     take.file = str(target.relative_to(project.root))
+    take.status = "new" if take.status in UNFINISHED else take.status
+    take.error = None
     take.created = take.created or datetime.now(timezone.utc).isoformat(timespec="seconds")
     (folder / "prompt.txt").write_text(take.prompt or take.params.get("text", "") or "", encoding="utf-8")
     write_meta(project, take, raw)
@@ -137,6 +174,7 @@ def set_status(project: Project, take_id: str, status: str, reason: str | None =
 
 
 def spent_eur(project: Project) -> float:
+    """Everything billed or reserved: pending and failed takes count until recovered or discarded."""
     return round(sum(t.cost_eur for t in list_takes(project)), 4)
 
 

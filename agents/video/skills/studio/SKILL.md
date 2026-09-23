@@ -28,7 +28,7 @@ Tell the lead agent how a production moves from idea to delivery, what each gate
 | review | `review` | continuity and brief compliance pass, or a flag list the user has seen |
 | deliver | `deliver` | exports in `renders/`, `Status.md` says delivered |
 
-A gate is passed when the artefact exists in the vault and the user said yes in chat. Record the yes through `backlot approve` (takes) or a line in `Decisions.md` written by `backlot approve --lock` (Context locks). Stage changes are recorded in `<slug>.md` frontmatter.
+A gate is passed when the artefact exists in the vault and the user said yes in chat. Record the yes through `backlot approve` (takes) or a line in `Decisions.md` written by `backlot approve --lock` (Context locks). Stages advance only through `backlot stage --advance` (it checks the gate and writes `status:` in `<slug>.md`); never edit the home note's `status` by hand.
 
 ## Running a session
 1. Resolve the project (cwd → `project.yaml` → `vault_project`). If none, offer `/new-project`.
@@ -38,7 +38,7 @@ A gate is passed when the artefact exists in the vault and the user said yes in 
 5. Close the session with `backlot status` and, if takes were produced, `backlot cost`. Commit the project dir and the vault.
 
 ## Role crew
-Spawn a sub-agent for bounded work with a written brief that names the vault notes to read and the output expected. Sub-agents never run `backlot gen --yes`, never approve, never edit `Decisions.md`.
+Spawn a sub-agent for bounded work with a written brief that names the vault notes to read and the output expected. Sub-agents never run backlot spend commands (`gen`, `tts`, `captions`, `batch`, `recover`), never approve, never edit `Decisions.md`; only dop, editor and continuity have Bash at all.
 
 | Sub-agent | Spawn when | Returns |
 |---|---|---|
@@ -58,7 +58,7 @@ Run `backlot status`, relay it verbatim or trimmed, then add one line: the next 
 Playbook rules are defaults for every action: ask before generating, 2–4 options per unlocked element and 1 for locked, lite for exploration, boards before video, variations never overwrites, reasons on every decision. A Workflow note is a scripted multi-step job (Casting, Reference Research, Production Design, Storyboarding, Ad Variations, Localisation, Campaign Transfer, Reframing). When a stage names a Workflow, follow its steps in order and report which step you are on.
 
 ## Escalation
-Stop and ask the user when: a single generation exceeds 10% of remaining budget; a Context edit would stale more than a third of shots; a Playbook rule conflicts with `Rules.md`; a provider fails twice in a row; a sub-agent proposes changing a locked element. Otherwise decide, and log the reason in the approve/reject call.
+The CLI enforces the money gates from `project.yaml` (`confirm_over_eur`, `max_call_eur`, `escalate_pct`, defaults in `studio.yaml`), so when it exits 3 or refuses, show the user its message and ask. On top of that, stop and ask when: a Context edit would stale more than a third of shots; a Playbook rule conflicts with `Rules.md`; a provider fails twice in a row; a sub-agent proposes changing a locked element. Otherwise decide, and log the reason in the approve/reject call.
 
 ## Example phrases
 - "what's the update on the launch spot"

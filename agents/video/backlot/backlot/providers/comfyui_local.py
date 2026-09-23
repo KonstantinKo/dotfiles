@@ -72,18 +72,26 @@ class ComfyUILocalProvider(BaseProvider):
         sub = data.get("subfolder")
         return f"{sub}/{name}" if sub else name
 
-    def _values(self, model: ModelSpec, req: GenRequest) -> dict[str, Any]:
+    def _values(self, model: ModelSpec, req: GenRequest, template_text: str = "") -> dict[str, Any]:
+        """Placeholder values. `{{frames}}` is derived from the request duration x fps when the
+        template uses it; `{{image}}` is the uploaded input image and must exist in the template
+        whenever an image is given."""
         values: dict[str, Any] = {"seed": random.randint(0, 2**31 - 1)}
         values.update(model.defaults)
         values["prompt"] = req.prompt or req.text
         values["negative_prompt"] = req.params.get("negative_prompt", model.defaults.get("negative_prompt", ""))
         if req.image:
+            if "{{image}}" not in template_text:
+                raise ProviderError(f"workflow template has no {{{{image}}}} node ({workflow_path(model).name}); the model cannot take --image")
             values["image"] = self._upload(req.image)
         if req.audio:
             values["audio"] = self._upload(req.audio)
         if req.duration_s:
             values["duration"] = req.duration_s
         values.update(req.params)
+        if "{{frames}}" in template_text and "frames" not in req.params and req.duration_s:
+            fps = float(values.get("fps") or 24)
+            values["frames"] = int(round(float(req.duration_s) * fps))
         if values.get("seed") in (None, -1, "-1"):
             values["seed"] = random.randint(0, 2**31 - 1)
         return values
@@ -92,9 +100,10 @@ class ComfyUILocalProvider(BaseProvider):
         path = workflow_path(model)
         if not path.exists():
             raise ProviderError(f"workflow template not found: {path}")
-        template = json.loads(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
+        template = json.loads(text)
         template.pop("_comment", None)
-        workflow = substitute(template, self._values(model, req))
+        workflow = substitute(template, self._values(model, req, text))
         if not self.reachable():
             raise ProviderError(f"ComfyUI not reachable at {self.url}")
         client_id = uuid.uuid4().hex
@@ -105,6 +114,8 @@ class ComfyUILocalProvider(BaseProvider):
         prompt_id = resp.json().get("prompt_id")
         if not prompt_id:
             raise ProviderError(f"ComfyUI returned no prompt_id: {resp.text[:200]}")
+        if req.on_submit:
+            req.on_submit(str(prompt_id))
         history = self._wait(prompt_id, float(self.config.get("timeout_s", 3600)))
         files = self._collect(history, req.workdir)
         if not files:

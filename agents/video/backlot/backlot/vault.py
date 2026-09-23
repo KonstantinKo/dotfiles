@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from backlot import frontmatter
+from backlot.config import Studio
 from backlot.errors import BacklotError
 from backlot.ids import validate_shot_id, validate_take_id
 from backlot.project import Project
@@ -48,6 +49,27 @@ def take_note_path(project: Project, take_id: str) -> Path:
     return takes_dir(project) / f"{validate_take_id(take_id)}.md"
 
 
+def link(project: Project, rel: str, alias: str | None = None) -> str:
+    """Wikilink with a vault-root-relative target: [[Projects/<slug>/<rel>|alias]]."""
+    target = f"{project.vault_prefix}/{rel}"
+    return f"[[{target}|{alias}]]" if alias else f"[[{target}]]"
+
+
+def thumb_link(project: Project, thumb: Path) -> str:
+    return link(project, f"_thumbs/{thumb.name}")
+
+
+def context_link(project: Project, dep: str) -> str:
+    """`Cast/Mia` -> [[Projects/<slug>/Context/Cast/Mia|Mia]]; unknown notes keep the given path."""
+    try:
+        path = context_note(project, dep)
+        rel = path.relative_to(project.vault_project).with_suffix("")
+    except BacklotError:
+        clean = dep.strip().strip("[]")
+        rel = Path("Context") / (clean[:-3] if clean.lower().endswith(".md") else clean)
+    return link(project, str(rel), rel.name)
+
+
 def write_take_note(project: Project, take: Take, thumb: Path | None) -> Path:
     data = {
         "type": "take",
@@ -61,24 +83,30 @@ def write_take_note(project: Project, take: Take, thumb: Path | None) -> Path:
         "parent": take.parent,
         "depends_on": list(take.depends_on),
         "file": take.file,
-        "thumb": f"[[_thumbs/{thumb.name}]]" if thumb is not None else "",
+        "thumb": thumb_link(project, thumb) if thumb is not None else "",
         "prompt": take.prompt,
         "params": take.params,
         "created": take.created,
     }
     if take.voice:
         data["voice"] = take.voice
+    if take.request_id:
+        data["request_id"] = take.request_id
+    if take.error:
+        data["error"] = take.error
     body = [f"# {take.take}", ""]
     if thumb is not None:
-        body.append(f"![[_thumbs/{thumb.name}]]")
+        body.append("!" + thumb_link(project, thumb))
         body.append("")
     body.append(f"**Model:** {take.model} ({take.provider}) · **Shot:** {take.shot or '-'} · **Cost:** {take.cost_eur:.3f} EUR")
+    if take.status == "failed":
+        body.append(f"**Failed:** {take.error or 'provider error'} · request `{take.request_id}` · `backlot recover {take.take}`")
     if take.shot:
-        body.append(f"Shot: [[{take.shot}]]")
+        body.append(f"Shot: {link(project, f'Shots/{take.shot}', take.shot)}")
     if take.parent:
-        body.append(f"Variation of [[{take.parent}]]")
+        body.append(f"Variation of {link(project, f'Takes/{take.parent}', take.parent)}")
     if take.depends_on:
-        body.append("Depends on: " + ", ".join(f"[[{d}]]" for d in take.depends_on))
+        body.append("Depends on: " + ", ".join(context_link(project, d) for d in take.depends_on))
     body += ["", "## Prompt", "", take.prompt or "_(none)_", "", "## Params", "", "```yaml",
              yaml.safe_dump(take.params or {}, sort_keys=False, allow_unicode=True).rstrip(), "```", ""]
     path = take_note_path(project, take.take)
@@ -206,6 +234,49 @@ def lock_context(project: Project, name: str, take_id: str) -> Path:
     return path
 
 
+def context_notes(project: Project) -> list[Path]:
+    ctx = project.vault_project / "Context"
+    return sorted(p for p in ctx.rglob("*.md") if not p.name.startswith("_")) if ctx.is_dir() else []
+
+
+def context_dependents(project: Project, target: Path) -> list[Path]:
+    """Context notes whose frontmatter `depends_on` reaches `target`, transitively (cycle-safe)."""
+    notes = context_notes(project)
+    deps: dict[Path, list[str]] = {}
+    for path in notes:
+        try:
+            data, _ = frontmatter.read(path)
+        except ValueError:
+            continue
+        deps[path] = [str(d) for d in (data.get("depends_on") or [])]
+    marked: list[Path] = []
+    seen = {target}
+    frontier = [target]
+    while frontier:
+        current = frontier.pop(0)
+        for path, names in deps.items():
+            if path in seen or not any(note_matches(n, current, project) for n in names):
+                continue
+            seen.add(path)
+            marked.append(path)
+            frontier.append(path)
+    return marked
+
+
+def replace_section(path: Path, heading: str, content: str) -> None:
+    """Replace the `## heading` section body (up to the next `## `) or append the section."""
+    data, body = frontmatter.read(path) if path.exists() else ({}, "")
+    lines = body.split("\n")
+    start = next((i for i, l in enumerate(lines) if l.strip().lower() == heading.strip().lower()), None)
+    block = [heading, "", *content.rstrip("\n").split("\n"), ""]
+    if start is None:
+        lines = [*lines, *([""] if lines and lines[-1].strip() else []), *block]
+    else:
+        end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+        lines = lines[:start] + block + lines[end:]
+    frontmatter.write(path, data, "\n".join(lines).rstrip("\n") + "\n")
+
+
 def prepend_decision(project: Project, action: str, subject: str, reason: str, extra: str = "") -> Path:
     """Insert a ledger line under `## Ledger` (or after the H1), newest on top."""
     path = project.vault_project / "Decisions.md"
@@ -269,7 +340,7 @@ def write_costs(project: Project) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def write_status(project: Project) -> str:
+def write_status(project: Project, studio: Studio | None = None) -> str:
     home = home_data(project)
     shots = load_shots(project)
     takes = list_takes(project)
@@ -291,9 +362,12 @@ def write_status(project: Project) -> str:
         elif not s.get("video_take"):
             actions.append(f"generate video for {sid}")
         elif not s.get("vo_take") and s.get("vo", True) is not False:
-            continue
-    if project.budget_eur and spent > project.budget_eur * 0.8:
-        actions.append(f"budget at {spent / project.budget_eur * 100:.0f}%")
+            actions.append(f"voice {sid}")
+    escalate_pct = project.threshold("escalate_pct", studio)
+    pct = (spent / project.budget_eur * 100) if project.budget_eur else 0.0
+    escalation = bool(project.budget_eur) and pct >= escalate_pct
+    if escalation:
+        actions.insert(0, f"ESCALATE: budget at {pct:.0f}% (threshold {escalate_pct:.0f}%), confirm with the user before spending more")
     lines = ["# Status", "", "Regenerated by `backlot status`. Do not edit by hand.", "",
              "## Stage", stage, "",
              f"Format {home.get('format') or project.data.get('format', '')} @ {home.get('fps') or project.fps} fps · "
@@ -306,12 +380,13 @@ def write_status(project: Project) -> str:
     lines += ["", "## Stale", str(len(stale_takes) + len(stale_shots))]
     if stale_takes or stale_shots:
         lines.append("takes: " + (", ".join(stale_takes) or "-") + " · shots: " + (", ".join(stale_shots) or "-"))
-    lines += ["", "## Takes", f"{len(takes)} takes, {len(approved)} approved", "",
-              "## Spend", f"{spent:.3f} / {project.budget_eur:.2f} EUR", "",
+    unfinished = [t.take for t in takes if t.status in ("pending", "failed")]
+    lines += ["", "## Takes", f"{len(takes)} takes, {len(approved)} approved" + (f", unfinished: {', '.join(unfinished)}" if unfinished else ""), "",
+              "## Spend", f"{spent:.3f} / {project.budget_eur:.2f} EUR ({pct:.0f}%)" + (" · ESCALATION" if escalation else ""), "",
               "## Next actions"]
     lines += [f"- {a}" for a in actions[:12]] or ["- nothing pending"]
     body = "\n".join(lines) + "\n"
     path = project.vault_project / "Status.md"
-    frontmatter.write(path, {"type": "status", "generated": _now(), "stage": stage, "spent_eur": spent, "stale": len(stale_takes) + len(stale_shots)}, body)
+    frontmatter.write(path, {"type": "status", "generated": _now(), "stage": stage, "spent_eur": spent, "stale": len(stale_takes) + len(stale_shots), "escalation": escalation}, body)
     update_home(project, spent_eur=spent)
     return path.read_text(encoding="utf-8")

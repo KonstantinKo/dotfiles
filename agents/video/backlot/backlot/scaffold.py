@@ -12,6 +12,8 @@ from backlot.config import Studio
 from backlot.errors import BacklotError
 
 BUILTIN = Path(__file__).resolve().parent.parent / "templates"
+CLAUDE_SETTINGS = Path(__file__).resolve().parent.parent.parent / "claude" / "settings.json"
+INPUTS_README = "Drop treatments, decks, footage, references here; binaries are git-ignored.\n"
 _PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 _TEXT_EXT = {".md", ".base", ".yaml", ".yml", ".txt", ".json", ""}
 
@@ -71,8 +73,25 @@ def init_project(studio: Studio, slug: str, *, fmt: str, fps: int, res: str, bud
     written += _copy_tree(dir_src, project_dir, values, {"gitignore": ".gitignore"})
     for sub in ("inputs", "takes", "renders", "edit"):
         (project_dir / sub).mkdir(parents=True, exist_ok=True)
+    readme = project_dir / "inputs" / "README.md"
+    if not readme.exists():
+        readme.write_text(INPUTS_README, encoding="utf-8")
+    settings = link_claude_settings(project_dir)
     git = _git_init(project_dir)
-    return {"slug": slug, "vault_project": str(vault_project), "project_dir": str(project_dir), "files": len(written), "git": git}
+    return {"slug": slug, "vault_project": str(vault_project), "project_dir": str(project_dir), "files": len(written), "git": git, "claude_settings": str(settings) if settings else None}
+
+
+def link_claude_settings(project_dir: Path, source: Path = CLAUDE_SETTINGS) -> Path | None:
+    """Symlink the toolkit's Claude settings (spend-confirmation hook) into <project>/.claude/;
+    Claude Code does not inherit settings from parent directories."""
+    if not source.is_file():
+        return None
+    target = project_dir / ".claude" / "settings.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.is_symlink() or target.exists():
+        return target
+    target.symlink_to(source)
+    return target
 
 
 def _git_init(project_dir: Path) -> str:

@@ -31,12 +31,14 @@ Studio config: `~/projects/video/studio.yaml` (vault path, projects root, curren
 - `lite` tier for exploration; `pro` / `ultra` only for shots whose inputs are locked.
 - Budget lives in `project.yaml` and `<slug>.md`. The CLI refuses overspend; do not work around it.
 - Never edit files under `Takes/`, `_thumbs/`, `Status.md`, `Costs.md` by hand; they are CLI output.
+- Stages advance only via `backlot stage --advance`, never by editing `status:` in the home note.
+- Money gates come from `project.yaml` (`confirm_over_eur`, `max_call_eur`, `escalate_pct`; defaults in `studio.yaml`). The CLI applies them; the `--yes` on any spend command also goes through a Claude Code permission prompt (`.claude/settings.json` hook), so the user, not the agent, confirms spend.
 
 ## Lead agent posture
 
 You are the studio's lead agent. At session start read `Projects/<slug>/Status.md` and `Studio/Playbooks/Default.md`, then `Context/Rules.md`. Playbooks are standing orders; `Rules.md` overrides them per project.
 
-Delegate bounded work to the role sub-agents in `.claude/agents/` (screenwriter, director, dop, casting-director, production-designer, sound-designer, editor, continuity). They return proposals and drafts; you hold the go on spend, locks and approvals.
+Delegate bounded work to the role sub-agents in `.claude/agents/` (screenwriter, director, dop, casting-director, production-designer, sound-designer, editor, continuity). They return proposals and drafts; you hold the go on spend, locks and approvals. Sub-agents never run backlot spend commands (`gen`, `tts`, `captions`, `batch`, `recover`); most have no Bash tool at all.
 
 "What's the update" is answered by running `backlot status` and relaying its output, plus the next decision the user owes. Do not narrate from memory.
 

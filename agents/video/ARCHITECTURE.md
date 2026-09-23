@@ -124,42 +124,96 @@ Commands (all print terse one-line results; `--json` for machine output):
   scaffolds vault project (from `_templates/`) + project dir + `git init` + `.gitignore`.
 - `backlot models [--kind K] [--provider P] [--all]` lists active and untested models from
   the vault (untested marked); `--all` includes disabled ones.
-- `backlot gen <kind> --model <id> --prompt "..." [--image <path|take>] [--audio <path|take>]
-  [--video <path|take>] [--shot S010] [--n 2] [--param k=v]... [--parent <take>]
-  [--depends-on Cast/Mia,...] [--dry-run] [--yes]`
+- `backlot gen <kind> --model <id> --prompt "..." [--image <path|take>]... [--audio <path|take>]...
+  [--video <path|take>]... [--end-image <path|take>] [--shot S010] [--n 2] [--param k=v]...
+  [--parent <take>] [--depends-on Cast/Mia,...] [--dry-run] [--yes] [--force]`
   Validates ids, required inputs and `--depends-on` notes, then estimates cost (from the
-  model note). If `ask_before_generate` is true and `--yes` is absent, prints the estimate
-  and exits 3 (the agent asks the user, then re-runs with `--yes`). Refuses if the budget
-  is 0, missing or would be exceeded. Runs provider, saves take, thumbnail, vault note,
-  manifest line, updates `spent_eur`.
+  model note). Spend guard, shared by `gen`, `tts`, `batch` and `captions`: budget 0,
+  missing or exceeded → exit 4; a single provider call above `max_call_eur` → exit 4 unless
+  `--force`; `ask_before_generate` with an estimate above `confirm_over_eur` → prints the
+  estimate and exits 3 (the agent asks the user, then re-runs with `--yes`). Then, under an
+  `fcntl` lock on `<project>/takes/.lock`: re-check the budget counting `pending` and
+  `failed` takes as spent, allocate the id, write `takes/<id>/meta.yaml` with
+  `status: pending`. Provider runs outside the lock (fal records `request_id` into the
+  meta before waiting; `providers.fal.timeout_s`, default 900 s). Save (again under the
+  lock): take, thumbnail, vault note, manifest line, `spent_eur`. A failure after the
+  request was submitted keeps the take as `failed` with `request_id` and cost; a failure
+  before submission drops the reservation. `--image/--audio/--video` repeat when the
+  model's `arg_map` target ends in `s` (list argument); a singular target refuses more
+  than one. `--end-image` maps via `arg_map.end_image` (default `end_image_url`) and needs
+  `end_image` in the model's `inputs`. `--parent` must be a take of the same kind.
 - `backlot tts --model <id> --voice <id> (--text "..."|--file f) [--shot] ...` same as gen with kind `vo`.
-- `backlot takes [--shot S010] [--kind] [--status] [--stale]`, `backlot show <take>`.
+- `backlot batch <plan.yaml> [--dry-run] [--yes] [--force]` plans a list of gen/tts requests
+  (`requests:` or a top-level list; fields as the CLI flags: `kind, model, prompt, text|file,
+  voice, image|audio|video (string or list), end_image, shot, n, params {}, parent,
+  depends_on []`), prints one cost table, needs a single `--yes` (exit 3 otherwise), applies
+  the same budget/max-call rules to the whole batch, runs sequentially, stops at the first
+  provider error (exit 1) and prints the take ids produced.
+- `backlot recover <take>` re-fetches a `failed`/`pending` take's result by its
+  `request_id` (`fal_client.status` + `result`) and completes it (media, thumb, note).
+- `backlot takes [--shot S010] [--kind] [--status new|approved|rejected|stale|pending|failed] [--stale]`, `backlot show <take>`.
 - `backlot approve <take> [--lock Cast/Mia] --reason "..."`, `backlot reject <take> --reason "..."`
   update take + shot notes and append to `Decisions.md`; `--lock` sets `locked: true`
-  and `locked_take` on a Context note.
-- `backlot stale <Context note name> --reason "..."` marks every take/shot whose
+  and `locked_take` on a Context note. Approving a take of a model whose note is
+  `status: untested` sets it `active` and appends a `## Observed` line (date, take,
+  seconds, cost) to the note body.
+- `backlot stale <Context note name> --reason "..." [--dry-run]` marks every take/shot whose
   `depends_on` includes that note as `stale` (this is how "make Mia blonde" propagates).
-- `backlot captions <take|audio> --model <stt-id>` → `.srt` + word timestamps JSON.
+  Transitive: Context notes whose frontmatter `depends_on` lists a marked note are marked
+  too (`stale: true`, `stale_reason`), recursively and cycle-safe, and their dependants
+  follow. `--dry-run` prints what would be marked without writing.
+- `backlot captions <take|audio> --model <stt-id> [--dry-run] [--yes] [--force]` → `.srt` +
+  word timestamps JSON; goes through the same spend guard as `gen`.
+- `backlot sheet --shot S010 [--kind img|vid]` writes a labelled contact sheet (≤ 1600 px
+  wide) to `<project>/renders/sheets/S010.jpg`, a ≤ 512 px copy to `_thumbs/sheet-S010.jpg`,
+  and replaces the `## Candidates` section of the shot note with the embed + take links.
+- `backlot stage [--advance]` evaluates the gate of the home note's current `status`
+  (ordered list in `backlot/stages.py`: idea, brief, develop, preproduction, boards, shots,
+  voice, score, assemble, review, deliver, delivered) and prints pass/fail with the missing
+  items (exit 1 on fail). Gates: brief = `Brief.md` differs from the template; develop =
+  `Script.md` has a `## Beats` section with ≥ 1 table row or bullet; preproduction = every
+  Cast/Locations note `locked: true`; boards = every shot's `board_take` approved; shots =
+  every shot has `video_take`; voice = every shot has `vo_take` or `vo: false`; score =
+  timeline has a music/sfx track or the home note says `score: false`; assemble = a render
+  of `timeline.yaml` exists; review = `Review.md` exists; deliver = renders present.
+  `--advance` writes the next `status` to the home note only when the gate passes.
 - `backlot render [edit/timeline.yaml] [-o renders/name.mp4] [--preset youtube|shorts|draft]
   [--allow-stale]` ffmpeg assembly (see timeline); refuses rejected or stale take sources
-  unless `--allow-stale`.
+  unless `--allow-stale`. Writes the merged captions as `renders/<name>.srt` next to the
+  render whenever the timeline has a `captions:` block, burned or not.
 - `backlot reframe <take|render> --to 9:16 [--focus center|left|right|auto]`.
 - `backlot status` rewrites `Status.md` (stage, shots by status, stale count, spend, next
-  actions) and returns it; `backlot cost` rewrites `Costs.md`.
-- `backlot thumbs` regenerates thumbnails; `backlot doctor` checks keys, ffmpeg, ComfyUI
-  reachability, vault path, model notes parse.
+  actions; an `ESCALATE` line once spend ≥ `escalate_pct` % of the budget) and returns it;
+  `backlot cost` rewrites `Costs.md`.
+- `backlot thumbs` regenerates thumbnails (always JPEG, `_thumbs/<id>.jpg`, waveform for
+  audio); `backlot doctor` checks keys, ffmpeg, ComfyUI reachability, vault path, model
+  notes parse.
+
+Spend thresholds live in `project.yaml` (written by `init`) and fall back to `defaults:` in
+`studio.yaml`: `confirm_over_eur` (default 0 = always confirm), `max_call_eur` (default 1.0),
+`escalate_pct` (default 80).
+
+Vault links written by the CLI are vault-root-relative so they stay unambiguous across
+projects: `[[Projects/<slug>/Shots/S010|S010]]`, `[[Projects/<slug>/Context/Cast/Mia|Mia]]`,
+`thumb: "[[Projects/<slug>/_thumbs/img-001.jpg]]"`, embeds `![[Projects/<slug>/_thumbs/...]]`.
 
 Providers (`backlot/providers/<name>.py`, a `Provider` protocol with `estimate(model,
 req)` and `run(model, req) -> files`):
 
-- `fal`: uses `fal_client` (`submit` + `get`); `FAL_KEY` from env or macOS Keychain (service `fal-api`,
-  account `FAL_KEY`, same item ComfyUI uses). Never writes the key to disk. Endpoint and
-  argument mapping come from the model note (`endpoint`, `defaults`, `inputs`, `arg_map`,
-  `param_types`). Provider failures surface as one `ProviderError` line.
+- `fal`: uses `fal_client` (`submit`, then `status` polling until completed, then `get`);
+  the request id is handed back to the CLI right after `submit` and stored in the pending
+  take's meta; `timeout_s` (default 900) bounds the wait; `fetch` re-reads a finished
+  request by id for `backlot recover`. `FAL_KEY` from env or macOS Keychain (service
+  `fal-api`, account `FAL_KEY`, same item ComfyUI uses). Never writes the key to disk.
+  Endpoint and argument mapping come from the model note (`endpoint`, `defaults`, `inputs`,
+  `arg_map`, `param_types`). Provider failures surface as one `ProviderError` line.
 - `comfyui-local`: POSTs a workflow JSON to `http://127.0.0.1:8188/prompt`, polls
   `/history`, fetches outputs. Workflow templates live in
   `agents/video/backlot/workflows/<model-id>.json` with `{{prompt}}`-style placeholders
-  named in the model note.
+  named in the model note. `{{frames}}` is filled from the request duration × `fps`
+  (defaults/`--param`) when present; `{{image}}` receives the uploaded input image and the
+  provider fails with "workflow template has no {{image}} node" when an image is given
+  but the template lacks it.
 - `local`: no-network helpers used by tts (`kokoro`, `edge-tts` CLIs) and by render.
   Subprocesses get a hard timeout (`providers.local.timeout_s`, default 120 s).
 - `comfyui-cloud`, `higgsfield`: stubs raising `ProviderNotConfigured` with a pointer to
@@ -173,11 +227,14 @@ fps: 24
 resolution: 1920x1080
 video:                     # ordered clips; `src` is a take id, a render, or a file
   - {src: vid-009, in: 0.0, out: 4.5, transition: {type: xfade, name: fade, duration: 0.5}}
+  - {src: vid-010, in: 0.0, out: 3.0, audio: keep, gain_db: -6}   # mix the clip's own sound at its position
   - {src: img-014.2, duration: 3.0, motion: kenburns}   # stills get duration + optional motion
 audio:
   - {track: vo, src: vo-003, at: 0.0, gain_db: 0}
+  - {track: vo, src: vo-004, at: 4.5}
   - {track: music, src: mus-001, at: 0.0, out: 32.0, fade_out_s: 1.0, gain_db: -14, duck_under: vo, duck_db: -10}
-captions: {src: vo-003, style: default, burn: true}   # uses the take's .srt
+captions: {from: vo, style: default, burn: true}   # every `track: vo` row's .srt, shifted by its `at`
+# or: captions: {src: vo-003}                       # one file, shifted by that row's `at`; merged .srt always written
 titles:
   - {text: "...", at: 0.0, duration: 2.0, style: lower-third}   # optional, ffmpeg drawtext
 ```

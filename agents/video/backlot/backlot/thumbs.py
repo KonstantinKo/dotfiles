@@ -1,4 +1,4 @@
-"""Thumbnails for the vault: images -> 256px JPEG, video -> first frame, audio -> waveform PNG."""
+"""Thumbnails for the vault, always JPEG (`_thumbs/<id>.jpg`): image, first video frame or audio waveform."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def make_thumb(src: Path, thumbs_dir: Path, take_id: str) -> Path | None:
     if kind == "video":
         return _video_thumb(src, thumbs_dir / f"{take_id}.jpg")
     if kind == "audio":
-        return _audio_thumb(src, thumbs_dir / f"{take_id}.png")
+        return _audio_thumb(src, thumbs_dir / f"{take_id}.jpg")
     return None
 
 
@@ -63,6 +63,7 @@ def _video_thumb(src: Path, dest: Path) -> Path:
 def _audio_thumb(src: Path, dest: Path) -> Path:
     _run([
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(src),
-        "-filter_complex", f"showwavespic=s={SIZE}x64:colors=#4c9be8", "-frames:v", "1", str(dest),
+        "-filter_complex", f"color=c=#1e2530:s={SIZE}x64[bg];[0:a]showwavespic=s={SIZE}x64:colors=#4c9be8[w];[bg][w]overlay=format=auto,format=yuvj420p",
+        "-frames:v", "1", "-q:v", "4", str(dest),
     ])
     return dest

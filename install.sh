@@ -205,6 +205,13 @@ done
 link_children "$A/video/skills"        "$VIDEO_ROOT/.claude/skills" "$VIDEO_ROOT/.agents/skills"
 link_files    "$A/video/commands"      "$VIDEO_ROOT/.claude/commands"
 link_files    "$A/video/claude/agents" "$VIDEO_ROOT/.claude/agents"
+# Spend-confirmation hook. Claude Code does not read settings from a parent dir, so every
+# project dir gets its own link (backlot init copies it for new projects).
+safe_symlink "$A/video/claude/settings.json" "$VIDEO_ROOT/.claude/settings.json"
+for p in "$VIDEO_ROOT"/*/project.yaml; do
+  [ -f "$p" ] || continue
+  safe_symlink "$A/video/claude/settings.json" "$(dirname "$p")/.claude/settings.json"
+done
 
 # --- project-local instruction overrides ---
 safe_symlink "$DOTFILES/projects/platform/CLAUDE.md"       "$HOME/projects/platform/CLAUDE.md"

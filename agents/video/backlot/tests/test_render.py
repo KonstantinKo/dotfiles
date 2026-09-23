@@ -127,6 +127,6 @@ def test_audio_track_out_and_fade(media):
         "audio": [{"track": "music", "src": "inputs/music.wav", "at": 0.0, "out": 3.0, "fade_out_s": 1.0}],
     }))
     code, data = run_json("render", str(tl), "--dry-run")
-    assert code == 0 and "atrim=end=3.000" in data["command"] and "afade=t=out:st=2.000:d=1.000" in data["command"]
+    assert code == 0 and "atrim=start=0.000:end=3.000" in data["command"] and "afade=t=out:st=2.000:d=1.000" in data["command"]
     code, data = run_json("render", str(tl), "--preset", "draft")
     assert code == 0 and ffmpeg.duration(Path(data["output"])) == pytest.approx(3.0, abs=0.2)
