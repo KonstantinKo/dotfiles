@@ -1,0 +1,58 @@
+{
+  "_comment": "TEMPLATE, NOT VERIFIED. Export the real 'LTX Director' GGUF workflow from ComfyUI Desktop via Workflow > Export (API) and replace this graph, keeping the {{prompt}}, {{negative_prompt}}, {{seed}}, {{width}}, {{height}}, {{frames}}, {{fps}} and {{steps}} placeholders. Node class names below follow ComfyUI-GGUF (UnetLoaderGGUF, CLIPLoaderGGUF) and the core LTX nodes; the LTX-2.3 node pack may use different class_type ids.",
+  "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {"unet_name": "ltx-2.3-22b-distilled-1.1-Q4_K_M.gguf"}
+  },
+  "2": {
+    "class_type": "CLIPLoaderGGUF",
+    "inputs": {"clip_name": "gemma-3-12b-it-Q3_K_M.gguf", "type": "ltxv"}
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {"vae_name": "LTX23_video_vae_bf16.safetensors"}
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {"text": "{{prompt}}", "clip": ["2", 0]}
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {"text": "{{negative_prompt}}", "clip": ["2", 0]}
+  },
+  "6": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "inputs": {"width": "{{width}}", "height": "{{height}}", "length": "{{frames}}", "batch_size": 1}
+  },
+  "7": {
+    "class_type": "LTXVConditioning",
+    "inputs": {"positive": ["4", 0], "negative": ["5", 0], "frame_rate": "{{fps}}"}
+  },
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": "{{seed}}",
+      "steps": "{{steps}}",
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": ["1", 0],
+      "positive": ["7", 0],
+      "negative": ["7", 1],
+      "latent_image": ["6", 0]
+    }
+  },
+  "9": {
+    "class_type": "VAEDecode",
+    "inputs": {"samples": ["8", 0], "vae": ["3", 0]}
+  },
+  "10": {
+    "class_type": "CreateVideo",
+    "inputs": {"images": ["9", 0], "fps": "{{fps}}"}
+  },
+  "11": {
+    "class_type": "SaveVideo",
+    "inputs": {"video": ["10", 0], "filename_prefix": "backlot/ltx23", "format": "mp4", "codec": "h264"}
+  }
+}

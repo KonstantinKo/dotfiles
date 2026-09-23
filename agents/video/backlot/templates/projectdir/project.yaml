@@ -1,0 +1,13 @@
+slug: {{slug}}
+vault_project: {{vault_project}}
+format: "{{format}}"
+fps: {{fps}}
+resolution: {{resolution}}
+budget_eur: {{budget_eur}}
+ask_before_generate: true
+models:
+  image: null
+  video: null
+  tts: null
+  music: null
+  stt: null

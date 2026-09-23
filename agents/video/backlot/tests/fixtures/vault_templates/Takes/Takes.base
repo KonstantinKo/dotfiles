@@ -1,0 +1,79 @@
+filters:
+  and:
+    - file.inFolder(this.file.folder)
+    - 'type == "take"'
+properties:
+  take:
+    displayName: Take
+  kind:
+    displayName: Kind
+  model:
+    displayName: Model
+  shot:
+    displayName: Shot
+  status:
+    displayName: Status
+  cost_eur:
+    displayName: EUR
+  parent:
+    displayName: Parent
+views:
+  - type: cards
+    name: Gallery
+    order:
+      - take
+      - shot
+      - status
+      - model
+      - cost_eur
+    sort:
+      - property: created
+        direction: DESC
+    image: note.thumb
+    imageFit: contain
+    imageAspectRatio: 0.5625
+    cardSize: 220
+  - type: cards
+    name: Approved
+    filters:
+      and:
+        - 'status == "approved"'
+    order:
+      - take
+      - shot
+      - model
+    sort:
+      - property: shot
+        direction: ASC
+    image: note.thumb
+    imageFit: contain
+    imageAspectRatio: 0.5625
+    cardSize: 220
+  - type: table
+    name: Ledger
+    order:
+      - take
+      - kind
+      - shot
+      - status
+      - model
+      - provider
+      - cost_eur
+      - parent
+      - created
+    sort:
+      - property: created
+        direction: DESC
+    summaries:
+      cost_eur: Sum
+  - type: table
+    name: By shot
+    groupBy:
+      property: shot
+      direction: ASC
+    order:
+      - take
+      - kind
+      - status
+      - model
+      - cost_eur

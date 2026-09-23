@@ -1,0 +1,7 @@
+format: "{{format}}"
+fps: {{fps}}
+resolution: {{resolution}}
+video: []
+audio: []
+captions: {}
+titles: []

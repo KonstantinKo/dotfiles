@@ -8,6 +8,7 @@
 #   work/di/  company-account homes only (~/.claude-di, ~/.codex-di)
 #   work/<tool>/  one harness only (claude | codex | opencode | cursor)
 #   games/    game-dev homes: ~/.codex-games, ~/.claude-games
+#   video/    the Backlot video studio at ~/projects/video (project-scoped, no agent home)
 set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,6 +20,7 @@ CODEX_HOMES=("$HOME/.codex" "$HOME/.codex-di")
 DI_HOMES=("$HOME/.claude-di" "$HOME/.codex-di")
 CODEX_GAMES_HOME="$HOME/.codex-games"
 CLAUDE_GAMES_HOME="$HOME/.claude-games"
+VIDEO_ROOT="$HOME/projects/video"
 OPENCODE="$HOME/.config/opencode"
 CURSOR="$HOME/.cursor"
 VENDOR_CACHE="$HOME/.cache/dotfiles/vendor"
@@ -191,6 +193,18 @@ link_files "$A/work/claude/commands"   "${CLAUDE_HOMES[@]/%//commands}"
 link_files "$A/work/opencode/commands" "$OPENCODE/commands"
 link_files "$A/work/cursor/commands"   "$CURSOR/commands"
 link_files "$A/games/prompts"          "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands"
+
+# --- video studio (Backlot): project-scoped, reaches only sessions under ~/projects/video ---
+safe_symlink "$A/video/AGENTS.md"    "$VIDEO_ROOT/AGENTS.md"
+safe_symlink "$A/video/CLAUDE.md"    "$VIDEO_ROOT/CLAUDE.md"
+safe_symlink "$A/video/studio.yaml"  "$VIDEO_ROOT/studio.yaml"
+safe_symlink "$A/video/bin/backlot"  "$HOME/.local/bin/backlot"
+for d in "$VIDEO_ROOT/.claude/skills" "$VIDEO_ROOT/.agents/skills" "$VIDEO_ROOT/.claude/commands" "$VIDEO_ROOT/.claude/agents"; do
+  mkdir -p "$d"; clean_stale_links "$d"
+done
+link_children "$A/video/skills"        "$VIDEO_ROOT/.claude/skills" "$VIDEO_ROOT/.agents/skills"
+link_files    "$A/video/commands"      "$VIDEO_ROOT/.claude/commands"
+link_files    "$A/video/claude/agents" "$VIDEO_ROOT/.claude/agents"
 
 # --- project-local instruction overrides ---
 safe_symlink "$DOTFILES/projects/platform/CLAUDE.md"       "$HOME/projects/platform/CLAUDE.md"

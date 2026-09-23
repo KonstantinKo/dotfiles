@@ -10,6 +10,8 @@ Managed via symlinks. Edit files here, changes are live. New machine: clone + `.
   `shared/` (all homes), `work/` (day-job homes), `work/di/` (company account only),
   `work/<tool>/` (one harness), `games/` (`~/.codex-games`, `~/.claude-games`). Each holds `skills/`, `commands/` or
   `prompts/`, `agents/`, and tool config.
+- `agents/video/` — Backlot, the agent-driven video studio (see `agents/video/ARCHITECTURE.md`):
+  linked into `~/projects/video/`, vault at `~/projects/obsidian/Backlot`, CLI `backlot`
 - `projects/` — local (untracked-in-repo) instruction overrides per project, symlinked into place
 - `iterm2_profile/Default.json` — iTerm2 default profile export
 

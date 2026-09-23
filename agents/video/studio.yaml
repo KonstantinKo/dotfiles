@@ -1,0 +1,10 @@
+# Backlot studio configuration. Linked to ~/projects/video/studio.yaml by `make`.
+vault: ~/projects/obsidian/Backlot
+projects_root: ~/projects/video
+currency: EUR
+providers:
+  fal:
+    keychain_service: fal-api
+    keychain_account: FAL_KEY
+  comfyui-local:
+    url: http://127.0.0.1:8188

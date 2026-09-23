@@ -9,6 +9,7 @@ The folder an item lives in says where `make` links it. Nothing else decides.
 | `work/di/` | company-account homes only: `~/.claude-di`, `~/.codex-di` |
 | `work/claude/`, `work/codex/`, `work/opencode/`, `work/cursor/` | that one harness |
 | `games/` | game-dev homes: `~/.codex-games`, `~/.claude-games` |
+| `video/` | the Backlot video studio: linked into `~/projects/video/` (project-scoped `AGENTS.md`, `.claude/skills`, `.claude/agents`, `.claude/commands`, `studio.yaml`) plus the `backlot` CLI in `~/.local/bin`. No agent home; only sessions started under `~/projects/video` see it. |
 
 Inside a folder the kind is by name: `skills/<name>/SKILL.md`, `commands/*.md` (Claude, OpenCode,
 Cursor slash commands), `prompts/*.md` (Codex custom prompts), `agents/*.md` (OpenCode agents),

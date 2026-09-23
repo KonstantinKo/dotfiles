@@ -1,0 +1,69 @@
+filters:
+  and:
+    - file.inFolder(this.file.folder)
+    - 'type == "shot"'
+properties:
+  shot:
+    displayName: Shot
+  status:
+    displayName: Status
+  duration_s:
+    displayName: s
+  cast:
+    displayName: Cast
+  location:
+    displayName: Location
+  board_take:
+    displayName: Board
+  video_take:
+    displayName: Video
+  vo_take:
+    displayName: VO
+formulas:
+  board_thumb: 'if(board_take, image(this.file.folder.replace("Shots", "_thumbs") + "/" + board_take + ".jpg"), "")'
+views:
+  - type: table
+    name: Board
+    order:
+      - shot
+      - status
+      - duration_s
+      - cast
+      - location
+      - board_take
+      - video_take
+      - vo_take
+    sort:
+      - property: shot
+        direction: ASC
+    summaries:
+      duration_s: Sum
+  - type: cards
+    name: Cards
+    order:
+      - shot
+      - status
+      - duration_s
+      - location
+      - board_take
+      - video_take
+    sort:
+      - property: shot
+        direction: ASC
+    image: formula.board_thumb
+    imageFit: contain
+    imageAspectRatio: 0.5625
+    cardSize: 240
+  - type: table
+    name: Open
+    filters:
+      and:
+        - 'status != "locked"'
+    order:
+      - shot
+      - status
+      - board_take
+      - video_take
+    sort:
+      - property: shot
+        direction: ASC
