@@ -1,5 +1,7 @@
 # Backlot — house rules for `~/projects/video/`
 
+Standalone experiments under `~/projects/video/labs/` use their own `AGENTS.md` and `CLAUDE.md`. The Backlot production rules below apply to projects with `project.yaml`.
+
 Backlot is a file-based video production studio run by agents. A production is a folder here plus a project in the Obsidian vault; every decision, take and euro spent is a Markdown or YAML file that git versions. Generation goes through the `backlot` CLI, which estimates cost before it spends and refuses runaway spend by construction.
 
 ## Three places

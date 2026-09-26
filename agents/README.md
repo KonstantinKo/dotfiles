@@ -9,7 +9,8 @@ The folder an item lives in says where `make` links it. Nothing else decides.
 | `work/di/` | company-account homes only: `~/.claude-di`, `~/.codex-di` |
 | `work/claude/`, `work/codex/`, `work/opencode/`, `work/cursor/` | that one harness |
 | `games/` | game-dev homes: `~/.codex-games`, `~/.claude-games` |
-| `video/` | the Backlot video studio: linked into `~/projects/video/` (project-scoped `AGENTS.md`, `.claude/skills`, `.claude/agents`, `.claude/commands`, `studio.yaml`) plus the `backlot` CLI in `~/.local/bin`. No agent home; only sessions started under `~/projects/video` see it. |
+| `creative/` | Blender skill linked into game homes and video projects |
+| `video/` | video projects under `~/projects/video/`: project-scoped skills for Codex and Claude, Backlot studio files, and the `backlot` CLI. No agent home. |
 
 Inside a folder the kind is by name: `skills/<name>/SKILL.md`, `commands/*.md` (Claude, OpenCode,
 Cursor slash commands), `prompts/*.md` (Codex custom prompts), `agents/*.md` (OpenCode agents),
@@ -31,3 +32,7 @@ home needs: `settings.json` and the `mcp/` server sets that `clag` passes via `-
 
 Keep bodies harness-neutral. Only put an adapter in a per-tool folder when that harness needs a
 different format.
+
+Standalone experiments live under `~/projects/video/labs/`. Run `make` after adding a
+Git-backed video project to link the Higgsfield and Blender skills into its `.agents/skills/`
+and `.claude/skills/`. Both harnesses use the same signed-in `higgsfield` CLI account.

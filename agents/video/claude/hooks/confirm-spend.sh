@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# PreToolUse hook (matcher: Bash). Turns any backlot spend command carrying --yes/--force
-# into a Claude Code permission prompt that shows the estimate, so the user confirms spend.
+# PreToolUse hook (matcher: Bash). Ask for user confirmation on paid Backlot and
+# direct Higgsfield commands in video projects.
 PY=$(cat <<'EOF'
 import json, re, shlex, subprocess, sys
 
@@ -10,6 +10,12 @@ except Exception:
     sys.exit(0)
 cmd = (data.get("tool_input") or {}).get("command") or ""
 spend = re.compile(r"(?<![\w/.-])backlot\s+(gen|tts|captions|batch|recover)\b")
+hf = re.compile(r"(?<![\w.-])(?:higgsfield|higgs|hf)(?:\s+--(?:json|no-color))*\s+(?:(?:generate|gen)\s+(?:create|workflow)|(?:marketplace-cards|product-photoshoot|soul-id)\s+create|(?:marketing-studio|marketing|ms)\s+dtc-ads\s+generate)\b")
+if hf.search(cmd):
+    segment = next((s for s in re.split(r"&&|\|\||;|\|", cmd) if hf.search(s)), cmd).strip()
+    reason = f"Higgsfield credit spend requires an exact cost estimate and explicit approval for this call.\n{segment}"
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": reason}}))
+    sys.exit(0)
 if not spend.search(cmd) or not re.search(r"(^|\s)--(yes|force)(=\S+)?(\s|$)", cmd):
     sys.exit(0)
 
