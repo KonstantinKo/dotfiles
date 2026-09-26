@@ -11,9 +11,7 @@
 #
 # Cache: $YT_SUBTITLES_DIR, default ${TMPDIR:-/tmp}/yt-subtitles/<video-id>.md
 #
-# YouTube sometimes blocks unauthenticated yt-dlp ("Sign in to confirm you're
-# not a bot"). By default we try without cookies and fall back to browser
-# cookies (chrome, or $YT_COOKIES_FROM_BROWSER) only on failure.
+# Authentication is explicit so a browser/keychain prompt cannot appear by default.
 #
 # Networking: --force-ipv4 is always passed (YouTube over IPv6 stalls on some
 # networks); YT_DLP_ARGS adds extra yt-dlp flags, e.g. YT_DLP_ARGS="--proxy ...".
@@ -34,8 +32,7 @@ OUT_DIR="${YT_SUBTITLES_DIR:-${TMPDIR:-/tmp}/yt-subtitles}"
 TO_STDOUT=0
 FORCE=0
 LANGS="en,en-US,en-GB,en-AU,en-CA,en-orig"
-COOKIE_MODE="auto"   # auto | forced | none
-COOKIE_ARGS=(--cookies-from-browser "${YT_COOKIES_FROM_BROWSER:-chrome}")
+COOKIE_ARGS=()
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -43,10 +40,10 @@ while [ $# -gt 0 ]; do
     --force) FORCE=1; shift ;;
     --out) [ $# -ge 2 ] || usage; OUT_DIR="$2"; shift 2 ;;
     --lang) [ $# -ge 2 ] || usage; LANGS="$2"; shift 2 ;;
-    --cookies-from-browser) [ $# -ge 2 ] || usage; COOKIE_MODE="forced"; COOKIE_ARGS=(--cookies-from-browser "$2"); shift 2 ;;
+    --cookies-from-browser) [ $# -ge 2 ] || usage; COOKIE_ARGS=(--cookies-from-browser "$2"); shift 2 ;;
     --cookies) [ $# -ge 2 ] || usage; [ -f "$2" ] || { echo "cookies file not found: $2" >&2; exit 1; }
-               COOKIE_MODE="forced"; COOKIE_ARGS=(--cookies "$2"); shift 2 ;;
-    --no-cookies) COOKIE_MODE="none"; COOKIE_ARGS=(); shift ;;
+               COOKIE_ARGS=(--cookies "$2"); shift 2 ;;
+    --no-cookies) COOKIE_ARGS=(); shift ;;
     *) echo "unknown arg: $1" >&2; usage ;;
   esac
 done
@@ -80,18 +77,7 @@ fetch() {
 }
 
 fail() { echo "yt-dlp failed for $URL" >&2; sed 's/^/  /' "$err" >&2; exit 1; }
-needs_login() { grep -qiE "sign in|log in|not a bot|age.?restricted|private video|members.only" "$err"; }
-
-case "$COOKIE_MODE" in
-  forced) fetch "${COOKIE_ARGS[@]}" || fail ;;
-  none)   fetch || fail ;;
-  auto)
-    if ! fetch; then
-      needs_login || fail
-      echo "yt-dlp without cookies failed; retrying with ${COOKIE_ARGS[*]}..." >&2
-      fetch "${COOKIE_ARGS[@]}" || fail
-    fi ;;
-esac
+fetch "${COOKIE_ARGS[@]}" || fail
 
 info=$(ls "$tmp"/*.info.json 2>/dev/null | head -1)
 [ -n "$info" ] || { echo "no info.json for $URL" >&2; exit 1; }
@@ -112,11 +98,22 @@ description=$(jq -r '.description // ""' "$info")
 # YouTube SRTs use a rolling window: each cue repeats the tail of the previous
 # one. Take the text lines of each cue, trim, drop blanks, dedupe consecutive.
 transcript=$(tr -d '\r' < "$srt" | awk '
-  BEGIN { RS = ""; FS = "\n"; prev = "" }
+  BEGIN { RS = ""; FS = "\n"; prev = ""; minute = -1 }
   {
     started = 0
     for (i = 1; i <= NF; i++) {
-      if (!started) { if ($i ~ /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9][,.][0-9]+ --> /) started = 1; continue }
+      if (!started) {
+        if ($i ~ /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9][,.][0-9]+ --> /) {
+          started = 1
+          h = substr($i, 1, 2) + 0; m = substr($i, 4, 2) + 0
+          bucket = h * 60 + m
+          if (bucket != minute) {
+            printf "[%02d:%02d:%02d]\n", h, m, 0
+            minute = bucket
+          }
+        }
+        continue
+      }
       line = $i; gsub(/^[ \t]+|[ \t]+$/, "", line)
       if (line == "" || line == prev) continue
       print line; prev = line
