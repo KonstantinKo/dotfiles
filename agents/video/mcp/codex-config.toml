@@ -1,0 +1,8 @@
+[mcp_servers.higgsfield-use-blender]
+command = "/opt/homebrew/bin/node"
+args = ["/Users/konstantin/.higgsfield/blender-mcp/node_modules/fnf-blender-mcp/dist/index.js"]
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[mcp_servers.higgsfield-use-blender.env]
+BLENDER_EXECUTABLE = "/Applications/Blender.app/Contents/MacOS/Blender"

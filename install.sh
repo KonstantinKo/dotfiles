@@ -149,6 +149,21 @@ seed_once "$A/work/codex/config.di.toml" "$HOME/.codex-di/config.toml"
 seed_once "$A/games/codex/config.toml"   "$CODEX_GAMES_HOME/config.toml"
 safe_symlink "$A/games/bin/fal-mcp-codg" "$HOME/.local/bin/fal-mcp-codg"
 
+# Codex loads a repository's .codex/config.toml only when that exact project
+# is trusted. Trust video repositories in both Codex homes for their local MCP.
+trust_video_project() {
+  local project="${1%/}" home config heading
+  heading="[projects.\"$project\"]"
+  for home in "$HOME/.codex" "$CODEX_GAMES_HOME"; do
+    config="$home/config.toml"
+    [ -f "$config" ] || continue
+    if ! rg -Fq "$heading" "$config"; then
+      printf '\n%s\ntrust_level = "trusted"\n' "$heading" >> "$config"
+      echo "trusted $project in $home"
+    fi
+  done
+}
+
 # --- opencode ---
 for f in opencode.jsonc opencode-notifier.json package.json; do
   safe_symlink "$A/work/opencode/$f" "$OPENCODE/$f"
@@ -218,6 +233,12 @@ link_files "$A/video/backlot/claude/agents" "$BACKLOT_ROOT/.claude/agents"
 # Claude Code does not read settings from a parent dir, so each project gets a link.
 safe_symlink "$A/video/claude/settings.json" "$VIDEO_ROOT/.claude/settings.json"
 safe_symlink "$A/video/claude/settings.json" "$BACKLOT_ROOT/.claude/settings.json"
+safe_symlink "$A/video/mcp/claude-mcp.json" "$VIDEO_ROOT/.mcp.json"
+safe_symlink "$A/video/mcp/claude-mcp.json" "$BACKLOT_ROOT/.mcp.json"
+safe_symlink "$A/video/mcp/codex-config.toml" "$VIDEO_ROOT/.codex/config.toml"
+safe_symlink "$A/video/mcp/codex-config.toml" "$BACKLOT_ROOT/.codex/config.toml"
+trust_video_project "$VIDEO_ROOT"
+trust_video_project "$BACKLOT_ROOT"
 
 # Git-backed child projects need local skill links so Codex can discover them
 # even when it stops scanning at the child repository root.
@@ -234,6 +255,9 @@ for project in "$BACKLOT_ROOT"/*/ "$VIDEO_ROOT"/labs/*/; do
       safe_symlink "$A/video/backlot/AGENTS.md" "$project/AGENTS.md" ;;
   esac
   safe_symlink "$A/video/claude/settings.json" "$project/.claude/settings.json"
+  safe_symlink "$A/video/mcp/claude-mcp.json" "$project/.mcp.json"
+  safe_symlink "$A/video/mcp/codex-config.toml" "$project/.codex/config.toml"
+  trust_video_project "$project"
 done
 
 if [ -d "$VIDEO_ROOT/labs" ]; then
