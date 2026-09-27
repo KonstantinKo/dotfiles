@@ -23,4 +23,4 @@ One-paragraph pitch. What is this, for whom, how long.
 
 ## Working dir
 
-`~/projects/video/{{slug}}/`
+`~/projects/video/backlot/{{slug}}/`

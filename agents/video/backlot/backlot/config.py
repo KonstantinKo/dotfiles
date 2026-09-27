@@ -12,7 +12,7 @@ import yaml
 from backlot.errors import BacklotError
 from backlot.frontmatter import load_yaml
 
-DEFAULT_STUDIO = Path("~/projects/video/studio.yaml")
+DEFAULT_STUDIO = Path("~/projects/video/backlot/studio.yaml")
 
 
 @dataclass

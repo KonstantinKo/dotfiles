@@ -19,9 +19,9 @@ Workflows, Playbooks), rebuilt around three principles they don't have:
 | Place | Path | Role | Git |
 |---|---|---|---|
 | **Vault** | `~/projects/obsidian/Backlot/` | Source of truth: studio knowledge + per-project Context, shots, takes index, decisions, status, costs. Markdown only, plus small thumbnails. | own repo |
-| **Projects root** | `~/projects/video/` | Working directory for all productions. Holds the agent instructions, skills, sub-agents, commands (all symlinked from dotfiles) and `studio.yaml`. Not a git repo itself. | none |
-| **Project dir** | `~/projects/video/<slug>/` | Binaries and machine state for one production: inputs, takes (media + meta), edit timeline, renders. | own repo per project; media ignored |
-| **Toolkit** | `~/dotfiles/agents/video/` | Everything tracked: this spec, skills, sub-agents, commands, `AGENTS.md`, `studio.yaml`, the `backlot` CLI. `make` in dotfiles links it into place. | dotfiles repo |
+| **Projects root** | `~/projects/video/backlot/` | Working directory for Backlot productions. Holds the agent instructions, skills, sub-agents, commands (all symlinked from dotfiles) and `studio.yaml`. Not a git repo itself. | none |
+| **Project dir** | `~/projects/video/backlot/<slug>/` | Binaries and machine state for one production: inputs, takes (media + meta), edit timeline, renders. | own repo per project; media ignored |
+| **Toolkit** | `~/dotfiles/agents/video/backlot/` | Everything tracked: this spec, skills, sub-agents, commands, `AGENTS.md`, `studio.yaml`, the `backlot` CLI. `make` in dotfiles links it into place. | dotfiles repo |
 
 Rule: the vault says *what is true and decided*; the project dir holds *what was produced*.
 The CLI keeps them in sync (every take gets a vault note + thumbnail; every approval lands
@@ -93,7 +93,7 @@ Frontmatter contracts (the CLI parses these; keep keys stable):
 Take IDs: `<kind>-<seq>` (`img-014`), variations `<id>.<n>` (`img-014.2`), where kind is
 `img|vid|vo|mus|sfx|up`. Shot IDs `S010`. Stable, quotable in chat ("combine img-014.2 and vid-009").
 
-## Project dir layout (`~/projects/video/<slug>/`)
+## Project dir layout (`~/projects/video/backlot/<slug>/`)
 
 ```
 <slug>/
@@ -114,8 +114,8 @@ Take IDs: `<kind>-<seq>` (`img-014`), variations `<id>.<n>` (`img-014.2`), where
 
 ## `backlot` CLI (Python 3.12, `uv run`, single package at `agents/video/backlot/`)
 
-Launcher `agents/video/bin/backlot` → linked to `~/.local/bin/backlot`. Reads
-`~/projects/video/studio.yaml` for `vault`, `projects_root`, `currency`, provider config.
+Launcher `agents/video/backlot/bin/backlot` → linked to `~/.local/bin/backlot`. Reads
+`~/projects/video/backlot/studio.yaml` for `vault`, `projects_root`, `currency`, provider config.
 Project is resolved from cwd (walk up to `project.yaml`) or `--project <slug>`.
 
 Commands (all print terse one-line results; `--json` for machine output):
@@ -241,7 +241,7 @@ titles:
 Renders are deterministic from this file; agents edit the YAML, never a GUI. Exporting
 to a real NLE later is a separate exporter, not part of v1.
 
-## Skills (`agents/video/skills/<name>/SKILL.md`, harness-neutral)
+## Skills (`agents/video/backlot/skills/<name>/SKILL.md`, harness-neutral)
 
 The lead agent runs the production; role sub-agents do bounded work; every skill reads
 the vault before acting and writes results back. Stages and their gates:
@@ -269,28 +269,29 @@ video; 2–4 options per unlocked element, 1 for locked; never overwrite a take 
 variation instead); every generated asset lists its `depends_on` Context notes; every
 approval/rejection has a reason in `Decisions.md`.
 
-Role sub-agents (`agents/video/claude/agents/*.md`, linked to
-`~/projects/video/.claude/agents/`): `screenwriter`, `director`, `dop` (shot & prompt
+Role sub-agents (`agents/video/backlot/claude/agents/*.md`, linked to
+`~/projects/video/backlot/.claude/agents/`): `screenwriter`, `director`, `dop` (shot & prompt
 craft), `casting-director`, `production-designer`, `sound-designer`, `editor`,
 `continuity` (vision-based reviewer that compares takes against Context and flags drift).
 Each declares which vault notes it reads and which it may write.
 
-Commands (`agents/video/commands/*.md`): `/new-project`, `/update` (status rollup),
+Commands (`agents/video/backlot/commands/*.md`): `/new-project`, `/update` (status rollup),
 `/lock`, `/approve`, `/reject`, `/gen` (thin wrappers that call the skill or CLI).
 
 ## How it reaches the machine (dotfiles `install.sh`)
 
 ```
-agents/video/AGENTS.md           -> ~/projects/video/AGENTS.md  (+ CLAUDE.md shim)
-agents/video/studio.yaml         -> ~/projects/video/studio.yaml
-agents/video/skills/*            -> ~/projects/video/.claude/skills/*  and .agents/skills/*
-agents/video/commands/*.md       -> ~/projects/video/.claude/commands/*.md
-agents/video/claude/agents/*.md  -> ~/projects/video/.claude/agents/*.md
-agents/video/bin/backlot         -> ~/.local/bin/backlot
+agents/video/AGENTS.md                 -> ~/projects/video/AGENTS.md
+agents/video/backlot/AGENTS.md         -> ~/projects/video/backlot/AGENTS.md
+agents/video/backlot/studio.yaml       -> ~/projects/video/backlot/studio.yaml
+agents/video/backlot/skills/*          -> ~/projects/video/backlot/.claude/skills/* and .agents/skills/*
+agents/video/backlot/commands/*.md     -> ~/projects/video/backlot/.claude/commands/*.md
+agents/video/backlot/claude/agents/*.md -> ~/projects/video/backlot/.claude/agents/*.md
+agents/video/backlot/bin/backlot       -> ~/.local/bin/backlot
 ```
 Nothing is linked into `~/.claude`, so none of this appears in day-job or games sessions.
-Claude Code discovers `.claude/skills`, `.claude/agents` and `CLAUDE.md` from the parent
-directory when the cwd is a project subfolder (verified on 2.1.280).
+`install.sh` also links skills into each Git-backed production for Codex and Claude.
+Claude Code reads `AGENTS.md` when no `CLAUDE.md` is present in the project.
 
 ## Open by design (not built in v1, but the seams exist)
 

@@ -1,6 +1,6 @@
-# Backlot studio configuration. Linked to ~/projects/video/studio.yaml by `make`.
+# Backlot studio configuration. Linked to ~/projects/video/backlot/studio.yaml by `make`.
 vault: ~/projects/obsidian/Backlot
-projects_root: ~/projects/video
+projects_root: ~/projects/video/backlot
 currency: EUR
 # Money gates; a project's project.yaml overrides each key.
 defaults:

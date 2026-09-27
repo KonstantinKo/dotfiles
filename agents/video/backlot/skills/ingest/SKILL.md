@@ -9,7 +9,7 @@ description: Ingest source material into a Backlot project's Context: PDF, deck,
 Get facts and references out of user material and into Context notes the crew can cite, with intent stated for every reference.
 
 ## Inputs
-- Files in `~/projects/video/<slug>/inputs/` or paths the user gives; URLs
+- Files in `~/projects/video/backlot/<slug>/inputs/` or paths the user gives; URLs
 - `Projects/<slug>/Context/Knowledge.md`, `Context/Inspiration.md` (append, newest section on top)
 - `Brief.md` for what matters
 

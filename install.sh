@@ -9,7 +9,7 @@
 #   work/<tool>/  one harness only (claude | codex | opencode | cursor)
 #   games/    game-dev homes: ~/.codex-games, ~/.claude-games
 #   creative/ Blender skills for game homes and video projects
-#   video/    video projects at ~/projects/video (project-scoped, no agent home)
+#   video/    general video skills; video/backlot/ adds the optional Backlot workflow
 set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,6 +22,7 @@ DI_HOMES=("$HOME/.claude-di" "$HOME/.codex-di")
 CODEX_GAMES_HOME="$HOME/.codex-games"
 CLAUDE_GAMES_HOME="$HOME/.claude-games"
 VIDEO_ROOT="$HOME/projects/video"
+BACKLOT_ROOT="$VIDEO_ROOT/backlot"
 OPENCODE="$HOME/.config/opencode"
 CURSOR="$HOME/.cursor"
 VENDOR_CACHE="$HOME/.cache/dotfiles/vendor"
@@ -196,50 +197,61 @@ link_files "$A/work/opencode/commands" "$OPENCODE/commands"
 link_files "$A/work/cursor/commands"   "$CURSOR/commands"
 link_files "$A/games/prompts"          "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands"
 
-# --- video projects: project-scoped, reaches only sessions under ~/projects/video ---
-safe_symlink "$A/video/AGENTS.md"    "$VIDEO_ROOT/AGENTS.md"
-safe_symlink "$A/video/CLAUDE.md"    "$VIDEO_ROOT/CLAUDE.md"
-safe_symlink "$A/video/studio.yaml"  "$VIDEO_ROOT/studio.yaml"
-safe_symlink "$A/video/bin/backlot"  "$HOME/.local/bin/backlot"
+# --- video projects: general tools at the root, Backlot tools only under backlot/ ---
+safe_symlink "$A/video/AGENTS.md" "$VIDEO_ROOT/AGENTS.md"
+safe_symlink "$A/video/backlot/AGENTS.md" "$BACKLOT_ROOT/AGENTS.md"
+safe_symlink "$A/video/backlot/studio.yaml" "$BACKLOT_ROOT/studio.yaml"
+safe_symlink "$A/video/backlot/bin/backlot" "$HOME/.local/bin/backlot"
 for d in "$VIDEO_ROOT/.claude/skills" "$VIDEO_ROOT/.agents/skills" "$VIDEO_ROOT/.claude/commands" "$VIDEO_ROOT/.claude/agents"; do
   mkdir -p "$d"; clean_stale_links "$d"
 done
 link_children "$A/video/skills"        "$VIDEO_ROOT/.claude/skills" "$VIDEO_ROOT/.agents/skills"
 link_children "$A/creative/skills"     "$VIDEO_ROOT/.claude/skills" "$VIDEO_ROOT/.agents/skills"
-link_files    "$A/video/commands"      "$VIDEO_ROOT/.claude/commands"
-link_files    "$A/video/claude/agents" "$VIDEO_ROOT/.claude/agents"
-# Spend-confirmation hook. Claude Code does not read settings from a parent dir, so every
-# project dir gets its own link (backlot init copies it for new projects).
-safe_symlink "$A/video/claude/settings.json" "$VIDEO_ROOT/.claude/settings.json"
-for p in "$VIDEO_ROOT"/*/project.yaml; do
-  [ -f "$p" ] || continue
-  safe_symlink "$A/video/claude/settings.json" "$(dirname "$p")/.claude/settings.json"
+for d in "$BACKLOT_ROOT/.claude/skills" "$BACKLOT_ROOT/.agents/skills" "$BACKLOT_ROOT/.claude/commands" "$BACKLOT_ROOT/.claude/agents"; do
+  mkdir -p "$d"; clean_stale_links "$d"
 done
+link_children "$A/video/skills"         "$BACKLOT_ROOT/.claude/skills" "$BACKLOT_ROOT/.agents/skills"
+link_children "$A/creative/skills"      "$BACKLOT_ROOT/.claude/skills" "$BACKLOT_ROOT/.agents/skills"
+link_children "$A/video/backlot/skills" "$BACKLOT_ROOT/.claude/skills" "$BACKLOT_ROOT/.agents/skills"
+link_files "$A/video/backlot/commands" "$BACKLOT_ROOT/.claude/commands"
+link_files "$A/video/backlot/claude/agents" "$BACKLOT_ROOT/.claude/agents"
+# Claude Code does not read settings from a parent dir, so each project gets a link.
+safe_symlink "$A/video/claude/settings.json" "$VIDEO_ROOT/.claude/settings.json"
+safe_symlink "$A/video/claude/settings.json" "$BACKLOT_ROOT/.claude/settings.json"
 
 # Git-backed child projects need local skill links so Codex can discover them
 # even when it stops scanning at the child repository root.
-for project in "$VIDEO_ROOT"/*/ "$VIDEO_ROOT"/labs/*/; do
+for project in "$BACKLOT_ROOT"/*/ "$VIDEO_ROOT"/labs/*/; do
   [ -d "$project/.git" ] || continue
-  for skill in higgsfield-generate blender; do
-    case "$skill" in
-      blender) src="$A/creative/skills/blender" ;;
-      *) src="$A/video/skills/$skill" ;;
-    esac
-    safe_symlink "$src" "$project/.agents/skills/$skill"
-    safe_symlink "$src" "$project/.claude/skills/$skill"
+  for d in "$project/.agents/skills" "$project/.claude/skills"; do
+    mkdir -p "$d"; clean_stale_links "$d"
   done
+  link_children "$A/video/skills" "$project/.agents/skills" "$project/.claude/skills"
+  link_children "$A/creative/skills" "$project/.agents/skills" "$project/.claude/skills"
+  case "$project" in
+    "$BACKLOT_ROOT"/*)
+      link_children "$A/video/backlot/skills" "$project/.agents/skills" "$project/.claude/skills"
+      safe_symlink "$A/video/backlot/AGENTS.md" "$project/AGENTS.md" ;;
+  esac
   safe_symlink "$A/video/claude/settings.json" "$project/.claude/settings.json"
 done
 
 if [ -d "$VIDEO_ROOT/labs" ]; then
   safe_symlink "$A/video/labs/AGENTS.md" "$VIDEO_ROOT/labs/AGENTS.md"
-  safe_symlink "$A/video/labs/CLAUDE.md" "$VIDEO_ROOT/labs/CLAUDE.md"
   for project in "$VIDEO_ROOT"/labs/*/; do
     [ -d "$project/.git" ] || continue
     safe_symlink "$A/video/labs/AGENTS.md" "$project/AGENTS.md"
-    safe_symlink "$A/video/labs/CLAUDE.md" "$project/CLAUDE.md"
   done
 fi
+
+# Retire old instruction shims and the old Backlot config link when managed by dotfiles.
+for link in "$VIDEO_ROOT/CLAUDE.md" "$VIDEO_ROOT/labs/CLAUDE.md" "$VIDEO_ROOT"/labs/*/CLAUDE.md "$VIDEO_ROOT/studio.yaml"; do
+  [ -L "$link" ] || continue
+  case "$(readlink "$link")" in
+    "$A/video/CLAUDE.md"|"$A/video/labs/CLAUDE.md"|"$A/video/studio.yaml")
+      rm "$link"; echo "retired $link" ;;
+  esac
+done
 
 # --- project-local instruction overrides ---
 safe_symlink "$DOTFILES/projects/platform/CLAUDE.md"       "$HOME/projects/platform/CLAUDE.md"

@@ -22,7 +22,7 @@ Produce every deliverable named in the Brief, record the state, and commit both 
 5. Localisation, when languages are listed: follow `Workflows/Localisation.md`: translate VO lines in a `Script.<lang>.md`, run the `voice` skill with the same Cast voice or the language variant from `Studio/Voices/`, captions per language, one timeline per language, render each.
 6. Verify each file with `ffprobe` (duration, resolution, fps, audio present). List paths with sizes.
 7. `backlot cost` then `backlot status`; set `status: delivered` and `deliverables[]` in `<slug>.md` to the rendered file names.
-8. Commit: in `~/projects/video/<slug>/` `git add -A && git commit -m "deliver: <names>"` (media is ignored; timelines, meta and manifest are tracked). In the vault `git add Projects/<slug> Studio && git commit -m "<slug>: delivered"`.
+8. Commit: in `~/projects/video/backlot/<slug>/` `git add -A && git commit -m "deliver: <names>"` (media is ignored; timelines, meta and manifest are tracked). In the vault `git add Projects/<slug> Studio && git commit -m "<slug>: delivered"`.
 9. Write a short retro into `Studio/Lessons/<date>-<slug>.md`: what cost more than expected, which model held identity best, what to promote into a Playbook.
 
 ## Outputs

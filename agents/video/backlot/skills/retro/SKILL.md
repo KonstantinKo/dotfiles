@@ -78,7 +78,7 @@ One paragraph: what was delivered, against which brief, and whether it met it.
 
 ## Outputs
 - `Studio/Lessons/<date>-<slug>.md`
-- Approved edits applied to Playbooks, Workflows, model notes; skill edits are reported to the user for the dotfiles repo (skills live in `~/dotfiles/agents/video/skills/`, not in the vault)
+- Approved edits applied to Playbooks, Workflows, model notes; skill edits are reported to the user for the dotfiles repo (skills live in `~/dotfiles/agents/video/backlot/skills/`, not in the vault)
 - A `## Retro` section on the project home note linking the Lessons note
 
 ## Gate

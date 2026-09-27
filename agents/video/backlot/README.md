@@ -1,7 +1,7 @@
 # backlot
 
-CLI for the Backlot studio (see `../ARCHITECTURE.md`). Python 3.12, run through `uv`;
-the launcher is `../bin/backlot` (linked to `~/.local/bin/backlot`).
+CLI for the Backlot studio (see `ARCHITECTURE.md`). Python 3.12, run through `uv`;
+the launcher is `bin/backlot` (linked to `~/.local/bin/backlot`).
 
 ```
 backlot doctor                      # tools, key presence, vault, ComfyUI, model notes
@@ -28,7 +28,7 @@ backlot status | backlot cost | backlot thumbs
 
 Every command accepts `--json` and `--project <slug>`; without `--project` the project is
 found by walking up from the cwd to `project.yaml`. Config comes from
-`~/projects/video/studio.yaml` (override with `BACKLOT_STUDIO`).
+`~/projects/video/backlot/studio.yaml` (override with `BACKLOT_STUDIO`).
 
 Exit codes: `0` ok, `1` error, `2` usage, `3` needs confirmation (`ask_before_generate`
 is on and `--yes` missing; the estimate is printed), `4` budget exceeded.

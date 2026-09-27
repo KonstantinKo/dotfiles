@@ -14,8 +14,8 @@ from backlot.output import Printer
 
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--json", action="store_true", help="machine-readable output")
-    common.add_argument("--project", metavar="SLUG", help="project slug (default: walk up from cwd to project.yaml)")
+    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="machine-readable output")
+    common.add_argument("--project", metavar="SLUG", default=argparse.SUPPRESS, help="project slug (default: walk up from cwd to project.yaml)")
 
     p = argparse.ArgumentParser(
         prog="backlot",
@@ -142,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.cmd:
         parser.print_help()
         return EXIT_OK
-    out = Printer(as_json=args.json)
+    out = Printer(as_json=getattr(args, "json", False))
     try:
         return _dispatch(args, out) or EXIT_OK
     except BacklotError as exc:
@@ -165,7 +165,7 @@ def _studio():
 def _project(args):
     from backlot.project import resolve_project
 
-    return resolve_project(_studio(), args.project)
+    return resolve_project(_studio(), getattr(args, "project", None))
 
 
 def _dispatch(args: argparse.Namespace, out: Printer) -> int:

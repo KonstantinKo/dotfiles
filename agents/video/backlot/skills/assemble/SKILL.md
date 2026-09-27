@@ -13,7 +13,7 @@ Produce a draft render from a deterministic timeline that names only approved ta
 - `Takes/*.md` for statuses; `backlot takes --status approved`
 - `edit/timeline.yaml` (audio rows from `score`)
 - `<slug>.md` frontmatter (format, fps, resolution), `Brief.md` (length, mandatories)
-- Timeline schema in `~/dotfiles/agents/video/ARCHITECTURE.md`
+- Timeline schema in `~/dotfiles/agents/video/backlot/ARCHITECTURE.md`
 
 ## Steps
 1. Spawn `editor` with the shot list, approved take IDs and Brief. It returns a `video:` list: one row per shot in order, `src` = `video_take`, `in`/`out` trimmed to `duration_s`, transitions where the script implies them (default hard cut; `xfade` only on beat changes). Stills use `duration` and optional `motion: kenburns`.
