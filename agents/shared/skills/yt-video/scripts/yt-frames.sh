@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=yt-common.sh
+. "$SCRIPT_DIR/yt-common.sh"
+
 usage() { sed -n '2,4p' "$0" >&2; exit 1; }
 command -v yt-dlp >/dev/null || { echo "yt-dlp not installed (brew install yt-dlp)" >&2; exit 1; }
 command -v ffmpeg >/dev/null || { echo "ffmpeg not installed (brew install ffmpeg)" >&2; exit 1; }
@@ -91,11 +95,13 @@ tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 err="$tmp/yt-dlp.err"
 stream_url=""
 resolve_stream() {
+  local selector="$1"; shift
   local extra=("$@")
   # HLS seeking works with YouTube videos whose direct DASH URL rejects remote
   # range requests. The 720p cap keeps frame decoding reasonably cheap.
-  stream_info=$(yt-dlp "${extra[@]}" ${YT_DLP_ARGS:-} --force-ipv4 --socket-timeout 30 \
-    --no-playlist --no-warnings -f 'b[protocol^=m3u8][height<=720]/bv*[height<=720]/b[height<=720]' \
+  yt_wait_rate_limit
+  stream_info=$(yt-dlp "${extra[@]}" "${yt_user_args[@]}" "${yt_network_args[@]}" \
+    --no-playlist --no-warnings -f "$selector" \
     --print '%(duration)s' --get-url "$URL" 2>"$err")
   [[ "$stream_info" == *$'\n'* ]] || return 1
   duration="${stream_info%%$'\n'*}"
@@ -103,8 +109,21 @@ resolve_stream() {
   [[ "$duration" =~ ^[0-9]+([.][0-9]+)?$ ]] || return 1
   [ -n "$stream_url" ] && [[ "$stream_url" != *$'\n'* ]]
 }
-fail() { echo "yt-dlp could not resolve a video stream with known duration for $URL" >&2; sed 's/^/  /' "$err" >&2; exit 1; }
-resolve_stream "${COOKIE_ARGS[@]}" || fail
+fail_stream() {
+  yt_mark_rate_limit "$err"
+  yt_report_error "yt-dlp could not resolve a video stream with known duration" "$err" "$id"
+  exit 1
+}
+PRIMARY_FORMAT='b[protocol^=m3u8][height<=720]/bv*[height<=720]/b[height<=720]'
+FALLBACK_FORMAT='bv*[height<=720]/b[height<=720]'
+if ! resolve_stream "$PRIMARY_FORMAT" "${COOKIE_ARGS[@]}"; then
+  if ! yt_is_rate_limited "$err" && grep -Eiq 'HTTP (Error )?403|Forbidden' "$err"; then
+    printf 'YouTube rejected the first stream lookup; trying one alternate format.\n' >&2
+    resolve_stream "$FALLBACK_FORMAT" "${COOKIE_ARGS[@]}" || fail_stream
+  else
+    fail_stream
+  fi
+fi
 duration_ms=$(awk -v s="$duration" 'BEGIN { printf "%.0f", s*1000 }')
 [ "$duration_ms" -gt 0 ] || { echo "video duration is unavailable; cannot safely seek" >&2; exit 1; }
 printf '%s\n' "$duration_ms" > "$tmp/duration-ms"
@@ -112,6 +131,7 @@ mv "$tmp/duration-ms" "$duration_path"
 validate_duration "$duration_ms"
 if [ "$missing" -eq 0 ]; then printf '%s\n' "${paths[@]}"; exit 0; fi
 
+fallback_used=0
 for i in "${!millis[@]}"; do
   path="${paths[$i]}"; ms="${millis[$i]}"
   if [ "$FORCE" -eq 0 ] && [ -s "$path" ]; then continue; fi
@@ -119,12 +139,33 @@ for i in "${!millis[@]}"; do
   # or audio output is opened; -an also excludes audio from the output.
   seconds=$(awk -v ms="$ms" 'BEGIN { printf "%.3f", ms/1000 }')
   partial="$tmp/frame-$i.jpg"
-  if ! ffmpeg -nostdin -hide_banner -loglevel error -ss "$seconds" -i "$stream_url" \
+  if ffmpeg -nostdin -hide_banner -loglevel error -ss "$seconds" -i "$stream_url" \
       -map 0:v:0 -an -sn -dn -frames:v 1 \
       -vf "scale=min(${WIDTH}\\,iw):-2" \
       -q:v 3 -y "$partial" 2>"$tmp/ffmpeg.err"; then
-    # ffmpeg errors may contain signed stream URLs; never print them.
-    echo "failed to extract video frame at ${times[$i]} (ffmpeg)" >&2; exit 1
+    :
+  else
+    if yt_is_rate_limited "$tmp/ffmpeg.err"; then
+      yt_mark_rate_limit "$tmp/ffmpeg.err"
+      yt_report_error "ffmpeg could not read the video stream at ${times[$i]}" "$tmp/ffmpeg.err" "$id"
+      exit 1
+    fi
+    if [ "$fallback_used" -eq 0 ] && grep -Eiq 'HTTP (Error )?403|Forbidden|Invalid data|server returned' "$tmp/ffmpeg.err"; then
+      fallback_used=1
+      printf 'The first stream was rejected at %s; resolving one fresh URL with an alternate format.\n' "${times[$i]}" >&2
+      resolve_stream "$FALLBACK_FORMAT" "${COOKIE_ARGS[@]}" || fail_stream
+      if ! ffmpeg -nostdin -hide_banner -loglevel error -ss "$seconds" -i "$stream_url" \
+          -map 0:v:0 -an -sn -dn -frames:v 1 \
+          -vf "scale=min(${WIDTH}\\,iw):-2" \
+          -q:v 3 -y "$partial" 2>"$tmp/ffmpeg.err"; then
+        yt_mark_rate_limit "$tmp/ffmpeg.err"
+        yt_report_error "failed to extract video frame at ${times[$i]} after one fresh stream attempt" "$tmp/ffmpeg.err" "$id"
+        exit 1
+      fi
+    else
+      yt_report_error "failed to extract video frame at ${times[$i]}" "$tmp/ffmpeg.err" "$id"
+      exit 1
+    fi
   fi
   [ -s "$partial" ] || { echo "no video frame at ${times[$i]} (past the end?)" >&2; exit 1; }
   mv "$partial" "$path"

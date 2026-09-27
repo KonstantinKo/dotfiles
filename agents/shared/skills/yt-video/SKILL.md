@@ -40,6 +40,9 @@ you need with the image viewing tool. `yt-dlp` resolves the media stream and
 does not play audio. Only the selected stills are opened in the model. Frames
 are cached under `${TMPDIR}/yt-subtitles/frames/` (override with
 `YT_FRAMES_DIR`); a repeat request returns cached paths without network access.
+If ffmpeg receives a rejected or expired stream (often HTTP 403), the helper
+refreshes the media URL once with an alternate format. It stops after that
+attempt and redacts signed URL query values from diagnostics.
 
 Timestamps accept seconds (`83.5`), `MM:SS`, or `HH:MM:SS`. Use `--width 1280`
 for fine detail (default 960), `--out DIR` for another output directory, or
@@ -58,8 +61,18 @@ If subtitles are unavailable, choose timestamps from chapters or the user's cue.
 - `--cookies-from-browser firefox`, `--cookies FILE`, `--no-cookies` control auth.
   Authentication is explicit; `--cookies-from-browser` may trigger a macOS
   keychain prompt.
-- `YT_DLP_ARGS="--proxy http://..."` passes extra flags to `yt-dlp`. IPv4 is
-  always forced because YouTube over IPv6 stalls on some networks.
+- Requests use yt-dlp's bounded exponential retry policy and one-second pacing.
+  A final HTTP 429 saves a shared two-minute cooldown for the next subtitle or
+  frame request. Cached files still return immediately during that cooldown.
+- `YT_RATE_LIMIT_COOLDOWN=SECONDS` changes the cooldown; set it to `0` to disable
+  it. `YT_VIDEO_STATE_DIR` changes where the shared cooldown file lives.
+- `YT_DLP_IP_FAMILY=ipv4|ipv6|auto` selects the connection family. IPv4 is the
+  default. This is a manual network troubleshooting setting; a 429 never causes
+  an automatic address-family switch.
+- `YT_DLP_ARGS="--proxy http://..."` passes additional yt-dlp flags, including
+  a proxy you already use. The helper does not rotate addresses; pause and let
+  YouTube's rate limit clear instead of sending more requests through alternate
+  egress addresses.
 
 Playlist parameters in the URL are stripped: the script always fetches a single
 video. To cover a playlist, run it once per video.
@@ -70,7 +83,9 @@ video. To cover a playlist, run it once per video.
 - `3` the video has no subtitles in the requested languages. Tell the user;
   there is no audio-transcription fallback. Try `--lang` with the video's
   spoken language first.
-- `1` anything else; stderr carries the `yt-dlp` error.
+- `1` network or processing error; stderr gives a short HTTP status summary and
+  redacted diagnostic details. After a 429, wait for the shared cooldown before
+  retrying. Avoid repeated `--force` calls while YouTube is rate-limiting.
 
 ## Handling the transcript
 

@@ -13,12 +13,16 @@
 #
 # Authentication is explicit so a browser/keychain prompt cannot appear by default.
 #
-# Networking: --force-ipv4 is always passed (YouTube over IPv6 stalls on some
-# networks); YT_DLP_ARGS adds extra yt-dlp flags, e.g. YT_DLP_ARGS="--proxy ...".
+# Networking uses paced requests and bounded exponential retries. A final
+# HTTP 429 starts a shared cooldown for the next subtitle/frame request.
 #
 # Exit codes: 0 ok · 3 no subtitles for this video · 1 other error
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=yt-common.sh
+. "$SCRIPT_DIR/yt-common.sh"
 
 usage() { sed -n '2,20p' "$0" >&2; exit 1; }
 
@@ -71,22 +75,26 @@ err="$tmp/yt-dlp.err"
 fetch() {
   local extra=("$@")
   rm -rf "$tmp"/*
-  ( cd "$tmp" && yt-dlp ${extra[@]+"${extra[@]}"} ${YT_DLP_ARGS:-} \
-      --force-ipv4 --socket-timeout 30 --skip-download --write-subs --write-auto-subs --sub-langs "$LANGS" --convert-subs srt \
+  yt_wait_rate_limit
+  ( cd "$tmp" && yt-dlp "${extra[@]}" "${yt_user_args[@]}" "${yt_network_args[@]}" \
+      --sleep-subtitles 1 --skip-download --write-subs --write-auto-subs --sub-langs "$LANGS" --convert-subs srt \
       --write-info-json --no-playlist --no-warnings -o "%(id)s" "$URL" >/dev/null 2>"$err" )
 }
 
-fail() { echo "yt-dlp failed for $URL" >&2; sed 's/^/  /' "$err" >&2; exit 1; }
-fetch "${COOKIE_ARGS[@]}" || fail
+fetch "${COOKIE_ARGS[@]}" || {
+  yt_mark_rate_limit "$err"
+  yt_report_error "yt-dlp could not fetch subtitles and video metadata" "$err" "${id:-unknown}"
+  exit 1
+}
 
 info=$(ls "$tmp"/*.info.json 2>/dev/null | head -1)
-[ -n "$info" ] || { echo "no info.json for $URL" >&2; exit 1; }
+[ -n "$info" ] || { echo "no video metadata returned for video ${id:-unknown}" >&2; exit 1; }
 id=$(basename "$info" .info.json)
 out="$OUT_DIR/$id.md"
 
 srt=$(find "$tmp" -maxdepth 1 -name "$id.*.srt" | head -1)
 [ -n "$srt" ] || srt=$(find "$tmp" -maxdepth 1 -name "$id.*.vtt" | head -1)
-[ -n "$srt" ] && [ -f "$srt" ] || { echo "no subtitles for $URL (langs: $LANGS)" >&2; exit 3; }
+[ -n "$srt" ] && [ -f "$srt" ] || { echo "no subtitles for video ${id:-unknown} (langs: $LANGS)" >&2; exit 3; }
 sub_lang=$(basename "$srt" | sed -E "s/^$id\.//; s/\.(srt|vtt)$//")
 
 title=$(jq -r '.title' "$info")
