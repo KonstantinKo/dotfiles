@@ -4,14 +4,14 @@ Managed via symlinks. Edit files here, changes are live. New machine: clone + `.
 
 ## Layout
 
-- `.zshrc` `.bashrc` `.profile` `.gitconfig` — shell & git (`.npmrc` stays machine-local, token only)
+- `.zshenv` `.zshrc` `.bashrc` `.profile` `.gitconfig` — shell & git (`.npmrc` stays machine-local, token only)
 - `dotconfig/nvim` → `~/.config/nvim`
 - `agents/` — everything AI-agent related, one folder per destination (see `agents/README.md`):
   `shared/` (all homes), `work/` (day-job homes), `work/di/` (company account only),
   `work/<tool>/` (one harness), `games/` (`~/.codex-games`, `~/.claude-games`). Each holds `skills/`, `commands/` or
   `prompts/`, `agents/`, and tool config.
 - `agents/video/` — general video skills; `agents/video/backlot/` is the optional Backlot studio (see `agents/video/backlot/ARCHITECTURE.md`), linked into `~/projects/video/backlot/` with CLI `backlot`
-- `projects/` — local (untracked-in-repo) instruction overrides per project, symlinked into place
+- `projects/` — private instructions and skills for specific project repos, symlinked into place
 - `iterm2_profile/Default.json` — iTerm2 default profile export
 
 ## Usage
@@ -78,7 +78,8 @@ commands, and no work skills, MCPs or plugins. Claude-only pieces live in
 `mcp/{base,unity-coplay,unity-anklebreaker}.json`. `clag` is a shell function in `~/.zshenv`
 that starts Claude with `CLAUDE_CONFIG_DIR=~/.claude-games` and
 `--mcp-config base.json unity-coplay.json --strict-mcp-config`; `clag unity-ab` swaps the Unity
-MCP for AnkleBreaker. Log in once (`clag` → `/login`), then
+MCP for AnkleBreaker. Under `~/projects/video`, `clag` also loads the nearest `.mcp.json`
+automatically, so launch it from the video project directory. Log in once (`clag` → `/login`), then
 `agents/work/claude/bootstrap-home.sh ~/.claude-games --settings agents/games/claude/settings.json --plugins-only`
 installs the plugin set (no work MCPs are copied). In T3 Code the same home is the `claude_games`
 provider instance in `~/.t3/userdata/settings.json`; it passes the MCP files through `launchArgs`

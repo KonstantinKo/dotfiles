@@ -37,3 +37,6 @@ Standalone experiments live under `~/projects/video/labs/`; Backlot productions 
 `~/projects/video/backlot/`. Run `make` after adding a Git-backed video project to link
 the general skills into its `.agents/skills/` and `.claude/skills/`. Backlot projects also
 receive the Backlot skills. Both harnesses use the same signed-in `higgsfield` CLI account.
+
+Private `devEnv` skills live in `projects/devEnv/.agents/skills/` and are linked into that
+project by `install.sh`; tracked skills remain in the project repository.

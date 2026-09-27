@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "higgsfield-use-blender": {
+    "blender-background": {
       "command": "/opt/homebrew/bin/node",
-      "args": ["/Users/konstantin/.higgsfield/blender-mcp/node_modules/fnf-blender-mcp/dist/index.js"],
+      "args": ["/Users/konstantin/.local/share/blender-background-mcp/node_modules/fnf-blender-mcp/dist/index.js"],
       "env": {
         "BLENDER_EXECUTABLE": "/Applications/Blender.app/Contents/MacOS/Blender"
       }

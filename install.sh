@@ -98,7 +98,7 @@ link_files() {
 }
 
 # --- shell & git ---
-for f in .zshrc .bashrc .profile .npmrc .gitconfig; do
+for f in .zshenv .zshrc .bashrc .profile .npmrc .gitconfig; do
   safe_symlink "$DOTFILES/$f" "$HOME/$f"
 done
 
@@ -278,6 +278,9 @@ for link in "$VIDEO_ROOT/CLAUDE.md" "$VIDEO_ROOT/labs/CLAUDE.md" "$VIDEO_ROOT"/l
 done
 
 # --- project-local instruction overrides ---
+if [ -d "$HOME/projects/devEnv" ]; then
+  link_children "$DOTFILES/projects/devEnv/.agents/skills" "$HOME/projects/devEnv/.agents/skills"
+fi
 safe_symlink "$DOTFILES/projects/platform/CLAUDE.md"       "$HOME/projects/platform/CLAUDE.md"
 safe_symlink "$DOTFILES/projects/platform/CLAUDE.local.md" "$HOME/projects/platform/CLAUDE.local.md"
 safe_symlink "$DOTFILES/projects/obsidian/spse/AGENTS.md"  "$HOME/projects/obsidian/spse/AGENTS.md"

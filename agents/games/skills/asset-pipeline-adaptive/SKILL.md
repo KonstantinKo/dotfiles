@@ -1,0 +1,66 @@
+---
+name: asset-pipeline-adaptive
+description: Produce or adapt editable 3D game assets from references using coupled shape-and-surface trials and independent visual comparisons. Use for asset production or workflow design, not continuing whole-world reconstruction.
+---
+
+# Adaptive asset production
+
+Build the requested asset by improving a retained whole-asset candidate against the original reference. Spend the next unit of work on the largest remaining visible failure, with shape and surface both available to change. A stage completed earlier is not a constraint on later corrections. Discussion-only requests do not authorize asset generation.
+
+## Establish the target and contract
+
+Read project authority and search the existing asset/material library before building. Inspect compatible candidates' actual shape, bindings and provenance. Reuse strong components as well as whole assets; record why a promising candidate cannot fulfill the request.
+
+Write a compact durable request: ID/revision, purpose, reference paths and hashes, ownership/output paths, dimensions/units/axes/pivot, important sides and viewing distance, motion or mating requirements, requested source/export/runtime endpoint, acceptance target and actual time/cost/storage limits. Mark inferred specifications. Source-only changes the endpoint, never the artistic standard. Continue independent work if a critical interface dimension needs clarification.
+
+Use a sufficient supplied concept directly. For an asset inside a scene image, inspect both scene and identified region, preserve contextual scale and attachments, and retain the original plus crop coordinates if used. Derive only a consequential missing view, with the actual image attached through the tool's reference input. Derived images clarify; they do not supersede visible original features. With no suitable reference, generate and inspect a concept against the brief before construction. Use relevant image-generation/tool skills. Keep prompts short and reference-led; do not invent surface coverage ratios or a material recipe absent from the image.
+
+Select a few observable identity requirements: silhouette/negative spaces, characteristic construction, surface character and functional relationships. Record explicit departures required by the brief. Fix comparison framing, object size and plausible reference-like lighting; include a second view when the intended use exposes it. Distinguish fidelity to the reference, appeal/craft and technical/function validity. Neither polish nor technical validity can cancel a defining discrepancy.
+
+## Establish an incumbent early
+
+Choose the most promising available route from reuse, reference-guided generation, explicit construction, sculpting, or a combination. Verify current capabilities rather than assuming a provider or procedural method fits an asset category. Articulation, hollows and exact interfaces need an early feasibility check. Scope that check to actual requirements.
+
+Create a cheap whole-asset candidate with the main masses and a straightforward appearance baseline. It may be coarse, but render it before detailed finishing. Preserve it as the first incumbent, not an accepted asset. A rich raw mesh or texture must earn retention by inspection; downstream shader complexity is not a default rescue route.
+
+Identify the largest uncertainty likely to invalidate repeated work. On a real representative component, test the relevant shape, edge/contact and surface together at the final viewing scale. Keep its surrounding masses visible in the whole-asset render. A disconnected flat swatch cannot prove a curved, fitted or layered feature. For appearance, first inspect a usable source or a simple reference-guided texture and direct binding; add channel derivation or procedural treatment only for an observed deficiency. A color image is not measured PBR. Surface patterns, UV scale/direction and reflectance must be coherent; visible thickness/occlusion may require geometry.
+
+If the route is genuinely uncertain, audition one plausible alternative on this same component before replication. State the visual difference that would justify switching. Do not benchmark every method. Skip the alternative when evidence already supports the route. The resulting comparison decides what to extend across the asset, not a permanent shape/material stage approval.
+
+## Allocate work by visual gain
+
+Maintain only the top three unresolved discrepancies, described by image location and visible effect. Before each trial choose one intervention with the highest credible gain per effort. Prioritize a defining or functional failure over optional polish regardless of score. Otherwise consider prominence at intended viewing distance, how much of the appearance it affects, confidence that the intervention addresses its cause, and estimated effort/cost. Use ordinal judgments, not invented numerical precision.
+
+State the hypothesis, changed region/layer, expected visible gain, bounded work/time allowance, and rollback revision. The intervention can replace geometry, a source texture, mapping, shading, or an entire component. Coupled edits are appropriate when the observed relationship needs both; explain that dependency. Keep other variables stable when diagnosing an uncertain cause. A camera repair is a verification repair, not artistic progress. Tool retries consume the same trial allowance; set a reasonable finite allowance even when the caller supplied no time limit.
+
+Where several parts share a material family, prove and reuse one source/treatment with suitable local mapping and wear. Create separate sources only for visibly different material behavior. Delegate a bounded family or component when useful; do not create one agent or one texture pack for every material slot by default. Apply the proven treatment across the whole candidate, then render the whole asset again: a beautiful region can produce globally wrong material distribution or repetition.
+
+Compare each challenger with both the original reference and incumbent under the same presentation. Retain useful partial work separately, but promote the challenger only for an observable whole-asset gain with no new defining/function failure. When uncertain, keep the incumbent and choose a discriminating observation before another treatment. Do not replace it merely because the challenger is newer, more detailed, or expensive.
+
+## Independent decisions and escape
+
+Use actual independent agents for the initial route-proof decision, consequential challenger promotion, and final review. One review may cover multiple related edits within a bounded trial. Give a judge the original reference/brief, comparable actual renders of incumbent and challenger, required views, and functional constraints. Do not supply the builder's preferred winner, expected score, or prior verdicts. Ask it to select incumbent/challenger/neither, identify the largest remaining errors and major quick wins, and explain observed global gain or regression. Record the exact revisions, actual judge identity/model and raw verdict; do not silently substitute a self-review. Self-checks still catch routine defects before consuming independent review.
+
+Follow the project's model policy; record requested versus available models. Schedule within the actual host capacity, counting root and workers: serialize specialist tasks or have the parent broker a judge slot. If capacity is unavailable, send a durable review checkpoint and ready-to-dispatch brief; use native waits for the brokered verdict. If an assignment boundary ends the worker turn, explicitly hand the unresolved dependency to the parent, which must resume the same request rather than treat the checkpoint as completion. Never claim async execution without a running worker, or pretend another role in your own answer is an independent judge. If independent review tools are unavailable, continue useful authorized work and report that review gate as unmet.
+
+Count an unproductive trial whenever the independent comparison finds no material whole-asset gain, or a bounded trial exhausts its allowance without usable evidence. Track both consecutive and lifetime counts in durable status; reset only the consecutive count after an independently verified material whole-asset gain. A local improvement that leaves overall resemblance unchanged counts as unproductive. Trigger escape after two consecutive unproductive trials or four lifetime unproductive trials, whichever comes first. Method/provider/seed changes do not reset counts.
+
+At escape, use a fresh Astra judge under this workflow's explicit escape policy. Supply original evidence, the strongest incumbent and failed trial evidence, costs/time and remaining constraints. It decides either a specific materially different method with a falsifiable proof and bounded allowance, or an incomplete stop with the best candidate and unmet criteria. The escape grant is at most two further bounded trials, fixed in durable state; do not reset it or summon replacement judges for unlimited extensions. Success means meeting the target, not obtaining another small gain. If that grant ends below target, return incomplete for the parent/user's next scoped decision. If the requested model is unavailable, report it and seek the parent's model decision rather than silently substituting. A real paid ceiling stops paid calls immediately; local work may continue within remaining scope.
+
+## Acceptance and export
+
+For subjective review, 100% means the reference's asset quality; greater than 100% means a better-crafted asset, not greater mathematical similarity. Report fidelity and appeal/craft separately, with uncertainty; no arithmetic average hides a fidelity failure. Use the request's target; absent a specified target, require both at least 80%, no defining errors, and no major quick wins. A major quick win is a substantial visible improvement plausibly achievable within one ordinary bounded trial, not an unlimited wish list. A score is a review judgment, not an objective measurement.
+
+Keep technical/function checks separate and blocking when required. Deliver editable source plus GLB when requested. Reimport the actual export, inspect its appearance and measure dimensions/axes/pivot, part and material bindings, mesh/texture counts and required interfaces or motion envelopes. Check only relevant requirements; names and bounding boxes do not prove a fitted interface. Verify runtime appearance/budgets in the target engine for runtime delivery. A source render cannot prove an export or runtime endpoint.
+
+Have a fresh final judge inspect the original and actual delivered endpoint evidence, without the builder's claimed score. It reports fidelity, appeal, defining errors/quick wins and pass/revise/incomplete against the unchanged contract. A final failure returns to the same counters and remaining trial allowance; it does not start a new loop. Never label a below-target candidate ready because files export successfully.
+
+## Durable publication and resources
+
+Use compact request, status, trial/review and result records in the owned asset directory. After each bounded trial update the retained revision, latest previews, top discrepancies, counters, costs and next action before long reporting. Update any assigned review artifact then; when a parent owns the shared dashboard, send it these exact paths and state. Checkpoint messages are working/review, not final-ready. A worker may end its turn at a checkpoint; that does not finish the asset request.
+
+For paid calls, verify exact current pricing/parameters and session authorization. Reserve estimated cost including outstanding/uncertain calls within shared limits; persist input hashes, endpoint/settings/seed and job ID. Reconcile a timed-out job before resubmission. Record confirmed/estimated/unknown charges distinctly, provider wait and measured local/total time, actual model when exposed, and retained bytes. Do not invent token/compute metrics unavailable from the host.
+
+Retain the incumbent, unreproducible/paid inputs, necessary editable dependencies, scripts/settings/provenance, final exports and compact review evidence. Prune only owned reproducible intermediates after verification. Avoid duplicate material packs or full binary histories; obey project storage/Git conventions. Record third-party licenses and source URLs, and generated prompts/settings/costs in the project's asset provenance record or assigned handoff.
+
+Publish an immutable result revision with request/spec and reference hashes, artifact paths/hashes, endpoint achieved, measured checks, reviews, provenance/costs and explicit limitations. Prepare files in an owned temporary output directory and verify them before publishing the result as ready; this is artifact preparation, not Git staging. Refuse publication against changed specs or lost ownership. Worker owns candidates; parent owns catalog/scene integration unless explicitly delegated. Keep worker-reviewed, requester-accepted and user-accepted distinct, and make later failed review visible for that exact revision. Durable state survives missed notifications; native messages alone do not establish a persistent queue service.

@@ -1,6 +1,6 @@
 ---
 name: blender
-description: Use for Blender work in game or video projects, including live scene editing, headless Python scripts, renders, and model exports.
+description: Use when creating or editing Blender scenes, renders, or exports in game or video projects.
 ---
 
 # Blender
