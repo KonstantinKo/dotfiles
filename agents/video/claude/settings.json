@@ -10,6 +10,16 @@
             "timeout": 60
           }
         ]
+      },
+      {
+        "matcher": "mcp__higgsfield__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/dotfiles/agents/video/claude/hooks/confirm-higgsfield-mcp.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }

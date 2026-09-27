@@ -11,8 +11,12 @@ except Exception:
 cmd = (data.get("tool_input") or {}).get("command") or ""
 spend = re.compile(r"(?<![\w/.-])backlot\s+(gen|tts|captions|batch|recover)\b")
 hf = re.compile(r"(?<![\w.-])(?:higgsfield|higgs|hf)(?:\s+--(?:json|no-color))*\s+(?:(?:generate|gen)\s+(?:create|workflow)|(?:marketplace-cards|product-photoshoot|soul-id)\s+create|(?:marketing-studio|marketing|ms)\s+dtc-ads\s+generate)\b")
-if hf.search(cmd):
-    segment = next((s for s in re.split(r"&&|\|\||;|\|", cmd) if hf.search(s)), cmd).strip()
+hf_any = re.compile(r"(?<![\w.-])(?:higgsfield|higgs)(?=\s|$)")
+hf_read = re.compile(r"(?<![\w.-])(?:higgsfield|higgs)(?:\s+--(?:json|no-color))*\s+(?:account\s+(?:status|transactions)|model\s+(?:list|get)|workflow\s+(?:list|get)|preset\s+list|voices\s+list|generate\s+(?:cost|list|wait)|workspace\s+(?:list|current)|auth\s+status|version|help)\b")
+segments = [s.strip() for s in re.split(r"&&|\|\||;|\|", cmd)]
+unsafe_hf = next((s for s in segments if hf.search(s) or (hf_any.search(s) and not hf_read.search(s))), None)
+if unsafe_hf:
+    segment = unsafe_hf
     reason = f"Higgsfield credit spend requires an exact cost estimate and explicit approval for this call.\n{segment}"
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask", "permissionDecisionReason": reason}}))
     sys.exit(0)

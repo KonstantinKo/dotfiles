@@ -6,6 +6,10 @@
       "env": {
         "BLENDER_EXECUTABLE": "/Applications/Blender.app/Contents/MacOS/Blender"
       }
+    },
+    "higgsfield": {
+      "type": "http",
+      "url": "https://mcp.higgsfield.ai/mcp"
     }
   }
 }

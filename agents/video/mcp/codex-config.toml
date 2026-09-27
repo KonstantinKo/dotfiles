@@ -6,3 +6,9 @@ tool_timeout_sec = 300
 
 [mcp_servers.higgsfield-use-blender.env]
 BLENDER_EXECUTABLE = "/Applications/Blender.app/Contents/MacOS/Blender"
+
+[mcp_servers.higgsfield]
+url = "https://mcp.higgsfield.ai/mcp"
+default_tools_approval_mode = "prompt"
+startup_timeout_sec = 30
+tool_timeout_sec = 300

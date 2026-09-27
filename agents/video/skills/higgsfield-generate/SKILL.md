@@ -16,3 +16,5 @@ The `higgsfield` CLI at `~/.local/bin/higgsfield` uses this Mac user's signed-in
 5. Record the result and actual credit charge in the project's `ASSETS.md` and `NOTES.md` when those files exist.
 
 Read-only discovery and local previews can proceed without a paid call. Treat video, image, audio, 3D, and marketing generation through Higgsfield as paid unless a current cost estimate proves otherwise.
+
+For Higgsfield's full CLI workflow coverage, read the relevant part of [the pinned official generate guide](references/official/SKILL.md) and its linked references. That guide covers model selection, image/video/3D/audio generation, Marketing Studio, workflows, and Virality Predictor. The approval procedure above takes precedence over any immediate-generation instruction in the upstream guide.
