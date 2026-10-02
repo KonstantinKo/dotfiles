@@ -25,5 +25,7 @@ Settings: `generate_audio: false` (music-only films; also 1.5x cheaper), `cfg_sc
 - Start and end frames must be similar, or Kling inserts a cut.
 - Elements: `frontal_image_url` + 1–3 `reference_image_urls`; they must appear in the reference frames; elements double the per-second price.
 - Motion-control: don't describe the action in the prompt; the video drives it.
+- When text controls motion, describe visible action and the camera's relation to the subject, including its landing frame. For motion-control, keep video-driven action out of the prompt and follow the selected orientation mode.
 - Faces: no documented block on realistic faces; you need rights to the likeness. Smoke-test one face element (3 s, audio off) before relying on it.
 - Generated speech is English or Chinese only on fal.
+- For complex blocking, acting, stylized shots, or repairs, read the [shared shot-direction reference](../higgsfield-seedance-prompt-builder/references/shot-direction.md).

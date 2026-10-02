@@ -1,26 +1,31 @@
-# Seedance 2.5 "likenesses of real people" filter: research (2026-09-24)
+# Seedance 2.5 "likenesses of real people" filter: research and tests (updated 2026-09-28)
 
 Legend: **[verified]** read in primary/official doc; **[reported]** third-party blog/test; **[uncertain]** weak or single source.
 
 ## 1. How the filter works
 
-- **ByteDance-side, not fal-side.** The same rejection on fal surfaces as `content_policy_violation` / `partner_validation_failed` ("partner" = upstream provider). [reported] https://masonry.so/blog/introducing-minimax-h3-max
+- **fal's rejection appears to come from upstream moderation.** In our fal tests it surfaced as `content_policy_violation` / `partner_validation_failed` ("partner" = upstream provider). [reported] https://masonry.so/blog/introducing-minimax-h3-max
   - fal's AUP says providers "may apply their own safeguards"; fal has no documented face filter of its own. [verified] https://fal.ai/legal/acceptable-use-policy
 - **The official BytePlus rule:** "Seedance 2.5 and Seedance 2.0 series models do not support directly uploading reference images/videos that contain real human faces." [verified] https://docs.byteplus.com/en/docs/ModelArk/2608626
-  - The same rule applies on Volcengine, BytePlus, CapCut/Dreamina and resellers. [reported] https://ruoqijin.com/blog/seedance-access-and-face-policy, https://aividpipeline.com/blog/seedance-real-human-face-rules-2026
-- **What it blocks:** any *photorealistic human face*, whatever its origin. It is not limited to celebrities or matches against a database of real people.
+  - Other providers may apply the model policy differently; the BytePlus rule and fal errors do not establish how Higgsfield handles inputs.
+- **fal test results:** fal Seedance 2.5 rejected photoreal human faces, including AI-generated images; this does not establish identical filtering on other providers.
   - Tests on fal Seedance 2.5 on 2026-09-14 rejected an AI-generated photoreal face sheet, a frame from Seedance's own output and Seedance's own mp4.
   - The same tests accepted a headless wardrobe crop and a stylised 3D/cartoon face. [reported] https://github.com/recoupable/skills/pull/145
   - A separate test found that a purely *generated* portrait was also refused on fal Seedance 2.5. [reported] https://masonry.so/blog/introducing-minimax-h3-max
-  - This matches our result: the wide shot with tiny faces passed and the close face sheets failed. The filter looks for face detections above some size or confidence threshold. [uncertain: the threshold is undocumented]
+  - In our fal tests, a wide shot with tiny faces passed while close face sheets failed. This suggests a detection threshold, but its behavior and threshold are undocumented. [uncertain]
 - **Minors:** no source documents a *separate* minor-specific gate for Seedance reference images. One secondary source says child-looking uploads get "stricter review". [uncertain] https://www.seedance.tv/blog/seedance-safety-filters-real-faces-image-prompts-2026
-  - The generic real-face block is enough to explain our failure.
-- **Why creators' photoreal sheets pass:** ModelArk "trusts" certain face-containing outputs as inputs:
+  - The generic real-face block is enough to explain our fal failure.
+- **Documented BytePlus ModelArk exception:** ModelArk "trusts" certain face-containing outputs as inputs:
   - Seedance 2.x videos and their last frames
   - **Seedream 5.0 lite text-to-image** images
   - Conditions: generated **on the same ModelArk account within 30 days**, unedited and not re-compressed. Cross-platform and cross-account use is not trusted. [verified] https://docs.byteplus.com/en/docs/ModelArk/2608626
-  - Platforms such as Higgsfield, Dreamina and similar probably use comparable trust for images generated on the platform. [uncertain]
-  - Via fal this trust does not apply. Our sheets come from another pipeline, so they are untrusted.
+  - Those ModelArk conditions are provider-specific and do not explain Higgsfield's behavior.
+
+## Higgsfield S012 test and current project workflow
+
+- On 2026-09-28, Higgsfield Seedance 2.5 job `6d039779-7745-4eed-a686-d017ad150b6e` accepted local uploads of fal-generated photoreal Tamino and Stoyan reference sheets/composites, approved fal-generated start/end images, and a local Blender previz video. The input media were supplied as local files, not as Higgsfield job IDs. A job ID was not necessary for this observed case.
+- The reason for acceptance is unknown. The result does not establish that raw photographs or other photoreal face references will pass, or identify whether provider moderation, file handling, or another factor explains it.
+- For this Backlot project, use Higgsfield Seedance 2.5 for upcoming shots and submit the reference sheets, approved start/end images, and Blender previz as local files. Treat S012 as evidence for this specific input route, and record outcomes for materially different inputs. Follow the paid-call approval steps in the Higgsfield generation skill.
 
 ## 2. Consent path: "authorized real-person assets" (BytePlus ModelArk)
 
@@ -73,7 +78,7 @@ Legend: **[verified]** read in primary/official doc; **[reported]** third-party 
 - **Grok Imagine Video 1.5 (reference-to-video, 1-7 refs):** no documented real-face gate on fal. https://fal.ai/models/xai/grok-imagine-video/v1.5/reference-to-video
   - xAI tightened moderation after the 2026 deepfake scandal. One source claims anything resembling a minor is blocked outright. [uncertain, NSFW-focused source] https://www.sloane.world/guides/grok-imagine-nsfw-content-policy-2026, https://en.wikipedia.org/wiki/Grok_sexual_deepfake_scandal
 - **FLUX 3 video:** no public real-face or minor reference policy found. [uncertain] https://bfl.ai/blog/flux-3-video
-- **Suggested test order for photoreal family shots:**
+- **Suggested fal fallback order if a photoreal family shot needs an alternate model:**
   1. MiniMax H3 Max
   2. Kling
   3. FLUX 3

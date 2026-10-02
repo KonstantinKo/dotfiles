@@ -30,8 +30,9 @@ Use the pinned images as keyframes of one continuous shot.
 
 ## Rules
 - Plain directive prose; order: camera/shot, subject, action, setting, light/look, audio. 5–10 beats max.
-- One framing term + one movement + one action per beat. Avoid roll, portal, morph effects.
+- One framing term + one movement + one action per beat. Avoid unrequested roll, portal or morph effects. For a requested effect, describe its visible transition and landing state, keeping it consistent with any pinned images.
 - No negative prompts; prose guardrails work ("locked-off", "no camera shake", "no on-screen text").
 - Multi-shot in one clip: `SHOT ONE: ... HARD CUT. SHOT TWO: ...` with contrasting shots.
 - Extends drift after about 3 hops; restart from the last clean clip.
 - Real people: benign, consented portrayals are allowed; don't present the fantasy as real footage.
+- For complex blocking, acting, stylized shots, or repairs, read the [shared shot-direction reference](../higgsfield-seedance-prompt-builder/references/shot-direction.md).

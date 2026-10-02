@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resolve Localization"
+  short_description: "Translate and reframe editable Resolve projects"
+  default_prompt: "Use $davinci-resolve-localization to adapt my timeline for another language and aspect ratio."

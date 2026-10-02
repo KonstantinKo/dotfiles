@@ -1,6 +1,6 @@
 ---
 name: html-communication
-description: Use when the user asks to communicate through an HTML document; don't use for HTML that ships as product code.
+description: Use when the user asks to communicate through an HTML document/artifact; don't use for HTML that ships as product code.
 ---
 
 # HTML Communication

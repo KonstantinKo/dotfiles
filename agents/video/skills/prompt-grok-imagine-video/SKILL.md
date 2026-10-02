@@ -22,5 +22,7 @@ Sources and details: `references/research.md` (researched 2026-09-24).
 - Write events in the order they happen; late actions often get dropped.
 - One action and one camera move per clip; static is the default.
 - Image-to-video: describe only what changes, not what's already in the image.
+- If the camera moves, describe its visible landing target within the short prompt budget; a requested ending is direction, not a pinned last frame.
 - Always include a `Sound:` line.
 - Faces: realistic and consented real-person references are not forbidden, but the filter is strict since January 2026 and reportedly blocks anything resembling a minor. Blocked requests are still billed: run one cheap 480p probe per sensitive reference.
+- For complex blocking, acting, stylized shots, or repairs, read the [shared shot-direction reference](../higgsfield-seedance-prompt-builder/references/shot-direction.md).

@@ -4,14 +4,14 @@
     "MCP_TOOL_TIMEOUT": "900000"
   },
   "permissions": {
-    "defaultMode": "bypassPermissions"
+    "defaultMode": "auto"
   },
   "model": "fable",
-  "outputStyle": "Concise",
   "statusLine": {
     "type": "command",
     "command": "bash \"/Users/konstantin/.claude-games/statusline.sh\""
   },
+  "outputStyle": "Concise",
   "effortLevel": "high",
   "tui": "fullscreen",
   "autoMemoryEnabled": false,

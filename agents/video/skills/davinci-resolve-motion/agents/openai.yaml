@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resolve Motion Design"
+  short_description: "Build editable Fusion motion graphics and rigs"
+  default_prompt: "Use $davinci-resolve-motion to build editable Fusion motion graphics from my reference."

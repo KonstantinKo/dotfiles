@@ -3,106 +3,169 @@ name: shorts-script
 description: Use when writing or evaluating YouTube Short scripts
 ---
 
-# YouTube Shorts scripts
+# Shorts scripts
 
-Shorts autoplay in a feed, so the viewer never chose the video. Their only decision is stay or
-swipe, and the first frame does the job a thumbnail does on long-form. Every rule below follows
-from that.
+Aim for a Short the intended audience chooses to watch, keeps finding worthwhile, and feels
+satisfied by. Optimize for the user's goal: reach, entertainment, understanding, useful action,
+or an ongoing audience relationship. Do not promise virality.
 
-**One-line model:** write the last line first, then a one-second hook that promises it; link
-every beat with "but" or "so", never "and then"; cut the moment the payoff lands.
+**Working model:** a reason to start → worthwhile progression → a satisfying result.
+These are viewer needs, not mandatory sections or a fixed timeline. A hook can be visual;
+progression can be a demonstration; satisfaction can be recognition rather than a twist.
 
-## Structure: Hook → Foreshadow → Narrative → Twist
+## Choose the angle and form
 
-| Part | Time (≈34 s Short) | Job |
-|---|---|---|
-| Hook | 0–3 s | Stop the thumb. Open a curiosity gap and promise to close it. |
-| Foreshadow | 3–7 s | Name the conflict and the finish line, so the viewer knows what they are waiting for. |
-| Narrative | 7–30 s | 3–4 beats, each caused by the last ("but" = complication, "so" = consequence). |
-| Twist | last 2–4 s | Pay off the hook's promise plus one detail nobody predicted. Then cut. |
+Infer from the brief: audience and prior knowledge, topic, intended reward, platform(s),
+presenter/visual format, production constraints, and any requested duration. Ask only for
+missing information that would materially change the script. Do not turn an example niche,
+duration, or creator into a standing preference.
 
-### Hook
-- Works on mute: the first frame alone must make sense. ≤ 3 objects, centered.
-- Shows the payoff, the disaster, or the odd object in frame 1.
-- 5–10 spoken words. No greeting, no "today I", no context-setting.
-- Familiar setting with one unexpected change (Hoyos). Concrete beats abstract: a number, a
-  price, a time, a named thing.
-- Loaded words help when true: banned, free, $1, secret, cheap, nobody, only.
-- Families: result-first, mistake, challenge with a constraint, one-change, impossible fact.
-  Pick one per Short.
+- Find the specific attraction: a useful answer, surprising question, relatable situation,
+  unusual task, character conflict, transformation, or sensory experience. A broad topic
+  without a reason to watch needs a sharper angle before polished wording.
+- Decide what makes the video satisfying before drafting. For factual material, establish the
+  supported answer and its limits; for comedy or a story, identify the emotional payoff.
+  Writing the last line first is useful when the story builds toward it, not a prerequisite.
+- Respect a requested length. Otherwise propose a provisional duration from the necessary
+  beats and delivery, and revise after a read-through. No universal optimum: brief and extended
+  Shorts are both valid. YouTube supports eligible Shorts up to three minutes; verify current
+  platform limits when delivery depends on them. A maximum is not a target.
 
-### Foreshadow
-One or two lines with a rival or obstacle, a constraint, and a finish line.
-Example (Hoyos): "Chick-fil-A has the best sandwiches, but I'm not paying $6. So I'll make one
-for $1 and compare them." Test: after 7 s, can a viewer say what the ending will decide?
+Choose or combine a structure that serves the material:
 
-### Narrative
-South Park rule via Colin & Samir: if two beats join with "and then", the story is dead. Each
-beat solves a problem and creates the next one. Every "but" is a moment where it might fail.
-Steps listed as "also / and / next" are the most common failure.
+| Form | Useful progression |
+|---|---|
+| Narrative or challenge | Hook → stakes/finish line → complications and consequences → payoff; optional twist |
+| Explanation or investigation | Question or answer → evidence/mechanism → implication or changed understanding |
+| Demonstration or transformation | Task/result → meaningful stages → completed result and what it shows |
+| Prediction, experiment, or interview game | Clear question/rules → clues or tests → resolution |
+| Character comedy or dialogue | Recognizable roles/goals → friction or escalation → comic/emotional payoff |
+| Process or sensory piece | Immediate appeal → visible development, craft, or satisfying variation → closure |
 
-### Twist and ending
-- Payoff first, then a twist on top: "satisfied, but surprised" (Hoyos). Funniest line,
-  biggest reveal, or warmest moment goes last.
-- Nothing after the payoff: no outro, no "subscribe", no recap.
-- Optional loop: the last line flows grammatically into the first, so rewatches feel seamless.
+### Established pathway: compact surprise story
 
-## Language and length
-- 5th-grade reading level. Short sentences, spoken words, no jargon.
-- Draft, then cut ~30%. Delete "basically", "so what I did was", "you know", hedges.
-- Target ≈ 30–40 s (Hoyos aims at 34 s; Galloway saw strong 40 s+ Shorts when they held
-  attention). As long as the story needs, never padded.
-- ≈ 2.5–3 spoken words per second, so 34 s ≈ 85–100 words.
-- Change something visual every few seconds: angle, text, B-roll, prop.
+For a challenge, experiment, or anecdote with a clear finish line and a satisfying surprise,
+use the **hook → foreshadow → narrative → twist** playbook. When no form is specified and the
+premise fits, this is a concrete starting choice. Write the ending first, draft three hooks,
+build 3–4 causal beats, and finish on the payoff.
 
-## Writing a script
-1. Ask for or infer: topic, audience, channel format, target length, on-camera vs voice-over.
-2. Write the ending (payoff + twist) first. No clear ending means a topic, not a Short yet;
-   say so and propose angles.
-3. Write three hooks from different families.
-4. Foreshadow line, then 3–4 but/so beats as bullets, then full lines.
-5. Count words against the target length and cut.
-6. Output a table: `Time | Beat | Line | Shot`, then the three hook variants with the one you
-   recommend and why. Mark any facts that need checking.
+Read [the compact narrative playbook](references/compact-narrative.md) when writing or
+evaluating this form. It contains the approximately 34-second worked structure, first-frame
+composition, hook families and word targets, foreshadowing example, but/so technique, editing
+pass, output format, and review checklist. Apply those defaults within this pathway; preserve
+the user's requested length and voice. The other forms above remain equally available when
+they better serve the material. Do not invent conflict or force a twist to fit this one.
 
-## Evaluating a script
-Score each item pass / weak / fail, quote the offending line, and give a concrete rewrite for
-every weak or fail. Lead with the single biggest fix.
+## Earn attention and keep delivering
 
-1. First frame works on mute and shows the payoff or something strange.
-2. Hook ≤ 10 words, no greeting, concrete detail, opens a gap.
-3. By ~7 s the viewer knows what the ending will decide.
-4. No "and then" joins; each beat raises risk or answers the last one.
-5. Every word is understandable by a 10-year-old; no filler.
-6. Length fits the story; word count matches the target duration.
-7. The ending pays off the hook's exact promise, plus a twist.
-8. Nothing after the payoff.
-9. (Optional) Last line loops into the first.
-10. Visual change every few seconds; shot noted for each line.
+**Opening.** In a feed, the first image, action, sound, and words carry the initial appeal.
+Make the subject and reason to care quickly legible to the intended viewer. Prefer a concrete
+detail, result, question, or situation over generic setup. Match the promise to what the video
+actually delivers. A curiosity gap is one option; immediate usefulness or recognition can work
+too. Check the opening without sound where relevant and add visual context or captions if
+needed. There is no fixed word/object count. Keep greetings or familiar rituals only when they
+contribute to the experience; an established audience's patience is not a newcomer's baseline.
 
-## Reading results (when analytics are given)
+**Progression.** Each beat should develop information, expectation, visible progress, feeling,
+or the intended sensory experience. “But/therefore” is a useful story diagnostic, not a ban on
+chronology, lists, or procedural steps. Make the relationship between beats understandable.
+In longer scripts, deliver intermediate answers, discoveries, reactions, or results; expand
+substance rather than the introduction. Renew attention with a meaningful development, not a
+scheduled “but wait.”
 
-| Signal in YouTube Studio | Points at | Fix |
-|---|---|---|
-| Low Viewed vs. Swiped Away | Hook | First frame, first words |
-| Drop at ~5–8 s | Missing foreshadow | Name the finish line |
-| Steady slide mid-video | "And then" beats | Add a "but", raise stakes |
-| Sharp dip at one second | One dull or confusing moment | Cut or tighten that moment |
-| Drop in the last seconds | Payoff too early, or an outro | End on the payoff |
-| Retention above 100% | Loops | Keep; make the loop intentional |
+**Delivery and visuals.** Write speech and visible action together. Let a prop, comparison,
+screen recording, expression, or evolving diagram do work that narration would do poorly.
+Choose cuts when they clarify or sustain the experience; there is no required cut frequency.
+Allow time to inspect evidence, predict, laugh, or feel a reaction. Calm and energetic delivery,
+minimal and polished production can all work if they serve the premise. Do not copy a creator's
+surface style without understanding what makes their format rewarding.
 
-Compare against the channel's own average, not internet benchmarks; published percentages
-(for example "70–90% viewed is great") are rough guidance. Likes and comments say little about
-the script. Judge after a few thousand impressions, not the first hour, and across several
-Shorts rather than one outlier.
+**Language and timing.** Use natural spoken language at the audience's level. Explain essential
+unfamiliar terms; retain useful precision and justified uncertainty. Cut repetition and verbal
+clutter before removing evidence, necessary context, or qualifications. Estimate duration from
+the performer's pace plus action and pauses, then read aloud. If no pace is known, a word-rate
+estimate is provisional; don't rush delivery to rescue an overlong draft.
 
-**Iterate on formats, not duplicates.** Keep a proven format and change its content (a new $1
-food each time), and compare hook families across different Shorts. Re-posting near-identical
-versions of one idea wears out returning viewers and risks YouTube's repetitive-content rules;
-re-cut only a clear flop, occasionally, with a new first frame and first line.
+**Ending.** Fulfill the promise. An answer, application, completed transformation, reaction,
+joke, or emotional resolution may be the payoff. Finish that experience and remove a tail that
+adds nothing. A twist, loop, brief synthesis, or relevant CTA is optional; keep one only if it
+serves the goal without weakening satisfaction. A serial installment should give viewers
+something worthwhile itself, even if a larger question continues.
 
-## Sources
-Jenny Hoyos (Hook, Foreshadow, Narrative, Twist; 34 s; 5th-grade language), via Jay Clouse's
-interview and summaries. Paddy Galloway's 3.3B-view Shorts study ("treat your intro like a
-thumbnail"; Viewed vs. Swiped Away). Colin & Samir (but/therefore; Ernesto Perez's Stop, Hook,
-Payoff). YouTube's Shorts team on Creator Insider and YouTube's engaged-views explainer.
+## Draft and deliver
+
+1. Set the angle, intended audience reward, and provisional structure/duration. Keep the
+   explanation brief; provide alternative angles only when choosing one would be useful.
+2. Outline the necessary beats and what the viewer sees or hears. For unscripted interviews or
+   demonstrations, write prompts, rules, factual checkpoints, and shot needs instead of
+   inventing participants' answers or experimental results.
+3. Draft the script. Develop a few materially different openings when exploring hooks; choose
+   one whose promise the body can fulfill. Preserve the creator's voice.
+4. Check facts and read through for timing, comprehension, progression, and closure. Flag
+   unverified claims specifically. In education, check that examples/analogies teach the right
+   relationship and preserve necessary exceptions; attention alone does not establish learning.
+5. Follow the requested output format. Otherwise use `Approx. time | Speech/audio | Visual/action`,
+   with estimated duration, word count when spoken, and a short rationale. Include useful hook
+   alternatives or production notes without burying the usable script in analysis.
+
+## Adapt across platforms when requested
+
+Start with one self-contained script and a clean vertical master when the premise travels
+well. Keep essential meaning in the video; it should not require a caption or comment thread
+that exists only on one platform. Adapt titles, covers, captions, and the next action to each
+destination. A reply/remix, platform-specific reference, or trend may need a different opening
+or edit. Reusing long-form research is useful, but the Short still needs its own complete appeal.
+
+Keep text and key action clear of interface overlays, preserve editable captions/audio, and
+use audio permitted on every intended destination. Check current specifications when they
+affect execution. Do not assume platform-library music permissions transfer. Different cuts
+or shoots should solve an identified audience or execution problem; platform stereotypes alone
+are insufficient. A shared video can fit several platforms without performing equally on them.
+
+## Evaluate a script
+
+Lead with the biggest actionable improvement. Assess against the brief and chosen form, not
+the narrative template. For each material weakness, identify the line, beat, or missing visual,
+explain its effect on the viewer, and provide a concrete revision.
+
+- **Appeal:** Is the subject worth this audience's attention, and does the opening convey why?
+- **Promise:** Is it honest, comprehensible, and fulfilled?
+- **Progression:** Does the middle keep contributing, with enough orientation to follow it?
+- **Execution:** Do speech, visuals, performance, and timing support each other and fit the
+  production constraints?
+- **Satisfaction:** Does the ending deliver the intended reward without unnecessary delay or tail?
+- **Accuracy and fit:** Are claims supported, necessary limits retained, and the intended
+  length, audience, voice, and platform needs respected?
+
+Do not fail a script merely for lacking narration, a twist, a loop, rapid cuts, or a short runtime.
+Explain a concern in terms of the viewer's experience and the user's goal.
+
+## Learn from results when analytics are available
+
+Treat analytics as clues to inspect alongside the actual scene and audience context:
+
+| Signal | Possible explanations to investigate |
+|---|---|
+| Few choose to watch | Weak/unclear opening, unappealing topic, or audience mismatch |
+| Early departure | Promise mismatch, excessive setup, missing context, or confusing delivery |
+| Mid-video dip/decline | Repetition, confusion, slow progress, or the viewer already got what they needed |
+| Departure near the end | Completed payoff, weak ending, or unnecessary outro; not automatically a problem |
+| Rewatching/high percentage viewed | Enjoyment, detail worth revisiting, a loop, or confusion |
+
+Compare similar topics/formats, traffic sources, durations, and observation windows within the
+channel. Inspect average watch time and percentage viewed together; raw views alone and
+cross-platform totals can mislead. Check current metric definitions, especially views versus
+engaged views. YouTube also describes satisfaction signals, so do not dismiss likes outright.
+Use shares, saves, relevant follows, conversions, or signs of understanding according to the goal.
+
+Test a clear hypothesis across several distinct videos, changing one major choice where
+practical. Record topic, format, length, opening, and effort; topic and audience differences
+remain confounders. Avoid universal retention thresholds or decisions based on one early result.
+Repeat promising formats with fresh substance and keep production sustainable.
+
+## Evidence
+
+See [sources.md](sources.md) for creator interviews, counterexamples, and platform documentation
+when choosing or justifying an approach. Creator advice and successful examples are contextual
+evidence, not causal proof or algorithm rules. Test transferable mechanisms with the user's
+audience; an outlier establishes possibility, not a new default.

@@ -1,0 +1,16 @@
+---
+name: davinci-resolve-localization
+description: Adapt editable DaVinci Resolve projects for target languages and aspect ratios, including font coverage, text reflow, reading time, safe areas, and vertical recuts. Use for localization or regional versions inside Resolve.
+---
+
+# Localization in Resolve
+
+Use [davinci-resolve](../davinci-resolve/SKILL.md) for project access, state preservation, app or script execution, preview, and delivery. Work in Resolve Studio by default and follow the installed version's supported features. Keep the approved source timeline and make a clearly named language or aspect-ratio version. If the user asks for a paste-ready script, follow the shared [Lua handoff and execution contract](../davinci-resolve/references/execution-and-contract.md); script authorship does not require a connected Studio session. For complex Fusion animation, read [davinci-resolve-motion](../davinci-resolve-motion/SKILL.md). Use the shared [timeline frame conventions](../davinci-resolve/references/timeline-media-render.md) when mapping source and record positions.
+
+First establish the requested locales, output ratios, approved source, and whether the task includes translation, recutting, or only inspection. Map each text item from its source cue and record-frame range to the translated wording, destination version, changed segmentation or hold, and review status. Include visible text in titles and graphics. Preserve names and identifiers, keep numerical values and unit meaning intact while applying requested locale formats, and record unresolved wording instead of silently inventing it.
+
+Check the installed font family and style, glyph coverage, and actual rendered fallback for every script used. Fit natural translated wording before adjusting size or line breaks. Reflow at phrase boundaries, preserve hierarchy and the intended alignment anchor, and check optical centering after the text changes. Avoid disproportionate horizontal scaling and Latin tracking habits on scripts that do not use them. Choose available, appropriately licensed fonts; record substitutions that affect the design.
+
+Review each language at its actual pace. Do not assume one language's cue duration or line breaks will read well in another, or apply one reading-speed threshold to every script. Preserve speech and cut timing unless the requested adaptation calls for a recut; use word-level timing only when the source timing supports it. If timing changes are permitted, adjust phrase segmentation and holds around natural grammar. An explicit requirement to preserve timing locks cue frame boundaries and holds: fit concise, faithful wording within those intervals, and flag any cue whose meaning and readability cannot both fit. Watch cues over speech, pauses, zooms, and cutaways.
+
+For vertical or other aspect-ratio versions, recompose from the source: create the target frame, recrop or keyframe the shot per scene, then reposition and reflow text inside the new safe area. Smart Reframe can be a starting point; inspect subject tracking and every cut manually. Keep type and image proportions intact rather than stretching the source geometry. Check faces, key action, titles, and platform interface margins through motion, not just on a still.

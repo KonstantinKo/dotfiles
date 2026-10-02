@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resolve Animated Captions"
+  short_description: "Create editable captions, emphasis, and cutaways"
+  default_prompt: "Use $davinci-resolve-captions to design editable animated captions for my footage."

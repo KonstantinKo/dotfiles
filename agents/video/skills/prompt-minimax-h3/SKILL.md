@@ -28,5 +28,6 @@ Sound: <named sources>. No music, no dialogue, no on-screen text, no subtitles.
 - Audio is always generated: name real sounds or say "no music, no dialogue".
 - `disabled` expansion only for long prompts already in MiniMax's structured format (see references); skip `quality`.
 - Real faces: allowed with consent; moderation is stricter and false positives happen. If blocked, try a cleaner crop before rewording.
-- Portraits need a subtle camera move, otherwise they look like a still with motion painted on.
+- Portraits benefit from subtle motivated camera movement or visible subject acting; keep the camera static for an intentionally still portrait.
+- For complex blocking, acting, stylized shots, or repairs, read the [shared shot-direction reference](../higgsfield-seedance-prompt-builder/references/shot-direction.md).
 - Validation is late: check the output, not the submit response.

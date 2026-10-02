@@ -203,11 +203,12 @@ while read -r repo path; do
 done < "$A/games/vendor.txt"
 
 # --- commands / prompts ---
-COMMAND_DIRS=("${CLAUDE_HOMES[@]/%//commands}" "$OPENCODE/commands" "$CURSOR/commands" "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands")
+COMMAND_DIRS=("${CLAUDE_HOMES[@]/%//commands}" "${CODEX_HOMES[@]/%//prompts}" "$OPENCODE/commands" "$CURSOR/commands" "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands")
 for d in "${COMMAND_DIRS[@]}"; do clean_stale_links "$d"; done
 
 link_files "$A/work/commands"          "${CLAUDE_HOMES[@]/%//commands}" "$OPENCODE/commands"
 link_files "$A/work/claude/commands"   "${CLAUDE_HOMES[@]/%//commands}"
+link_files "$A/work/codex/prompts"     "${CODEX_HOMES[@]/%//prompts}"
 link_files "$A/work/opencode/commands" "$OPENCODE/commands"
 link_files "$A/work/cursor/commands"   "$CURSOR/commands"
 link_files "$A/games/prompts"          "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands"
@@ -278,9 +279,6 @@ for link in "$VIDEO_ROOT/CLAUDE.md" "$VIDEO_ROOT/labs/CLAUDE.md" "$VIDEO_ROOT"/l
 done
 
 # --- project-local instruction overrides ---
-if [ -d "$HOME/projects/devEnv" ]; then
-  link_children "$DOTFILES/projects/devEnv/.agents/skills" "$HOME/projects/devEnv/.agents/skills"
-fi
 if [ -f "$HOME/projects/platform/CLAUDE.global.md" ]; then
   safe_symlink "$HOME/projects/platform/CLAUDE.global.md" "$HOME/projects/platform/CLAUDE.md"
 fi

@@ -5,7 +5,9 @@ description: Use Higgsfield's signed-in CLI for image or video work in a video p
 
 # Higgsfield generation
 
-The `higgsfield` CLI at `~/.local/bin/higgsfield` uses this Mac user's signed-in Higgsfield subscription. Check `higgsfield --help` and subcommand help for current syntax. If authentication expires, use `higgsfield auth login --port 18765`; port 8765 conflicts with another local server here. Never expose login tokens or callback URLs.
+The `higgsfield` CLI at `~/.local/bin/higgsfield` uses this Mac user's signed-in Higgsfield subscription. Check `higgsfield --help` and subcommand help for current syntax. If authentication expires, use `higgsfield auth login --port 18765`; default port 8765 sometimes conflicts with another local server here. Never expose login tokens or callback URLs.
+
+Higgsfield media inputs support local paths/uploads as well as generation job IDs; see the pinned CLI guide for the accepted forms. In the S012 Seedance 2.5 test on 2026-09-28, local uploads of fal-generated photoreal character sheets and start/end images plus a local Blender previz were accepted, so job IDs were not needed for that case. The reason for acceptance remains unknown; raw photographs or materially different face references have not been established as accepted (see `prompt-seedance-2-5/references/likeness-filter.md`).
 
 ## Before each paid call
 

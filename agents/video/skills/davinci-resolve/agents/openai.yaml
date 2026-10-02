@@ -1,0 +1,4 @@
+interface:
+  display_name: "DaVinci Resolve"
+  short_description: "Edit projects and author Resolve automation scripts"
+  default_prompt: "Use $davinci-resolve to prepare the requested edit in Resolve Studio."
