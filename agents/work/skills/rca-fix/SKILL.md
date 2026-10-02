@@ -16,18 +16,15 @@ End-to-end production-incident handler. Do not skip phases.
 
 ## Hard constraints (every phase)
 
-Conventional commits, atomic (one logical change per commit), no AI attribution in commits or PR bodies, never `--no-verify`, never force-push, work in a git **worktree** (never the main checkout), branch `fix/<ticket-id>-<kebab-title>`, all ticket/PR text in English.
+Conventional commits, atomic (one logical change per commit), no AI attribution in commits, never `--no-verify`, never force-push, work in a git **worktree** (never the main checkout), branch `fix/<ticket-id>-<kebab-title>`, all ticket/PR text in English.
 
-## Verify commands (per repo)
+## Verification and publication
 
-| Repo | Verify |
-|---|---|
-| platform | `bun run verify` (or light: `bun run check && bun run lint && bun run test:unit`) |
-| backend | `npm run verify` (skip integration — needs `sst bind`/AWS; use `npm run typecheck && npm run lint && npm run prettier && npm run test:unit`) |
+Before verification or publication, read [the shared PR workflow](../feature-ship/references/pr-workflow.md). Apply repository checks, templates, existing authorization, attribution, and latest-head review requirements from that reference.
 
 ## Cold critic (used at two gates)
 
-Cross-vendor by default: from the worktree, pipe the material into `codex exec --sandbox read-only -` (prompt + material via stdin; read-only — it must never write). codex only runs inside a trusted git directory — if the worktree isn't trusted ("Not inside a trusted directory"), run from the main checkout instead and pipe the diff in. If codex is unavailable or errors, fall back to `claude -p --permission-mode plan --model claude-sonnet-5` (different model than the Opus/Fable default that wrote the fix). Always prompt adversarially: find what was rationalised away, attack the weakest assumption, and say "no substantive objections" if there are none — do not invent findings.
+At both plan and diff gates, read [cold-critic selection](../feature-ship/references/cold-critic.md). Select by the vendor of the material’s actual authors and report whether the review was cross-vendor or an independent fallback.
 
 ## Orient (graphify — optional, only if a graph already exists)
 
@@ -40,15 +37,15 @@ Map, not truth: confirm hot files by reading them (edges tagged `EXTRACTED` = re
 
 ## Phases (in order)
 
-1. **Root-cause analysis.** Orient first (Orient section) if a graph exists, then search local code in the repo, git history/blame on the suspect file, and prior Linear tickets for the same error. Write a one-paragraph hypothesis (file:line, triggering input, why now). Estimate confidence. **If <90%, STOP and ask for the missing info — never proceed on a guess.**
-2. **Draft a ticket** (ask me team/priority/labels/assignee/state in one batch) via Linear, with a description template including a **Validation contract** — a checklist of testable assertions the fix must satisfy. Skip if invoked with an existing detailed ticket.
-3. **Worktree** off `main` (`git worktree add`).
-4. **Fix proposals** — dispatch 1 subagent if single-file/unambiguous, 2 if multi-file/multiple approaches, 3 if architectural. Each returns what-to-change / files / test strategy / risks in <400 words, no code. Present and let me pick.
+1. **Root-cause analysis.** Orient first (Orient section) if a graph exists, then search local code in the repo, git history/blame on the suspect file, and prior Linear tickets for the same error. Write a one-paragraph hypothesis (file:line, triggering input, why now). Estimate confidence. **If <90%, gather more evidence independently: reproduce, inspect callers/history, and test competing hypotheses. Proceed to a fix only at ≥90% confidence backed by evidence; ask for genuinely unavailable required information when it blocks further investigation.**
+2. **Draft a ticket** via Linear under the publication rules above. Use existing metadata and project/team conventions; ask only for missing required metadata. Write a description including a **Validation contract** — a checklist of testable assertions the fix must satisfy. Skip if invoked with an existing detailed ticket.
+3. **Worktree** — prepare a dedicated worktree off the synchronized base using the repository’s full setup checklist (env files, context mirror, dependencies, sync). Preserve unrelated/main-checkout state and inspect status before editing.
+4. **Fix proposals** — dispatch 1 subagent if single-file/unambiguous, 2 if multi-file/multiple approaches, 3 if architectural. Each returns what-to-change / files / test strategy / risks in <400 words, no code. Choose and proceed when one approach clearly wins; ask only about close or product-level choices.
 5. **Plan critic (gate 1)** — before writing any code: feed the chosen proposal + root-cause hypothesis + validation contract to the cold critic (section above). It challenges the approach itself: wrong root cause? simpler fix available? blast radius / callers missed? Fold real objections into the plan; if it credibly undermines the root cause, confidence drops below 90% — go back to phase 1.
 6. **Apply** the chosen fix as atomic conventional commits referencing the ticket.
-7. **Diff critic (gate 2)** — pipe the diff + root cause + validation contract into the cold critic, prompted adversarially to find what was rationalised away. Fold in real findings.
-8. **Verify** — dispatch a fresh-context subagent given ONLY the validation contract + the repo's verify commands (table above). It runs them and reports pass/fail with evidence. Don't claim "verified" without a green fresh run.
-9. **Push, open a ready PR** — `GITHUB_TOKEN= gh pr create`, conventional title, body with Summary / Root cause / Test plan, no AI attribution. Then hand off to `/babysit-prs current` to watch CI.
+7. **Code review + diff critic (gate 2)** — after the implementation agent reports done, run `code-review` under the global review contract with the root cause/validation contract, project instructions, comparison base, and exact task scope including uncommitted changes. Use fresh read-only Standards/Spec reviewers separate from implementation. Then pipe the diff + root cause + validation contract into the cold critic, prompted adversarially to find what was rationalised away. Verify findings against current code, fix confirmed issues, and repeat affected review/checks.
+8. **Verify** — dispatch a fresh-context subagent given the validation contract, exact scope/head, project instructions, and required repository checks. It reports pass/fail with evidence; claim verified only after a green fresh run.
+9. **Publish and complete** — push and create/update the PR under the publication rules above, with a conventional title. Monitor repository gates and review feedback on the latest head, using `/babysit-prs current` for follow-up. Call it ready only after the required gates pass and feedback is handled; identify any waiting human review.
 
 ## Failure modes
 

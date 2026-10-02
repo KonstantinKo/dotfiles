@@ -1,48 +1,43 @@
 ---
 name: babysit-prs
-description: Use to sweep my open authored GitHub PRs — auto-fix safe bot-reviewer findings (lint/format/typecheck) with full pre-push verification, resolve stale threads, digest CI/review status. Run with no arg (all open non-draft PRs) or scoped to one PR (number, repo#number, or "current").
+description: Use to sweep my open authored GitHub PRs — auto-fix safe bot-reviewer findings (lint/format/typecheck) with full pre-push verification, resolve addressed bot threads, digest CI/review status. Run with no arg (all open non-draft PRs) or scoped to one PR (number, repo#number, or "current").
 user_invocable: true
 ---
 
 # babysit-prs
 
-Cleanup pass over my open authored PRs across `~/projects/platform` and `~/projects/backend`. Auto-fix only SAFE bot findings. Never touch human comments.
+Sweep my open authored PRs across `~/projects/platform` and `~/projects/backend`. Auto-fix safe bot findings; also handle human requests within the scope already authorized by the user. Leave human threads for humans to resolve.
 
 ## Environment
 
-- `gh` CLI fails when `GITHUB_TOKEN` is set. Prefix EVERY gh call: `GITHUB_TOKEN= gh ...`
+- `gh` fails when `GITHUB_TOKEN` is set. Prefix every gh call: `GITHUB_TOKEN= gh ...`.
 - GitHub user: KonstantinKo. Default branch: `main`. Repos under `~/projects/<repo>`.
 - Bot reviewers: CodeRabbit, Copilot.
-- Linear via MCP (`mcp__claude_ai_Linear__*`), Slack via MCP (`mcp__claude_ai_Slack__*`).
 
-## Verify commands (per repo)
+## Authorization and scope
 
-| Repo | Pre-push verify (auto-fix gate) |
-|---|---|
-| platform | `bun run check && bun run lint && bun run test:unit` |
-| backend | `npm run typecheck && npm run lint && npm run prettier && npm run test:unit` |
+Explicit invocation authorizes the normal safe fixes, pushes, and review handling described here. Scheduled runs retain their established authorization. Use existing session authorization; prepare concrete fixes/drafts and checks before requesting any missing authorization. Unrelated Slack/Linear announcements require a separate explicit request.
 
-- platform = **bun**, backend = **npm**. Don't cross them.
-- NEVER run backend integration tests in auto-fix — they need `sst bind` / live AWS session. Unit only.
-- Detect repo from the PR's repo / branch checkout path; pick the matching row.
+Keep fixes scoped to verified findings. Auto-fix bot lint/format/typecheck/coverage-gate issues only when safe and supported by evidence. Architectural changes, fixes over five files, or persistently failing verification need attention rather than expanding the sweep. Assess human requests against the user-authorized scope; report requests outside it for a decision.
 
-## Safety rails (absolute)
-
-- Never auto-fix or reply to HUMAN review comments — forward them to me in the digest.
-- Never `--no-verify`. Never force-push. Never push to `main`. One logical fix per commit, conventional, no AI attribution.
+Use conventional atomic commits with no AI attribution. Include hook rewrites; never bypass hooks, force-push, or push to `main`. Accepted/actioned findings are handled silently. Any authorized skipped-finding reply needs a brief reason, file:line evidence, and `(Written by {model name & version} for Konstantin)`. Post no automatic reactions.
 
 ## Per-PR steps
 
-1. **CI** — `GITHUB_TOKEN= gh pr checks <pr>`. Pending → skip auto-fix this round. Failed → triage: only lint/format/typecheck/coverage-gate issues are auto-fixable; infra/flaky → record as blocker.
-2. **Fetch findings** — open review threads via GraphQL AND bot review bodies (CodeRabbit/Copilot post findings in collapsible review-body sections, not just inline threads — fetch both).
-3. **Score** each thread/finding 1–10 on correctness, security, convention adherence, specificity. HARD RULE: human comments never auto-fixed, never replied to — forward to me. Only BOT findings scoring 7+ are auto-fixed.
-4. **Auto-fix path** — in the repo dir, checkout the branch, apply the change, run the repo's pre-push verify (table above), commit (conventional, no AI attribution, one logical fix), push. Never `--no-verify`, never force-push, never push to `main`. React 👍 and resolve the bot thread. If the fix exceeds scope (>5 files, architectural, or verify keeps failing) → abort, add to "needs attention".
-5. **Stale threads** — resolve ones pointing at already-fixed code, silently, no reply.
+1. **Inspect the exact head** — refresh PR metadata and SHA, CI, all unresolved threads, and review bodies (including collapsible bot sections). Pending CI may defer edits this sweep, but still read and assess feedback. Triage infra/flaky failures as blockers.
+2. **Verify each finding** — inspect the current head and reproduce or substantiate the claim before accepting or dismissing it. Bot scores are not evidence. Read every unresolved thread; handle authorized human requests too.
+3. **Prepare a worktree** — use an existing dedicated PR worktree or create one for the exact PR branch/head. Follow the repository’s full setup checklist: env files, context mirror, dependencies, sync. Preserve primary-checkout and unrelated work; never switch branches in the primary checkout. Verify the PR SHA matches before editing and refresh if it changes.
+4. **Fix and review** — apply the verified scoped fix. After an implementation agent reports done, automatically run `code-review` in fresh read-only reviewers separate from implementation, explicitly supplying goal/spec, project instructions, comparison base, and exact scope including uncommitted changes. The primary agent verifies findings, handles fixes, and repeats affected review/checks.
+5. **Verify and push** — follow current repository checks, which override the defaults below. Run a CodeRabbit CLI review/fix cycle when available unless its bot already reviewed the current head; read and handle its findings either way. Commit verified changes and push without bypassing hooks. If scope or verification fails, preserve the work and report the blocker.
+6. **Refresh after every push** — fetch the exact new PR head, reread every unresolved thread and review body, and verify new or stale findings against it. Resolve addressed bot threads silently, including already-fixed findings whose current code you verified. Reply briefly only to skipped findings under the authorization/footer rules above, then resolve bot threads. Leave human threads for human resolution. Never resolve unread or unaddressed threads.
+7. **Assess readiness** — check latest-head repository CI, reviews, and decision gates, and handle newly arriving findings before calling done. Green CI or approval alone is insufficient. An end-to-end ready workflow monitors until its required gates pass; a sweep may report pending checks or waiting human review without claiming readiness.
 
-When 3+ PRs: fan out one subagent per PR in parallel, each scoped to its PR, then merge into one digest.
+When three or more PRs need work, fan out one subagent per PR with its exact scope and authorization, then merge the digests.
 
-## Digest
+## Verification defaults
 
-End with a plain-text digest in chat: per-PR CI / open threads / merge state, what was auto-fixed, what needs my attention, blockers.
+Repository instructions take precedence. Platform uses bun and requires full `bun run verify` plus its architecture/decision gate on the latest head before readiness. Backend uses npm: `npm run typecheck && npm run lint && npm run prettier && npm run test:unit`; integration requires `sst bind`/live AWS and follows repository instructions.
 
-When scoped to a single PR and CI isn't green yet: self-reschedule via `/loop` to keep watching until green or merged.
+## Digest and monitoring
+
+Report briefly in chat: per-PR CI/head, unresolved threads, review/merge state, fixes, and blockers or waiting humans. For a scoped end-to-end readiness task, continue monitoring through the required gates. Use `/loop` only when supported and recurring monitoring is authorized; a scheduled sweep reports current status and relies on its existing schedule.

@@ -16,18 +16,15 @@ End-to-end feature development. Do not skip phases.
 
 ## Hard constraints
 
-Conventional commits, atomic, no AI attribution, never `--no-verify`, no force-push, work in a git **worktree**, branch `feat/<ticket>-<kebab-title>`, all ticket/PR text in English.
+Conventional commits, atomic, no AI attribution in commits, never `--no-verify`, no force-push, work in a git **worktree**, branch `feat/<ticket>-<kebab-title>`, all ticket/PR text in English.
 
-## Verify commands (per repo)
+## Verification and publication
 
-| Repo | Verify |
-|---|---|
-| platform | `bun run verify` (or light: `bun run check && bun run lint && bun run test:unit`) |
-| backend | `npm run verify` (skip integration — needs `sst bind`/AWS; use `npm run typecheck && npm run lint && npm run prettier && npm run test:unit`) |
+Before verification or publication, read [the shared PR workflow](references/pr-workflow.md). Apply repository checks, templates, existing authorization, attribution, and latest-head review requirements from that reference.
 
 ## Cold critic (used at two gates)
 
-Cross-vendor by default: pipe the material into `codex exec --sandbox read-only -` (prompt + material via stdin; read-only — it must never write; run it from the repo/worktree so it can read real code). codex only runs inside a trusted git directory — if the worktree isn't trusted ("Not inside a trusted directory"), run from the main checkout instead and pipe the diff in. If codex is unavailable or errors, fall back to `claude -p --permission-mode plan --model claude-sonnet-5` (different model than the Opus/Fable default). Always prompt adversarially, and require "no substantive objections" when there are none — no invented findings.
+At both plan and diff gates, read [cold-critic selection](references/cold-critic.md). Select by the vendor of the material’s actual authors and report whether the review was cross-vendor or an independent fallback.
 
 ## Orient (graphify — optional, only if a graph already exists)
 
@@ -40,17 +37,17 @@ Map, not truth: confirm hot files by reading them (edges tagged `EXTRACTED` = re
 
 ## Phases (in order)
 
-1. **Discovery** — understand the request; ask problem / success criteria / non-goals if unclear; confirm understanding.
+1. **Discovery** — establish the problem, success criteria, and non-goals from the request and available context. Carry existing answers forward; ask only for required information that cannot be determined independently.
 2. **Codebase exploration** — orient with graphify first (Orient section) if a graph exists, then launch 2–3 explorer subagents in parallel on different angles (similar existing features, architecture of the area, extension/test patterns), seeding them with the anchor files/symbols the graph surfaced. Each returns 5–10 key files; read them.
-3. **Clarifying questions** — one batch covering edge cases, integration points, backward compat, design prefs. Wait for answers.
-4. **Architecture** — launch 2–3 architect subagents in parallel with different lenses (minimal / clean / pragmatic). Present side by side, recommend, let me pick.
-5. **Plan critic (gate 1)** — before ticket and code: feed the chosen architecture + draft acceptance criteria to the cold critic (section above). It challenges the approach: overbuilt? existing pattern in the codebase unused? integration/backward-compat risk missed? Fold real objections in; if the pick changes, re-present briefly.
-6. **Ticket** — ask team/priority/labels/assignee/state in one batch; Linear description with Goal / Acceptance criteria (each a testable assertion) / Approach / Out-of-scope. Skip if a detailed ticket was passed in.
-7. **Worktree** off `main`; confirm clean status before editing.
+3. **Clarify** — investigate edge cases, integration points, and backward compatibility. Proceed on clear choices; ask one focused batch only about close or product-level decisions or genuinely missing required information. Wait only for answers that block dependent work.
+4. **Architecture** — launch 2–3 architect subagents in parallel with different lenses (minimal / clean / pragmatic). Choose and proceed when one approach clearly wins; present close or product-level choices for the user.
+5. **Plan critic (gate 1)** — before ticket and code: feed the chosen architecture + draft acceptance criteria to the cold critic (section above). It challenges the approach: overbuilt? existing pattern in the codebase unused? integration/backward-compat risk missed? Fold real objections in; proceed on clear improvements and ask only if objections create a close or product-level decision.
+6. **Ticket** — use existing ticket metadata and repository/team conventions; ask only for missing required metadata. Publish under the authorization rules above, with a Linear description containing Goal / Acceptance criteria (each a testable assertion) / Approach / Out-of-scope. Skip if a detailed ticket was passed in.
+7. **Worktree** — prepare a dedicated worktree off the synchronized base using the repository’s full setup checklist (env files, context mirror, dependencies, sync). Preserve unrelated/main-checkout state and inspect status before editing.
 8. **Implementation** — atomic commits, body explains why not what, reference the ticket.
-9. **Code review + diff critic (gate 2)** — 3 reviewer subagents in parallel (simplicity / correctness / conventions), plus the cold critic seeing only the diff + ACs. Consolidate, ask me what to fix.
-10. **Verify** — fresh-context subagent given only the ACs + the repo's verify commands (table above); reports pass/fail with evidence.
-11. **Push, open a ready PR** — `GITHUB_TOKEN= gh pr create`, body Summary / Ticket link / Approach / Test plan. Hand off to `/babysit-prs current`.
+9. **Code review + diff critic (gate 2)** — after the implementation agent reports done, run `code-review` under the global review contract with the goal/ACs, project instructions, comparison base, and exact task scope including uncommitted changes. Use its fresh read-only Standards/Spec reviewers as this stage’s reviewers. Also run the cold critic with the bounded diff/ACs packet and relevant project constraints from the shared reference. Verify findings against current code, fix confirmed issues, and repeat affected review/checks; ask me only about unresolved product-level choices.
+10. **Verify** — fresh-context subagent given the ACs, exact scope/head, project instructions, and required repository checks; reports pass/fail with evidence.
+11. **Publish and complete** — push and create/update the PR under the publication rules above. Monitor repository gates and review feedback on the latest head, using `/babysit-prs current` for follow-up. Call it ready only after the required gates pass and feedback is handled; identify any waiting human review.
 
 ## Failure modes
 

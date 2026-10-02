@@ -10,7 +10,7 @@ Run only on explicit human invocation of `/ensuremerge`. If reached indirectly, 
 
 Target (may be empty → PR of current branch): PR URL, `owner/repo#number`, PR number in current repo, or branch name.
 
-Helper scripts (host-agnostic path): `~/.agents/skills/ensuremerge/scripts/`. Use them — they exist to keep token usage low.
+Helper scripts: resolve the loaded `SKILL.md` path through any symlinks, then use the adjacent `scripts/` directory. Use them — they exist to keep token usage low.
 
 ## Token-Efficiency Rules
 

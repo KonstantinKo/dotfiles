@@ -1,0 +1,5 @@
+interface:
+  display_name: "Quickreview"
+  short_description: "Independent review with verified findings"
+policy:
+  allow_implicit_invocation: false

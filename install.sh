@@ -281,7 +281,9 @@ done
 if [ -d "$HOME/projects/devEnv" ]; then
   link_children "$DOTFILES/projects/devEnv/.agents/skills" "$HOME/projects/devEnv/.agents/skills"
 fi
-safe_symlink "$DOTFILES/projects/platform/CLAUDE.md"       "$HOME/projects/platform/CLAUDE.md"
+if [ -f "$HOME/projects/platform/CLAUDE.global.md" ]; then
+  safe_symlink "$HOME/projects/platform/CLAUDE.global.md" "$HOME/projects/platform/CLAUDE.md"
+fi
 safe_symlink "$DOTFILES/projects/platform/CLAUDE.local.md" "$HOME/projects/platform/CLAUDE.local.md"
 safe_symlink "$DOTFILES/projects/obsidian/spse/AGENTS.md"  "$HOME/projects/obsidian/spse/AGENTS.md"
 safe_symlink "$DOTFILES/projects/obsidian/spse/AGENTS.md"  "$HOME/projects/obsidian/spse/CLAUDE.md"

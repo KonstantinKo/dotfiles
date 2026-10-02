@@ -1,6 +1,7 @@
 ---
 name: review-pr-silent
-description: Use when asked to review a colleague's PR ("review this PR", "what do you think of X's PR", "X sent a PR on Slack") and report findings to me directly WITHOUT posting anything on GitHub.
+description: Review a colleague's PR and report privately in chat.
+disable-model-invocation: true
 user_invocable: true
 ---
 

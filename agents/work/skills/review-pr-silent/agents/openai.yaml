@@ -1,0 +1,5 @@
+interface:
+  display_name: "Review PR Silently"
+  short_description: "Review a colleague’s PR privately in chat"
+policy:
+  allow_implicit_invocation: false
