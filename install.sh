@@ -120,10 +120,13 @@ if [ -d "$HOME/.agents/skills" ]; then
 fi
 
 # --- instruction files ---
-for home in "${CLAUDE_HOMES[@]}"; do safe_symlink "$A/CLAUDE.md" "$home/CLAUDE.md"; done
-for home in "${CODEX_HOMES[@]}"; do safe_symlink "$A/AGENTS.md" "$home/AGENTS.md"; done
-safe_symlink "$A/AGENTS.md" "$OPENCODE/AGENTS.md"
-safe_symlink "$A/AGENTS.md" "$CURSOR/AGENTS.md"
+for work_home in "${CLAUDE_HOMES[@]}"; do
+  safe_symlink "$A/work/AGENTS.md" "$work_home/AGENTS.md"
+  safe_symlink "$A/work/CLAUDE.md" "$work_home/CLAUDE.md"
+done
+for work_home in "${CODEX_HOMES[@]}"; do safe_symlink "$A/work/AGENTS.md" "$work_home/AGENTS.md"; done
+safe_symlink "$A/work/AGENTS.md" "$OPENCODE/AGENTS.md"
+safe_symlink "$A/work/AGENTS.md" "$CURSOR/AGENTS.md"
 safe_symlink "$A/games/AGENTS.md" "$CODEX_GAMES_HOME/AGENTS.md"
 safe_symlink "$A/games/AGENTS.md" "$CLAUDE_GAMES_HOME/AGENTS.md"
 safe_symlink "$A/games/CLAUDE.md" "$CLAUDE_GAMES_HOME/CLAUDE.md"

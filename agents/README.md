@@ -16,9 +16,11 @@ Inside a folder the kind is by name: `skills/<name>/SKILL.md`, `commands/*.md` (
 Cursor slash commands), `prompts/*.md` (Codex custom prompts), `agents/*.md` (OpenCode agents),
 plus per-tool config files.
 
-- `AGENTS.md` is the global instruction file; `CLAUDE.md` is a one-line shim importing it.
-  `games/AGENTS.md` replaces it in the games homes; `games/CLAUDE.md` adds the Codex→Claude
-  model-name mapping on top of it (Astra → Fable, Luna → Sonnet, anything else → Opus).
+- `AGENTS.md` holds shared global preferences and is linked at `~/.agents/AGENTS.md`;
+  `CLAUDE.md` imports it for broad use. `work/AGENTS.md` loads those preferences and adds
+  work-only skill rules in the work homes. `work/CLAUDE.md` imports both files for Claude.
+  `games/AGENTS.md` replaces the global instructions in the games homes; `games/CLAUDE.md`
+  adds the Codex→Claude model-name mapping (Astra → Fable, Luna → Sonnet, anything else → Opus).
 - `work/skills/_archive/` keeps retired skills tracked but unlinked.
 - `games/vendor.txt` lists third-party skills (`<owner/repo> <path>`); `make` shallow-clones the
   repo into `~/.cache/dotfiles/vendor/` and links the listed folders. Update with

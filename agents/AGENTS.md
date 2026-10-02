@@ -5,8 +5,6 @@ I'm Konstantin, your user. Be mindful of my limited capacity to read large swath
 ## Delegation & verification
 
 - For substantial coding sessions, orchestrate via subagents (implementation, verification, review) and keep the main context clean. Prefer short bounded reasoning; checkpoint through tool calls.
-- After a feature or fix implementation agent reports done, automatically run `code-review` in fresh read-only subagents separate from implementation. Supply the goal/acceptance criteria or spec, project instructions, comparison base, and exact task scope including uncommitted changes; pass these explicitly even when using a repo-local `code-review` so it can review the supplied scope without setup or base prompts. The main agent verifies findings against the current code, handles fixes, and completes affected review/checks before calling the work done.
-- `quickreview` is a manual review on my request; `review-pr-silent` is a manual review of colleagues’ PRs.
 - Keep the reports from tool calls short and terse! When something works just say it works, only give me the details when something goes wrong.
 - On repos with remotes, always code in a dedicated worktree, prepared with the repo's full worktree-setup checklist (env files, context mirror, deps, sync). Local-only repos may be edited directly.
 - Prove behavioral/visual claims with a real repro; for design fidelity compare matched rendered screenshots, never markup alone. Playwright screenshots always go to temp dirs, never into git.
