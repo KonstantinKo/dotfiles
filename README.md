@@ -86,3 +86,47 @@ provider instance in `~/.t3/userdata/settings.json`; it passes the MCP files thr
 without `--strict-mcp-config`, so T3's own MCP tools keep working.
 
 Secrets never go in this repo.
+
+## Optional Linux work profiles
+
+On an owner-managed Linux worker, clone this repository to `~/dotfiles` and run:
+
+```sh
+cd ~/dotfiles
+./install-work-linux.sh --launchers
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+This installs only company Claude and Codex profiles (`~/.claude-di`, `~/.codex-di`),
+shared/work instructions and commands. Skill precedence is shared → work → company →
+harness. `_archive` is excluded. Keep the checkout in place: the profiles use symlinks.
+The generic cloud runtime and colleagues do not need this private repository or installer.
+
+Omit `--launchers` if T3 launches the CLIs directly; set its provider home paths to those
+company directories. Optional `clax` and `codx` are executable scripts, so noninteractive
+shells can use them by absolute path without sourcing shell startup files. The CLIs must
+already be installed on `PATH`. Existing launchers are preserved.
+
+The installer seeds only empty portable settings and leaves existing settings, config and
+authentication untouched. It does not install packages, change shell/Git configuration,
+copy credentials, enable permission bypasses, configure MCPs, or install personal/game
+profiles. Conflicting instruction/skill links and files are backed up under
+`~/.dotfiles-backup/work-linux.*`; symlinked profile/container directories are rejected.
+Re-running updates links and removes dangling skill links owned by this checkout.
+
+Sign into each company profile separately, with or without the optional launchers:
+
+```sh
+CLAUDE_CONFIG_DIR="$HOME/.claude-di" claude auth login
+CODEX_HOME="$HOME/.codex-di" codex login
+```
+
+Check
+CLI authentication independently from MCP readiness: MCP servers, their OAuth sessions,
+plugins and skill-specific external tools need their own Linux-compatible setup. Do not
+copy the macOS configs or auth files. For GitHub HTTPS credentials, `gh` must be on `PATH`
+and authenticated; an optional repository-local helper can be added with
+`git -C /path/to/repo config --local --add credential.https://github.com.helper '!gh auth git-credential'`
+after checking that repository's existing helpers. No global helper is changed.
+
+Run the isolated installer checks with `bash tests/install-work-linux.sh`.
