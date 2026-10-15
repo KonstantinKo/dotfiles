@@ -15,7 +15,9 @@ class InstallTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.home = Path(self.tmp.name)
         self.env = dict(os.environ, HOME=str(self.home))
-        self.env.pop('DOTFILES_SHELL_LOADED', None)
+        for key in list(self.env):
+            if key.startswith('DOTFILES_'):
+                self.env.pop(key)
 
     def install(self, *args):
         return subprocess.run(['bash', str(ROOT / 'install.sh'), '--offline', *args],
@@ -79,6 +81,48 @@ class InstallTests(unittest.TestCase):
         self.assertFalse((skills / 'game-engines').exists())
         self.assertTrue((custom / 'SKILL.md').exists())
         self.assertTrue((skills / 'game-loop').is_symlink())
+
+    def test_backup_preserves_existing_dangling_symlink(self):
+        source = self.home / 'config'
+        source.write_text('keep current config')
+        backup_root = self.home / 'backups'
+        backup_root.mkdir()
+        first = backup_root / 'config'
+        first.symlink_to(self.home / 'missing-old-target')
+        script = (ROOT / 'install.sh').read_text()
+        backup_function = script[script.index('backup() {'):script.index('safe_symlink() {')]
+        runner = self.home / 'backup-test.sh'
+        runner.write_text('set -euo pipefail\n' + backup_function + '\nbackup "$HOME/config"\n')
+        subprocess.run(['/bin/bash', str(runner)], env=dict(self.env, BACKUP_ROOT=str(backup_root)),
+                       capture_output=True, text=True, check=True)
+        self.assertTrue(first.is_symlink())
+        self.assertEqual(first.readlink(), self.home / 'missing-old-target')
+        self.assertEqual((backup_root / 'config.1').read_text(), 'keep current config')
+
+    def test_repeated_skill_backup_retains_versions_outside_repository(self):
+        # Use a repository copy so a regression cannot mutate the real checkout.
+        fixture = self.home / 'dotfiles'
+        shutil.copytree(ROOT, fixture, ignore=shutil.ignore_patterns(
+            '.git', '.venv', '__pycache__', '.pytest_cache'))
+        skill = 'html-communication'
+        shared = fixture / 'agents/shared/skills' / skill
+        work = fixture / 'agents/work/skills' / skill
+        self.assertTrue(shared.is_dir())
+        self.assertTrue(work.is_dir())
+        target = self.home / '.claude-di/skills' / skill
+        target.parent.mkdir(parents=True)
+        target.symlink_to(work)
+        command = ['/bin/bash', str(fixture / 'install.sh'), '--offline', '--workspaces',
+                   'work,games,creative,video,personal']
+        for _ in range(2):
+            subprocess.run(command, env=self.env, capture_output=True, text=True, check=True)
+            self.assertEqual(target.readlink(), work)
+            self.assertFalse((work / skill).is_symlink())
+            self.assertFalse((shared / skill).is_symlink())
+            self.assertTrue((self.home / '.config/dotfiles/links.tsv').is_file())
+        backups = list((self.home / '.dotfiles-backup').glob('*/.claude-di/skills/' + skill + '*'))
+        self.assertGreaterEqual(len(backups), 4)
+        self.assertEqual({path.readlink() for path in backups}, {work, shared})
 
     def test_work_profile_and_backups(self):
         config = self.home / '.gitconfig'

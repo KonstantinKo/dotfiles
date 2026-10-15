@@ -83,8 +83,13 @@ CURSOR="$HOME/.cursor"
 VENDOR_CACHE="$HOME/.cache/dotfiles/vendor"
 
 backup() {
-  local path="$1" rel="${1#$HOME/}" dst
-  dst="$BACKUP_ROOT/$rel"
+  local path="$1" rel="${1#$HOME/}" dst base suffix=1
+  base="$BACKUP_ROOT/$rel"
+  dst="$base"
+  while [ -e "$dst" ] || [ -L "$dst" ]; do
+    dst="$base.$suffix"
+    suffix=$((suffix + 1))
+  done
   mkdir -p "$(dirname "$dst")"
   mv "$path" "$dst"
   echo "backed-up $path -> $dst"
