@@ -56,7 +56,7 @@
     // Pay-per-use Fal.ai asset generation; the wrapper reads the key from macOS Keychain.
     "fal": {
       "type": "local",
-      "command": ["/Users/konstantin/.local/bin/fal-mcp-codg"],
+      "command": ["fal-mcp-codg"],
       "timeout": 60000
     }
   }

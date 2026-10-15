@@ -3,3 +3,6 @@
 node_modules/
 *.pre-dotfiles
 .npmrc
+
+# Python validation artifacts
+__pycache__/

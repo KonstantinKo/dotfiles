@@ -1,6 +1,6 @@
 # dotfiles
 
-Managed via symlinks. Edit files here, changes are live. New machine: clone + `./install.sh`.
+Shared configuration for macOS and Linux. Edit the repo, commit and push, then pull and rerun the installer on each machine. Agent auth, sessions, secrets, Git identity, and workspace choices stay machine-local.
 
 ## Layout
 
@@ -14,15 +14,104 @@ Managed via symlinks. Edit files here, changes are live. New machine: clone + `.
 - `projects/` — private instructions and skills for specific project repos, symlinked into place
 - `iterm2_profile/Default.json` — iTerm2 default profile export
 
-## Usage
+## Install and update
 
-```sh
-make   # idempotent; backs up conflicts to <file>.pre-dotfiles
+On omini (Bash/Omarchy), after cloning to `~/dotfiles`:
+
+```bash
+cd ~/dotfiles
+./install.sh --workspaces games,creative,video,personal --projects-root "$HOME/projects"
+exec bash -l
 ```
 
-Conflicting real files are moved to `~/.dotfiles-backup/<timestamp>/`, never deleted.
-To move a skill between areas or archive it (`agents/work/skills/_archive/`), move the folder,
-run `make`, restart running agent sessions. Stale links are removed automatically.
+`work` installs company homes, skills, MCP settings, and the work Git email.
+`games` installs isolated Codex/Claude games homes and OpenCode; `creative` adds Blender
+skills to games/video; `video` adds video and Backlot project tooling; `personal` adds
+private vault instructions. Choose any comma-separated combination. New Linux homes
+default to `games,creative,video,personal`; macOS defaults to all five for compatibility.
+Use an explicit `--workspaces` value when enrolling a machine.
+
+The installer saves choices in `~/.config/dotfiles/machine.sh`, outside Git. `make` or
+`./install.sh` reuses them after a pull. CLI options override explicit `DOTFILES_WORKSPACES`,
+`DOTFILES_PROJECTS_ROOT`, and `DOTFILES_EXCLUDE_SKILLS` environment variables, which override
+saved values. To change choices, rerun with `--workspaces`.
+`--exclude-skills skill-name,another-skill` persists individual skill exclusions; pass
+an empty string to clear exclusions. `--projects-root` is case-sensitive and may point
+to an existing migration symlink. Both machines can use `~/projects`; an alternative
+such as `~/Projects` is supported by the launcher and Backlot config resolution.
+
+```bash
+git pull --ff-only
+./install.sh
+# No network/vendor downloads (uncached third-party skills are skipped):
+./install.sh --offline
+```
+
+Conflicts are backed up under `~/.dotfiles-backup/<timestamp>-<pid>/`. Existing Bash,
+profile, and Zsh environment files receive a loader for shared shell functions;
+Omarchy startup configuration is retained. Auth/session files are never installed or
+copied. Codex configs are seeded once, then remain machine-local. Changing workspace
+choices retires only recorded managed symlinks; old seeded configs, generated OpenCode
+files, auth, local skills, and backups remain available for explicit cleanup. Stop old
+agent sessions when changing a profile. Skill moves/deletions are applied on reinstall.
+
+Set a personal Git identity on omini (the shared `.gitconfig` has no company identity):
+
+```bash
+git config --file ~/.config/dotfiles/git.local user.name 'Konstantin Koss'
+git config --file ~/.config/dotfiles/git.local user.email 'YOUR PERSONAL EMAIL'
+```
+
+The previous global Git config is backed up if it conflicts; restore any additional
+machine-specific settings in `git.local`. `.npmrc` remains local and is never linked.
+
+### Linux prerequisites and credentials
+
+The installer itself needs Bash, Git, and standard Unix tools. Agent tooling additionally
+uses Node/npm (`npx`), `uv`/`uvx`, `jq`, and the desired Claude/Codex/OpenCode CLIs. Backlot
+uses Python 3.12 through `uv`, FFmpeg, and its locked Python dependencies (`uv sync --project
+agents/video/backlot`). Install Blender and Godot through the OS package manager. The
+background Blender MCP is a separate opt-in install:
+
+```bash
+./agents/video/mcp/install-blender.sh
+```
+
+Blender resolves from `BLENDER_EXECUTABLE`, then `blender` on PATH, then the macOS app.
+Godot resolves from `GODOT_QUIET_BIN`/`GODOT_BIN`, `godot`/`godot4` on PATH, then the macOS
+app. `godot-quiet` retains the macOS GPU shim; Linux uses headless Godot with a coreutils
+`timeout` watchdog. Use normal `godot` for visible/GPU editor work on Linux. Unity MCPs
+require a separately installed Unity editor and project bridge.
+
+Log in separately to each agent provider (`codg login`, `clag` → `/login`, OpenCode
+`/connect`) and GitHub (`gh auth login`) as needed. Never copy account auth files.
+MCP executables rely on `~/.local/bin` being in the launching application's PATH; the
+shared Bash/Zsh loader adds it. Restart GUI agent apps after updating their environment.
+Higgsfield uses its own OAuth login. API credentials are optional until using the relevant
+provider; no secret values belong in this repo.
+
+For fal.ai, prefer a one-session `FAL_KEY` environment variable or a private machine-local
+file. Create it without putting the key into shell history:
+
+```bash
+mkdir -p ~/.config/dotfiles/secrets
+(umask 077; read -r -s -p 'fal.ai API key: ' fal_key; printf '\n';
+ printf '%s' "$fal_key" > ~/.config/dotfiles/secrets/fal-key)
+```
+
+The fal MCP and Backlot launcher read `FAL_KEY`, then `FAL_KEY_FILE` (defaults to the file
+above, mode 600/400 required), then their existing macOS Keychain item. Games use
+`fal.ai (codg)` / `$USER`; Backlot uses `fal-api` / `FAL_KEY`. Existing Mac Keychain enrollment
+continues to work. Company tokens and npm package credentials are unnecessary on omini.
+
+### Verification
+
+```bash
+python3 -m unittest discover -s tests -v
+uv run --project agents/video/backlot pytest -q agents/video/backlot/tests
+```
+
+Installer tests use disposable homes and `--offline`, preserving the actual home.
 
 ## Two accounts per tool
 
@@ -39,7 +128,7 @@ skills. Per home: auth, `.claude.json` (MCP servers, project trust), plugins, se
 Codex `config.toml` (seeded once from `agents/work/codex/config.di.toml`).
 
 New Claude home: log in once (`clax` → `/login`), then
-`agents/claude/bootstrap-home.sh ~/.claude-di` installs the plugin set and copies user-scope
+`agents/work/claude/bootstrap-home.sh ~/.claude-di` installs the plugin set and copies user-scope
 MCP servers. New Codex home: switch the chatgpt.com browser session to that account first, then `codx login`.
 Never `codex logout` (revokes that account's tokens everywhere) and never copy `auth.json`.
 In T3 Code, add a second Claude/Codex provider instance with the `CLAUDE_CONFIG_DIR` /
@@ -58,7 +147,7 @@ server started (`uvx blender-mcp==<version> install-addon` installs the matching
 `codg` is a shell function in `~/.zshenv`. Plain `codg` has the Blender, Godot (godot-ai)
 and Unity (CoplayDev MCP for Unity) MCPs; each connects once its editor is open with the add-on.
 `codg unity-ab` swaps the Unity MCP for AnkleBreaker (A/B testing). The local fal.ai asset MCP
-reads its API-scope key from the macOS Keychain item `fal.ai (codg)`; add or rotate it with
+reads an environment/file key (above), or the macOS Keychain item `fal.ai (codg)`; add or rotate it with
 `security add-generic-password -U -a "$USER" -s "fal.ai (codg)" -w` (the trailing `-w`
 prompts without putting the secret in shell history). The `game-loop` skill triggers on game-building requests, or explicitly via `$game-loop`.
 The codg config runs Codex in yolo mode (`approval_policy = "never"`, `sandbox_mode = "danger-full-access"`) — private game projects only.

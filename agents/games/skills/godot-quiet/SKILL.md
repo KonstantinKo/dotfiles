@@ -1,9 +1,19 @@
 ---
 name: godot-quiet
-description: Run a Godot project or exported macOS build with real GPU rendering and no visible window. Use for every Godot run that needs pixels (screenshots, test renders, movies, automated playthroughs, performance samples), including several at once.
+description: Choose a Godot runner for automated checks and visual captures. On macOS, run GPU captures without a visible window; on Linux, use headless logic checks or a display for pixels.
 ---
 
 # godot-quiet
+
+## Platform selection
+
+On Linux, `godot-quiet` runs headless Godot with a timeout, suitable for imports and logic checks.
+Its dummy renderer cannot capture pixels. For screenshots, movies, or GPU measurements,
+use a real Godot display session (a visible editor/game or a separately configured virtual
+GPU display); agree on visible windows with the user. `--app` is macOS-only. Set
+`GODOT_QUIET_BIN` or `GODOT_BIN` to override the engine executable.
+
+The remaining capture recipes describe macOS.
 
 `godot-quiet` is on PATH and takes the same arguments as `godot`. The game renders with the project's real renderer (Metal, Forward+ or whatever the project selects) at full frame rate, while its window stays off the screen: nothing appears on the desktop or in the Dock, focus stays where it is, and the user's mouse pointer is left alone. Audio defaults to the Dummy driver.
 
@@ -41,7 +51,7 @@ get_tree().quit()
 
 ## Rules
 
-- Every run ends itself: `quit()` in the script or `--quit-after <frames>`. A watchdog stops the process after 900 seconds with exit code 142; set a different limit with `--timeout <seconds>` (0 disables it) before the Godot arguments.
+- Every run ends itself: `quit()` in the script or `--quit-after <frames>`. A watchdog stops the process after 900 seconds (macOS exit 142; Linux exit 124); set a different limit with `--timeout <seconds>` (0 disables it) before the Godot arguments.
 - Exit code, stdout and stderr are Godot's own, so a script's `quit(1)` fails the command.
 - Parallel runs are fine. Give each one its own output path.
 - Drive the game with synthetic input (`Input.parse_input_event`, `Input.action_press`). The hidden window never gains focus, so `DisplayServer.window_is_focused()` is false and OS keyboard or mouse events never arrive.

@@ -18,7 +18,7 @@ description: Use for any work inside a Unity or Godot project, such as opening e
 ## Godot
 
 - Godot 4.7 (`godot` on PATH), GDScript only. `.tscn`/`.gd` files are plain text and safe to edit; run headless checks with `godot --headless --path <project> --quit`.
-- Any Godot run that needs pixels (screenshots, test renders, movies, playthroughs) goes through `godot-quiet` from the `godot-quiet` skill, which renders on the GPU with no visible window. Open a visible Godot window only when the user asks to see or play the game.
+- For Godot screenshots, movies, or playthroughs, read the `godot-quiet` skill first. macOS supports hidden GPU rendering; Linux needs a display session for pixels, while `godot-quiet` provides headless logic checks. Agree on visible windows with the user.
 
 ## Screenshots
 

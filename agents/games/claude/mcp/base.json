@@ -15,7 +15,7 @@
       "env": { "GODOT_AI_DISABLE_TELEMETRY": "true" }
     },
     "fal": {
-      "command": "/Users/konstantin/.local/bin/fal-mcp-codg"
+      "command": "fal-mcp-codg"
     }
   }
 }

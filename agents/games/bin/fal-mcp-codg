@@ -1,27 +1,8 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 set -euo pipefail
-
-# Prefer a one-off environment override, otherwise read the private API key from
-# the user's login keychain. The secret never appears in Codex's config file.
-if [[ -z "${FAL_KEY:-}" ]]; then
-  FAL_KEY="$(security find-generic-password -a "$USER" -s "fal.ai (codg)" -w 2>/dev/null || true)"
-fi
-
-if [[ -z "${FAL_KEY:-}" ]]; then
-  print -u2 'fal-mcp-codg: no fal.ai key found.'
-  print -u2 'Store one securely with:'
-  print -u2 '  security add-generic-password -U -a "$USER" -s "fal.ai (codg)" -w'
+FAL_KEY="$(dotfiles-fal-key)" || {
+  echo 'fal-mcp-codg: set FAL_KEY, a private FAL_KEY_FILE, or the macOS fal.ai (codg) Keychain item.' >&2
   exit 78
-fi
-
+}
 export FAL_KEY
-
-# fal-mcp-server 1.18.0 only declares `mcp>=1.6.0` and breaks on the newest
-# `mcp`. Its upstream uv.lock uses mcp 1.13.1 with pydantic 2.11.7, and mcp
-# 1.13.1 imports a private pydantic symbol that later pydantic releases drop.
-# Pin all three to the lockfile versions; pydantic pins its own pydantic-core.
-exec /Users/konstantin/.local/bin/uvx \
-  --with mcp==1.13.1 \
-  --with pydantic==2.11.7 \
-  --from fal-mcp-server==1.18.0 \
-  fal-mcp
+exec uvx --with mcp==1.13.1 --with pydantic==2.11.7 --from fal-mcp-server==1.18.0 fal-mcp

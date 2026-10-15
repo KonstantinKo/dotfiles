@@ -9,7 +9,7 @@
   "model": "fable",
   "statusLine": {
     "type": "command",
-    "command": "bash \"/Users/konstantin/.claude-games/statusline.sh\""
+    "command": "bash \"$HOME/.claude-games/statusline.sh\""
   },
   "outputStyle": "Concise",
   "effortLevel": "high",

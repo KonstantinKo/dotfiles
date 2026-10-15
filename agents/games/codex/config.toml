@@ -64,9 +64,6 @@ tool_timeout_sec = 300
 # Pay-per-use Fal.ai asset generation. The wrapper reads an API-scope key from
 # macOS Keychain and pins a known-compatible fal-mcp-server/MCP SDK pair.
 [mcp_servers.fal]
-command = "/Users/konstantin/.local/bin/fal-mcp-codg"
+command = "fal-mcp-codg"
 startup_timeout_sec = 60
 tool_timeout_sec = 900
-
-[projects."/Users/konstantin/projects/other/games"]
-trust_level = "trusted"

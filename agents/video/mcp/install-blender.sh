@@ -2,7 +2,8 @@
 set -euo pipefail
 
 package_version=0.2.2
-blender_executable=/Applications/Blender.app/Contents/MacOS/Blender
+blender_executable="${BLENDER_EXECUTABLE:-$(command -v blender || true)}"
+blender_executable="${blender_executable:-/Applications/Blender.app/Contents/MacOS/Blender}"
 install_dir="$HOME/.local/share/blender-background-mcp"
 
 node --version

@@ -4,19 +4,27 @@
 set -euo pipefail
 
 here="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-binary="${GODOT_QUIET_BIN:-/Applications/Godot.app/Contents/MacOS/Godot}"
+binary="${GODOT_QUIET_BIN:-${GODOT_BIN:-$(command -v godot || command -v godot4 || true)}}"
+binary="${binary:-/Applications/Godot.app/Contents/MacOS/Godot}"
 timeout="${GODOT_QUIET_TIMEOUT:-900}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --app)
+      [ "$(uname -s)" = Darwin ] || { echo "--app requires macOS" >&2; exit 2; }
+      [ $# -ge 2 ] || exit 2
       binary="$2/Contents/MacOS/$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$2/Contents/Info.plist")"
       shift 2 ;;
-    --timeout) timeout="$2"; shift 2 ;;
+    --timeout) [ $# -ge 2 ] || exit 2; timeout="$2"; shift 2 ;;
     *) break ;;
   esac
 done
 [ -x "$binary" ] || { echo "godot-quiet: no executable at $binary" >&2; exit 127; }
+
+if [ "$(uname -s)" != Darwin ]; then
+  command -v timeout >/dev/null || { echo 'godot-quiet requires coreutils timeout' >&2; exit 127; }
+  exec timeout "$timeout" "$binary" --headless --audio-driver Dummy "$@"
+fi
 
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/godot-quiet"
 shim="$cache/libgodotquiet.dylib"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -z "${BLENDER_EXECUTABLE:-}" ]; then
+  if command -v blender >/dev/null; then BLENDER_EXECUTABLE="$(command -v blender)"
+  else BLENDER_EXECUTABLE=/Applications/Blender.app/Contents/MacOS/Blender; fi
+fi
+export BLENDER_EXECUTABLE
+[ -x "$BLENDER_EXECUTABLE" ] || { echo 'Blender not found; install it or set BLENDER_EXECUTABLE' >&2; exit 127; }
+server="${BLENDER_BACKGROUND_MCP_ROOT:-$HOME/.local/share/blender-background-mcp}/node_modules/fnf-blender-mcp/dist/index.js"
+[ -f "$server" ] || { echo 'Run agents/video/mcp/install-blender.sh to install the background MCP' >&2; exit 127; }
+exec node "$server" "$@"

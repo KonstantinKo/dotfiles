@@ -29,7 +29,15 @@ class Studio:
 
 
 def studio_path() -> Path:
-    return Path(os.environ.get("BACKLOT_STUDIO") or DEFAULT_STUDIO).expanduser()
+    default = Path(os.environ.get("DOTFILES_PROJECTS_ROOT", "~/projects")) / "video/backlot/studio.yaml"
+    return Path(os.environ.get("BACKLOT_STUDIO") or default).expanduser()
+
+
+def _machine_path(value: str) -> Path:
+    root = os.environ.get("DOTFILES_PROJECTS_ROOT")
+    if root and value.startswith("~/projects/"):
+        return Path(root).expanduser() / value[len("~/projects/"):]
+    return Path(value).expanduser()
 
 
 def load_studio(path: Path | None = None) -> Studio:
@@ -45,8 +53,8 @@ def load_studio(path: Path | None = None) -> Studio:
             raise BacklotError(f"studio config missing '{key}': {path}")
     return Studio(
         path=path,
-        vault=Path(str(raw["vault"])).expanduser(),
-        projects_root=Path(str(raw["projects_root"])).expanduser(),
+        vault=_machine_path(str(raw["vault"])),
+        projects_root=_machine_path(str(raw["projects_root"])),
         currency=str(raw.get("currency", "EUR")),
         providers=dict(raw.get("providers") or {}),
         defaults=dict(raw.get("defaults") or {}),

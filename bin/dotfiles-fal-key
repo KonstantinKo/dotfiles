@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Internal secret lookup. Callers capture stdout; never log it.
+set -euo pipefail
+if [ -n "${FAL_KEY:-}" ]; then printf '%s' "$FAL_KEY"; exit 0; fi
+key_file="${FAL_KEY_FILE:-$HOME/.config/dotfiles/secrets/fal-key}"
+if [ -f "$key_file" ]; then
+  mode="$(stat -c %a "$key_file" 2>/dev/null || stat -f %Lp "$key_file")"
+  case "$mode" in 400|600) ;; *) echo 'fal key file must have mode 600 or 400' >&2; exit 78 ;; esac
+  key="$(cat "$key_file")"
+  [ -z "$key" ] || { printf '%s' "$key"; exit 0; }
+fi
+if command -v security >/dev/null 2>&1; then
+  service="${1:-fal.ai (codg)}" account="${2:-$USER}"
+  key="$(security find-generic-password -a "$account" -s "$service" -w 2>/dev/null || true)"
+  [ -z "$key" ] || { printf '%s' "$key"; exit 0; }
+fi
+exit 78

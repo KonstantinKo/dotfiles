@@ -1,3 +1,4 @@
+[ ! -r "$HOME/.config/dotfiles/shell.sh" ] || . "$HOME/.config/dotfiles/shell.sh"
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -72,7 +73,7 @@ ZSH_THEME="robbyrussell"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git)
 
-source $ZSH/oh-my-zsh.sh
+[ ! -r "$ZSH/oh-my-zsh.sh" ] || source "$ZSH/oh-my-zsh.sh"
 
 # User configuration
 
@@ -100,12 +101,12 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias oco='opencode'
-alias odysseus='"/Users/konstantin/projects/os/odysseus/start-macos.sh"'
-alias odysseus-up='cd "/Users/konstantin/projects/os/odysseus" && git pull --ff-only origin dev'
-alias prestol='cd "/Users/konstantin/projects/os/presto" && cargo tauri dev'
+alias odysseus='"$DOTFILES_PROJECTS_ROOT/os/odysseus/start-macos.sh"'
+alias odysseus-up='cd "$DOTFILES_PROJECTS_ROOT/os/odysseus" && git pull --ff-only origin dev'
+alias prestol='cd "$DOTFILES_PROJECTS_ROOT/os/presto" && cargo tauri dev'
 
 presto-open-last-production-build() {
-  local repo="/Users/konstantin/projects/os/presto"
+  local repo="$DOTFILES_PROJECTS_ROOT/os/presto"
   local -a apps
   apps=("$repo"/target/release/bundle/**/*.app(N/om))
 
@@ -119,43 +120,43 @@ presto-open-last-production-build() {
 alias presto='presto-open-last-production-build'
 
 # CUSTOM:
-if [[ -z "${DEV_ENV_MCP_TOKEN:-}" ]]; then
+if dotfiles_workspace work && command -v security >/dev/null && [[ -z "${DEV_ENV_MCP_TOKEN:-}" ]]; then
   dev_env_mcp_token="$(security find-generic-password -a "$USER" -s dev-env-mcp-token -w 2>/dev/null)"
   [[ -n "$dev_env_mcp_token" ]] && export DEV_ENV_MCP_TOKEN="$dev_env_mcp_token"
   unset dev_env_mcp_token
 fi
 
-if [[ -z "${DOINSTRUCT_MCP_TOKEN:-}" ]]; then
+if dotfiles_workspace work && command -v security >/dev/null && [[ -z "${DOINSTRUCT_MCP_TOKEN:-}" ]]; then
   doinstruct_mcp_token="$(security find-generic-password -a "$USER" -s doinstruct-mcp-token -w 2>/dev/null)"
   [[ -n "$doinstruct_mcp_token" ]] && export DOINSTRUCT_MCP_TOKEN="$doinstruct_mcp_token"
   unset doinstruct_mcp_token
 fi
 
-export PATH=~/.asdf/shims:/Users/konstantin/.asdf/installs/lua/5.4.6/luarocks/bin:$PATH
+export PATH=~/.asdf/shims:$HOME/.asdf/installs/lua/5.4.6/luarocks/bin:$PATH
 
 export NVM_DIR="$HOME/.nvm"
   [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
   [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 export PATH="/opt/homebrew/opt/crowdin@4/bin:$PATH"
-export PATH="/Users/konstantin/.bun/bin:$PATH"
+export PATH="$HOME/.bun/bin:$PATH"
 
 # bun completions
-[ -s "/Users/konstantin/.bun/_bun" ] && source "/Users/konstantin/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # Added by Antigravity
-export PATH="/Users/konstantin/.antigravity/antigravity/bin:$PATH"
+export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.venvs/llm-stack/bin:$PATH"
 
-. "$HOME/.atuin/bin/env"
+[ ! -r "$HOME/.atuin/bin/env" ] || . "$HOME/.atuin/bin/env"
 
-eval "$(atuin init zsh)"
+if command -v atuin >/dev/null; then eval "$(atuin init zsh)"; fi
 
 # Android SDK
 export ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
 export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-export JAVA_HOME="/Users/konstantin/.asdf/installs/java/temurin-17.0.14+7"
+export JAVA_HOME="$HOME/.asdf/installs/java/temurin-17.0.14+7"
 
 # Android ADB functions
 phone-deploy() {
@@ -203,4 +204,4 @@ confessing-scripture-dev() {
 }
 
 # direnv loads repo-local .envrc files after explicit `direnv allow`.
-eval "$(direnv hook zsh)"
+if command -v direnv >/dev/null; then eval "$(direnv hook zsh)"; fi

@@ -8,4 +8,8 @@ while [ -L "$self" ]; do
   [[ "$self" != /* ]] && self="$dir/$self"
 done
 root="$(cd -P "$(dirname "$self")/.." && pwd)"
+if [ -z "${FAL_KEY:-}" ] && command -v dotfiles-fal-key >/dev/null; then
+  FAL_KEY="$(dotfiles-fal-key fal-api FAL_KEY || true)"
+  [ -z "$FAL_KEY" ] || export FAL_KEY
+fi
 exec uv run --quiet --project "$root" python -m backlot "$@"
