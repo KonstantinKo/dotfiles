@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML communication"
+  short_description: "Create and publish company HTML documents"
+  default_prompt: "Use $html-communication to present this material as a readable company-hosted HTML document."

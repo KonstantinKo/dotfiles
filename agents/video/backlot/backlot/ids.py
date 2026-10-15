@@ -6,8 +6,8 @@ import re
 
 from backlot.errors import BacklotError
 
-TAKE_PREFIXES = ("img", "vid", "vo", "mus", "sfx", "up")
-TAKE_ID_RE = re.compile(r"^(?P<prefix>img|vid|vo|mus|sfx|up)-(?P<seq>\d{3})(?:\.(?P<var>\d+))?$")
+TAKE_PREFIXES = ("img", "vid", "vo", "mus", "sfx", "up", "cap")
+TAKE_ID_RE = re.compile(r"^(?P<prefix>img|vid|vo|mus|sfx|up|cap)-(?P<seq>\d{3})(?:\.(?P<var>\d+))?$")
 SHOT_ID_RE = re.compile(r"^S\d{3}$")
 
 

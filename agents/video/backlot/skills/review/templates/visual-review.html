@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backlot visual review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #edf1f1;
+      --ink: #182c34;
+      --muted: #53666b;
+      --rule: #b7c6c7;
+      --stage: #14232a;
+      --stage-edge: #38515a;
+      --signal: #825512;
+      --pending-bg: #f4ead5;
+      --pending-rule: #d8bd86;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(100%, 1240px);
+      margin: 0 auto;
+      padding: 30px clamp(16px, 3.8vw, 48px) 48px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 17px;
+      border-bottom: 2px solid var(--ink);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+      font-weight: 650;
+    }
+    .template-state {
+      max-width: 19rem;
+      margin: 0;
+      color: var(--signal);
+      font-size: 0.92rem;
+      font-weight: 650;
+      text-align: right;
+    }
+    .review-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(17rem, 0.85fr);
+      gap: clamp(18px, 3vw, 34px);
+      align-items: start;
+      padding-top: 22px;
+    }
+    h2 {
+      margin: 0 0 11px;
+      font-size: 1.08rem;
+      line-height: 1.25;
+      font-weight: 680;
+    }
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 0.98rem;
+      line-height: 1.3;
+    }
+    p { margin: 0 0 10px; }
+    .media-panel { margin: 0; }
+    .frame-stage {
+      min-height: 18rem;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: var(--stage);
+      border: 1px solid var(--stage-edge);
+    }
+    .media-empty {
+      max-width: 28rem;
+      padding: 22px;
+      color: #e1e9e9;
+      border: 1px dashed #8ca1a6;
+      text-align: center;
+    }
+    .candidate-media {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 70vh;
+      max-height: 70svh;
+      object-fit: contain;
+    }
+    figcaption {
+      padding-top: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .detail-stage {
+      min-height: 10rem;
+      margin-top: 9px;
+      padding: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--stage);
+      border: 1px solid var(--stage-edge);
+    }
+    .detail-stage .candidate-media { max-height: 38vh; max-height: 38svh; }
+    .detail-note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .record-block {
+      padding: 0 0 15px;
+      border-bottom: 1px solid var(--rule);
+    }
+    dl { margin: 0; }
+    .record-row {
+      display: grid;
+      grid-template-columns: minmax(8.5rem, 0.8fr) minmax(0, 1.2fr);
+      gap: 12px;
+      padding: 7px 0;
+      border-top: 1px solid var(--rule);
+    }
+    dt { color: var(--muted); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .pending {
+      display: inline-block;
+      padding: 2px 8px;
+      color: #63420d;
+      background: var(--pending-bg);
+      border: 1px solid var(--pending-rule);
+      font-size: 0.9rem;
+      font-weight: 650;
+    }
+    .input-list { margin: 0; padding-left: 1.4rem; }
+    .input-list > li { padding: 5px 0 5px 4px; }
+    .empty-state { color: var(--muted); }
+    .input-record { padding: 8px 0; border-top: 1px solid var(--rule); }
+    .input-record .record-row { border: 0; padding: 3px 0; }
+    .review-note {
+      margin-top: 18px;
+      padding-left: 12px;
+      border-left: 3px solid var(--signal);
+      color: var(--muted);
+    }
+    footer {
+      margin-top: 28px;
+      padding-top: 12px;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    @media (max-width: 760px) {
+      main { padding: 20px 14px 32px; }
+      header { align-items: start; flex-direction: column; gap: 10px; }
+      .template-state { text-align: left; }
+      .review-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-top: 16px; }
+      .frame-stage { min-height: 11rem; padding: 10px; }
+      .candidate-media { max-height: 64vh; max-height: 64svh; }
+      .record-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      dd { padding-bottom: 3px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Visual review</h1>
+      <p class="template-state">Template only — no candidate media attached</p>
+    </header>
+
+    <div class="review-grid">
+      <section aria-labelledby="candidate-heading">
+        <h2 id="candidate-heading">Whole candidate frame</h2>
+        <figure class="media-panel">
+          <div class="frame-stage">
+            <div class="media-empty" role="img" aria-label="No candidate image is attached">
+              No candidate image attached.<br>
+              Replace this placeholder with the complete frame.
+            </div>
+          </div>
+          <figcaption>Whole frame slot. Keep the full image visible; the fit must not crop its edges.</figcaption>
+        </figure>
+
+        <h3>Optional detail crop</h3>
+        <figure class="media-panel">
+          <div class="detail-stage">
+            <div class="media-empty" role="img" aria-label="No detail crop is attached">
+              No detail crop attached.
+            </div>
+          </div>
+          <figcaption>Use only when a readable detail helps the decision.</figcaption>
+        </figure>
+        <p class="detail-note">Keep the uncropped whole frame above. Identify the crop’s source and crop window in its caption.</p>
+      </section>
+
+      <aside aria-label="Review record">
+        <section class="record-block" aria-labelledby="identity-heading">
+          <h2 id="identity-heading">Candidate identity</h2>
+          <dl>
+            <div class="record-row"><dt>Scene / beat</dt><dd>Not supplied</dd></div>
+            <div class="record-row"><dt>Shot ID</dt><dd>Not supplied</dd></div>
+            <div class="record-row"><dt>Take ID</dt><dd>Not supplied</dd></div>
+            <div class="record-row"><dt>Candidate version</dt><dd>Not supplied</dd></div>
+            <div class="record-row"><dt>Active render / timeline version</dt><dd>Not supplied</dd></div>
+            <div class="record-row"><dt>Source artifact ID</dt><dd>Not supplied</dd></div>
+            <div class="record-row"><dt>Source SHA-256</dt><dd>Not measured</dd></div>
+          </dl>
+        </section>
+
+        <section class="record-block" aria-labelledby="inputs-heading">
+          <h2 id="inputs-heading">Submitted inputs, in exact order</h2>
+          <ol class="input-list" aria-label="Submitted inputs in request order">
+            <li class="empty-state">No input records attached to this template.</li>
+            <!-- For each actual input, replace the empty state with an li.input-record containing rows for: position, artifact ID and version, role, content hash, and exact effective value or setting sent. -->
+          </ol>
+          <p class="review-note">Identify media by stable artifact ID and hash. Do not place credentials, private URLs, or local filesystem paths here.</p>
+        </section>
+
+        <section class="record-block" aria-labelledby="coverage-heading">
+          <h2 id="coverage-heading">Review coverage</h2>
+          <dl>
+            <div class="record-row"><dt>Coverage recorded</dt><dd>No media attached; no frame, playback, audio, or page checks performed.</dd></div>
+            <div class="record-row"><dt>Desktop visual verification</dt><dd><span class="pending">Pending</span></dd></div>
+            <div class="record-row"><dt>Mobile visual verification</dt><dd><span class="pending">Pending</span></dd></div>
+            <div class="record-row"><dt>Payload size</dt><dd>Not measured</dd></div>
+          </dl>
+        </section>
+
+        <section aria-labelledby="publication-heading">
+          <h2 id="publication-heading">Publication record</h2>
+          <dl>
+            <div class="record-row"><dt>Publication state</dt><dd>Not attempted</dd></div>
+            <div class="record-row"><dt>Published revision</dt><dd>None — template only</dd></div>
+            <div class="record-row"><dt>Publication result</dt><dd>No attempt recorded</dd></div>
+          </dl>
+          <p class="review-note">If publishing fails, record “Failed” and the observed error. Keep the revision empty unless a specific revision was published.</p>
+        </section>
+      </aside>
+    </div>
+
+    <footer>Replace “Not supplied” only with recorded values. This blank template makes no review, playback, listening, approval, or publication claim.</footer>
+  </main>
+</body>
+</html>

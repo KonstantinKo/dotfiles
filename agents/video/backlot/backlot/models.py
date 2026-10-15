@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +46,9 @@ class ModelSpec:
     tier: str = "lite"
     cost_unit: str = "per_run"
     cost_eur: float = 0.0
+    price_known: bool = True
+    zero_price_evidence: dict[str, Any] = field(default_factory=dict)
+    local_zero_evidence: dict[str, Any] = field(default_factory=dict)
     status: str = "untested"
     inputs: list[str] = field(default_factory=list)
     max_duration_s: float | None = None
@@ -69,6 +74,9 @@ class ModelSpec:
             "tier": self.tier,
             "cost_unit": self.cost_unit,
             "cost_eur": self.cost_eur,
+            "price_known": self.price_known,
+            "zero_price_evidence": self.zero_price_evidence,
+            "local_zero_evidence": self.local_zero_evidence,
             "status": self.status,
             "inputs": self.inputs,
             "max_duration_s": self.max_duration_s,
@@ -95,7 +103,7 @@ def parse_model_note(path: Path) -> ModelSpec:
     if kind not in KINDS:
         raise ValueError(f"unknown kind {data.get('kind')!r}")
     known = {
-        "id", "provider", "kind", "endpoint", "tier", "cost_unit", "cost_eur", "status",
+        "id", "provider", "kind", "endpoint", "tier", "cost_unit", "cost_eur", "price_known", "zero_price_evidence", "local_zero_evidence", "status",
         "inputs", "max_duration_s", "min_duration_s", "resolutions", "defaults", "arg_map", "param_types", "optional_inputs",
     }
     for key in ("arg_map", "param_types"):
@@ -109,6 +117,9 @@ def parse_model_note(path: Path) -> ModelSpec:
         tier=str(data.get("tier") or "lite"),
         cost_unit=str(data.get("cost_unit") or "per_run"),
         cost_eur=float(data.get("cost_eur") or 0.0),
+        price_known=data.get("cost_eur") is not None,
+        zero_price_evidence=dict(data.get("zero_price_evidence") or {}) if isinstance(data.get("zero_price_evidence") or {}, dict) else {},
+        local_zero_evidence=dict(data.get("local_zero_evidence") or {}) if isinstance(data.get("local_zero_evidence") or {}, dict) else {},
         status=str(data.get("status") or "untested"),
         inputs=[str(x) for x in (data.get("inputs") or [])],
         max_duration_s=float(data["max_duration_s"]) if data.get("max_duration_s") is not None else None,
@@ -121,6 +132,51 @@ def parse_model_note(path: Path) -> ModelSpec:
         extra={k: v for k, v in data.items() if k not in known},
         path=path,
     )
+
+
+def validate_price(model: ModelSpec) -> None:
+    """A missing cloud price, or undocumented zero, cannot imply a free provider call."""
+    if model.provider == "local":
+        return
+    if model.provider == "comfyui-local" and model.cost_eur == 0:
+        evidence = model.local_zero_evidence
+        if not (evidence.get("source") and evidence.get("route") == model.endpoint
+                and evidence.get("model") == model.id and evidence.get("verified_at")
+                and evidence.get("cost_scope") == "local_only" and evidence.get("workflow_sha256")):
+            raise BacklotError(f"model {model.id} needs route- and workflow-specific local_zero_evidence")
+        try:
+            verified = datetime.fromisoformat(str(evidence["verified_at"]).replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise BacklotError(f"model {model.id} local zero-cost evidence needs a dated verification") from exc
+        if verified.tzinfo is None or verified > datetime.now(timezone.utc):
+            raise BacklotError(f"model {model.id} local zero-cost verification date is invalid")
+        from backlot.authority import file_hash
+        from backlot.providers.comfyui_local import workflow_path
+
+        path = workflow_path(model)
+        if not path.is_file() or file_hash(path) != evidence["workflow_sha256"]:
+            raise BacklotError(f"model {model.id} local zero-cost workflow hash differs from evidence")
+        return
+    if not model.price_known:
+        raise BacklotError(f"model {model.id} has no paid-route price estimate; configure cost_eur before quoting")
+    if model.cost_eur == 0:
+        evidence = model.zero_price_evidence
+        if not (evidence.get("source") and evidence.get("model") == model.id
+                and evidence.get("route") == model.endpoint and evidence.get("observed_at")
+                and evidence.get("expires_at")):
+            raise BacklotError(f"model {model.id} has zero cloud price without route-specific zero_price_evidence")
+        try:
+            observed = datetime.fromisoformat(str(evidence["observed_at"]).replace("Z", "+00:00"))
+            expires = datetime.fromisoformat(str(evidence["expires_at"]).replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise BacklotError(f"model {model.id} zero-price evidence needs dated source and expiry") from exc
+        if observed.tzinfo is None or expires.tzinfo is None or observed > datetime.now(timezone.utc) or expires <= datetime.now(timezone.utc):
+            raise BacklotError(f"model {model.id} zero-price evidence is invalid or expired")
+
+
+def validate_estimate(model: ModelSpec, amount: float) -> None:
+    if model.provider != "local" and amount == 0 and model.cost_eur != 0:
+        raise BacklotError(f"model {model.id} returned an unexplained zero cloud estimate")
 
 
 def models_dir(vault: Path) -> Path:
@@ -163,6 +219,12 @@ def estimate_cost(model: ModelSpec, *, n: int = 1, duration_s: float | None = No
         if model.min_duration_s:
             dur = max(dur, model.min_duration_s)
         return round(model.cost_eur * dur * n, 4)
+    if unit == "per_minute_ceil":
+        dur = duration_s if duration_s is not None else model.max_duration_s or 60.0
+        if model.min_duration_s:
+            dur = max(dur, model.min_duration_s)
+        minutes = math.ceil(dur / 60.0)
+        return round(model.cost_eur * minutes * n, 4)
     if unit == "per_1k_chars":
         return round(model.cost_eur * max(chars, 1) / 1000.0 * n, 4)
     return round(model.cost_eur * n, 4)

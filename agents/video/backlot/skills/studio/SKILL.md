@@ -10,32 +10,23 @@ Tell the lead agent how a production moves from idea to delivery, what each gate
 
 ## Inputs
 - `Projects/<slug>/Status.md`, `<slug>.md` frontmatter (`status`, `budget_eur`, `spent_eur`)
+- Current handoff and delivery/version pointer, plus relevant archived conversation exports when recent approvals or state are not in the active thread. Search project-local sources before asking the user to repeat a decision; note missing coverage.
 - `Studio/Playbooks/Default.md`, then `Projects/<slug>/Context/Rules.md` (project overrides win)
 - `Studio/Workflows/*.md` when a stage names one
 - `Decisions.md` (newest on top) for the last decisions taken
 
-## Stages and gates
+## Declared workflow and gates
 
-| Stage (`status`) | Skill | Gate |
-|---|---|---|
-| brief | `brief` | `Brief.md` agreed by the user |
-| develop | `develop` | `Script.md` locked: beats, VO lines, durations |
-| preproduction | `preproduction` | four locks (cast, locations/props, visual language, format & deliverables) plus a voice per cast member |
-| boards | `storyboard` | every shot has an approved `board_take` |
-| shots | `generate` | every shot has an approved `video_take` |
-| voice / score | `voice`, `score` | vo takes approved; music and sfx placed in the timeline |
-| assemble | `assemble` | `edit/timeline.yaml` renders a draft |
-| review | `review` | continuity and brief compliance pass, or a flag list the user has seen |
-| deliver | `deliver` | exports in `renders/`, `Status.md` says delivered |
+`project.yaml workflow` names the scenes, their requirements, and the deliverables. The base path needs an agreed Brief, one or more named scenes, exact source coverage, a verified deliverable and an approval for that output version and scope. Add boards, identity/world locks, spatial or Blender guides, voice, captions, score, exact graphics, typed review, or remote share only when the project needs them. [Workflow requirements](references/workflow-gates.md) is generated from the evaluator's registry.
 
-A gate is passed when the artefact exists in the vault and the user said yes in chat. Record the yes through `backlot approve` (takes) or a line in `Decisions.md` written by `backlot approve --lock` (Context locks). Stages advance only through `backlot stage --advance` (it checks the gate and writes `status:` in `<slug>.md`); never edit the home note's `status` by hand.
+`backlot stage --json` reports blockers per scene and deliverable without writing. `backlot stage --advance` updates the home note's summary to delivered only after the declared checks pass. A legacy project may still use the old stage path until its workflow is declared. A current version is established by its deliverable record and matching user decision, rather than by the summary stage. Record original user approval text, source reference and timestamp when available; mark agent reviews and unverified legacy text with their own source kind. See [Decision and spend](references/decision-and-spend.md).
 
 ## Running a session
 1. Resolve the project (cwd → `project.yaml` → `vault_project`). If none, offer `/new-project`.
-2. `backlot status`. Read Playbook and `Rules.md`. Note stale counts and remaining budget.
-3. State the current stage and the one decision or artefact the gate needs. Ask, or proceed if the answer is already in `Decisions.md`.
-4. Work the stage with its skill. Spend goes through `backlot gen`; exit 3 means show the estimate and ask.
-5. Close the session with `backlot status` and, if takes were produced, `backlot cost`. Commit the project dir and the vault.
+2. Read the current handoff/delivery pointer, `Status.md`, `Costs.md`, Playbook, and `Rules.md`; reconcile them with the relevant `Decisions.md` entries and archived approvals before asking for a repeated decision. Note source coverage and stale counts.
+3. State the current stage and the one decision or artefact the gate needs. Ask, or proceed if the answer is already supported by current records or a scoped archived approval.
+4. Work the stage with its skill. For paid calls, quote first and use [Decision and spend](references/decision-and-spend.md); exit 3 requires recorded authorization for the exact call. Free/local calls need no authorization.
+5. Close the session with read-only `backlot status` and `backlot delivery`; use `backlot cost` when spend changed. Refresh the derived notes only when needed. Commit the project dir and the vault.
 
 ## Role crew
 Spawn a sub-agent for bounded work with a written brief that names the vault notes to read and the output expected. Sub-agents never run backlot spend commands (`gen`, `tts`, `captions`, `batch`, `recover`), never approve, never edit `Decisions.md`; only dop, editor and continuity have Bash at all.
@@ -52,13 +43,13 @@ Spawn a sub-agent for bounded work with a written brief that names the vault not
 | continuity | compare takes against Context, flag drift | flag list with take IDs and evidence |
 
 ## "What's the update"
-Run `backlot status`, relay it verbatim or trimmed, then add one line: the next decision the user owes (which take to pick, which lock to confirm, whether to spend X on Y). Nothing from memory.
+Run `backlot status`, `backlot delivery`, and `backlot cost` for computed read-only inspection; add one line naming the next decision the user owes. `--refresh` rewrites the respective derived note. Keep the hand-written `Delivery.md` narrative untouched.
 
 ## Playbooks and Workflows
-Playbook rules are defaults for every action: ask before generating, 2–4 options per unlocked element and 1 for locked, lite for exploration, boards before video, variations never overwrites, reasons on every decision. A Workflow note is a scripted multi-step job (Casting, Reference Research, Production Design, Storyboarding, Ad Variations, Localisation, Campaign Transfer, Reframing). When a stage names a Workflow, follow its steps in order and report which step you are on.
+Playbook rules apply to the work actually declared: quote each paid call, present options for an unlocked selected element, use lite for exploration, keep variations immutable, and record reasons on decisions. Boards precede generated video when the scene declares `board`. A Workflow note is a scripted job to use when that activity is selected, not a mandatory phase for every film.
 
 ## Escalation
-The CLI enforces the money gates from `project.yaml` (`confirm_over_eur`, `max_call_eur`, `escalate_pct`, defaults in `studio.yaml`), so when it exits 3 or refuses, show the user its message and ask. On top of that, stop and ask when: a Context edit would stale more than a third of shots; a Playbook rule conflicts with `Rules.md`; a provider fails twice in a row; a sub-agent proposes changing a locked element. Otherwise decide, and log the reason in the approve/reject call.
+The CLI enforces the money gates from `project.yaml` (`confirm_over_eur`, `max_call_eur`, `escalate_pct`, defaults in `studio.yaml`), so when it exits 3 or refuses, show the quote and follow [Decision and spend](references/decision-and-spend.md). On top of that, stop and ask when: a Context edit would stale more than a third of shots; a Playbook rule conflicts with `Rules.md`; a provider fails twice in a row; a sub-agent proposes changing a locked element. Log each take decision with its explicit source and reason.
 
 ## Example phrases
 - "what's the update on the launch spot"

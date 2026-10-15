@@ -23,8 +23,13 @@ if unsafe_hf:
 if not spend.search(cmd) or not re.search(r"(^|\s)--(yes|force)(=\S+)?(\s|$)", cmd):
     sys.exit(0)
 
+# The CLI validates a versioned, one-use authorization against the current
+# provider request. The hook must not ask the user to repeat that approval.
+segment = next((s for s in segments if spend.search(s)), cmd).strip()
+if re.search(r"(^|\s)--authorization(?:=\S+|\s+\S+)", segment):
+    sys.exit(0)
+
 estimate = ""
-segment = next((s for s in re.split(r"&&|\|\||;|\|", cmd) if spend.search(s)), cmd).strip()
 try:
     toks = shlex.split(segment)
     i = toks.index("backlot")

@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from backlot.models import ModelSpec
-from backlot.providers.base import BaseProvider, GenRequest, GenResult, ProviderError, build_arguments
+from backlot.providers.base import BaseProvider, GenRequest, GenResult, ProviderError, ProviderPreSubmitError, build_arguments
 
 DEFAULT_TIMEOUT_S = 900.0
 POLL_INTERVAL_S = 1.0
@@ -73,7 +73,7 @@ class FalProvider(BaseProvider):
     def _client(self):
         key = resolve_key(self.config)
         if not key:
-            raise ProviderError("no FAL_KEY in env or Keychain (service fal-api, account FAL_KEY)")
+            raise ProviderPreSubmitError("no FAL_KEY in env or Keychain (service fal-api, account FAL_KEY)")
         os.environ["FAL_KEY"] = key
         import fal_client
 
@@ -84,7 +84,7 @@ class FalProvider(BaseProvider):
         try:
             return client.upload_file(str(path))
         except Exception as exc:  # noqa: BLE001 - fal_client raises many exception types
-            raise ProviderError(f"upload of {path.name} failed: {_short(exc)}") from exc
+            raise ProviderPreSubmitError(f"upload of {path.name} failed: {_short(exc)}") from exc
 
     @property
     def timeout_s(self) -> float:
@@ -95,14 +95,18 @@ class FalProvider(BaseProvider):
         the status until completed or `timeout_s`; the result is only read when it is complete."""
         client = self._client()
         if not model.endpoint:
-            raise ProviderError(f"model {model.id} has no endpoint")
+            raise ProviderPreSubmitError(f"model {model.id} has no endpoint")
         args = build_arguments(model, req, self._upload)
         start = time.time()
         request_id = ""
         try:
+            if req.on_before_submit:
+                req.on_before_submit()
             handler = client.submit(model.endpoint, arguments=args)
             request_id = str(getattr(handler, "request_id", "") or "")
-            if req.on_submit and request_id:
+            if not request_id:
+                raise ProviderError(f"{model.endpoint} accepted a submission without a request id; submission status uncertain. Check provider history before retrying")
+            if req.on_submit:
                 req.on_submit(request_id)
             deadline = start + self.timeout_s
             while not isinstance(handler.status(), client.Completed):
@@ -129,6 +133,10 @@ class FalProvider(BaseProvider):
         return GenResult(files=files, job_id=request_id, seconds=seconds, raw=result)
 
     def fetch(self, endpoint: str, request_id: str, workdir: Path) -> GenResult:
+        result = self.fetch_json(endpoint, request_id)
+        return GenResult(files=_download_all(result, workdir), job_id=request_id, raw=result)
+
+    def fetch_json(self, endpoint: str, request_id: str) -> dict[str, Any]:
         client = self._client()
         try:
             status = client.status(endpoint, request_id)
@@ -139,7 +147,7 @@ class FalProvider(BaseProvider):
             raise
         except Exception as exc:  # noqa: BLE001
             raise ProviderError(f"{endpoint} result {request_id} failed: {_short(exc)}") from exc
-        return GenResult(files=_download_all(result, workdir), job_id=request_id, raw=result)
+        return result if isinstance(result, dict) else {"result": result}
 
 
 def _download_all(result: Any, workdir: Path) -> list[Path]:

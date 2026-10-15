@@ -102,13 +102,14 @@ def test_budget_refusal(project):
     assert code == 0 and data["dry_run"]
 
 
-def test_ask_before_generate_false_skips_confirmation(project):
+def test_ask_before_generate_false_does_not_skip_exact_authorization(project):
     yml = project["root"] / "project.yaml"
     data = yaml.safe_load(yml.read_text())
     data["ask_before_generate"] = False
     yml.write_text(yaml.safe_dump(data))
     code, out = run_json("gen", "img", "--model", "fake-image", "--prompt", "p")
-    assert code == 0 and out[0]["take"] == "img-001"
+    assert code == EXIT_CONFIRM and out["needs_confirmation"]
+    assert FakeProvider.calls == []
 
 
 def test_per_second_estimate_and_image_input(project):
@@ -143,8 +144,8 @@ def test_approve_reject_and_lock(project):
     decisions = (project["vault_project"] / "Decisions.md").read_text()
     lines = [l for l in decisions.splitlines() if l.startswith("- ")]
     assert "## Ledger" in decisions and decisions.index("## Ledger") < decisions.index(lines[0])
-    assert "**reject** img-002 (S010) - wrong palette" in lines[0]
-    assert "**approve** img-001" in lines[1] and "**lock** Mia" in lines[2]
+    assert "**reject** img-002 (S010) [legacy scope unverified] - wrong palette" in lines[0]
+    assert "**lock** Mia" in lines[1] and "**approve** take:img-001@" in lines[2]
     assert "# Decisions" in decisions
     code, takes = run_json("takes", "--status", "approved")
     assert [t["take"] for t in takes] == ["img-001"]
@@ -262,7 +263,9 @@ def test_lipsync_requires_video_and_audio_before_billing(project):
     subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=size=64x64:rate=24", "-t", "1", "-pix_fmt", "yuv420p", str(clip)], check=True)
     code, data = run_json("gen", "video", "--model", "fake-lipsync", "--video", "inputs/face.mp4", "--audio", "vo-001", "--yes", "--param", "duration=2")
     assert code == 0 and data[0]["take"] == "vid-001" and data[0]["params"]["video"].endswith("face.mp4")
-    assert FakeProvider.calls[-1][1].video == clip.resolve() and FakeProvider.calls[-1][1].audio.name == "out.wav"
+    submitted = FakeProvider.calls[-1][1]
+    assert submitted.video.name == clip.name and submitted.video.parent.name == "inputs"
+    assert "approved-inputs" in str(submitted.video) and submitted.audio.name == "out.wav"
 
 
 def test_param_types_and_min_duration(project):

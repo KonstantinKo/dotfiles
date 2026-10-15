@@ -4,6 +4,7 @@ import io
 import json
 import shutil
 import subprocess
+from datetime import datetime, timedelta, timezone
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -15,6 +16,16 @@ from backlot.providers.base import BaseProvider, GenRequest, GenResult
 
 FFMPEG = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+
+
+def mock_authorization(project, quoted):
+    """An explicit mock user message bound to a single quote."""
+    from backlot.authority import authorize
+
+    return authorize(project, quoted, source_message="Yes, submit this exact test call.",
+                     source_ref="fixture:explicit-user-approval", balance_amount=100.0,
+                     balance_unit="EUR", balance_source="fixture balance at approval",
+                     expires_at=(datetime.now(timezone.utc) + timedelta(hours=1)).isoformat())["id"]
 
 MODEL_NOTE = """---
 id: fake-image
@@ -174,9 +185,28 @@ def studio(tmp_path, monkeypatch):
 
 
 def run_cli(*argv: str) -> tuple[int, str]:
+    # Existing feature tests use a mock user's explicit approval for each paid
+    # call. Authority-specific tests call cli.main directly to test refusal.
+    args = list(argv)
+    if args and args[0] == "approve" and "--source-ref" not in args:
+        args += ["--source-ref", "fixture:explicit-user-approval",
+                 "--source-message", "Yes, approve this exact test take."]
+    if args and args[0] in ("gen", "tts", "captions", "batch") and "--yes" in args and "--authorization" not in args:
+        from backlot.config import load_studio
+        from backlot.project import resolve_project
+
+        with redirect_stdout(io.StringIO()) as quote_buf:
+            quote_code = cli.main([a for a in args if a != "--yes" and a != "--json"] + ["--dry-run", "--json"])
+        if quote_code == 0 and quote_buf.getvalue().strip():
+            payload = json.loads(quote_buf.getvalue().strip().splitlines()[-1])
+            quotes = payload.get("quotes") or ([payload["quote"]] if payload.get("quote") else [])
+            project = resolve_project(load_studio())
+            for quoted in quotes:
+                if quoted["request"]["estimate"]["amount"] > 0:
+                    args += ["--authorization", mock_authorization(project, quoted)]
     buf = io.StringIO()
     with redirect_stdout(buf):
-        code = cli.main(list(argv))
+        code = cli.main(args)
     return code, buf.getvalue()
 
 
@@ -190,6 +220,10 @@ def project(studio, monkeypatch):
     code, info = run_json("init", "demo", "--budget", "2")
     assert code == 0, info
     root = Path(info["project_dir"])
+    config_path = root / "project.yaml"
+    config = yaml.safe_load(config_path.read_text())
+    config["workflow"] = {"schema_version": 1, "preset": "legacy"}
+    config_path.write_text(yaml.safe_dump(config, sort_keys=False))
     monkeypatch.chdir(root)
     shots = Path(info["vault_project"]) / "Shots"
     (shots / "S010.md").write_text("---\nshot: S010\nstatus: planned\nduration_s: 4\ncast: [Mia]\ndepends_on: [Cast/Mia]\n---\n# S010\n")

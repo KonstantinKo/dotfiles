@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import json
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -43,6 +44,7 @@ def _copy_tree(src: Path, dest: Path, values: dict[str, Any], rename: dict[str, 
 
 
 def init_project(studio: Studio, slug: str, *, fmt: str, fps: int, res: str, budget: float, title: str | None = None) -> dict[str, Any]:
+    validate_hook_settings(CLAUDE_SETTINGS)
     if not re.match(r"^[a-z0-9][a-z0-9-]*$", slug):
         raise BacklotError(f"slug {slug!r} must be lowercase letters, digits and dashes")
     vault_project = studio.vault / "Projects" / slug
@@ -77,6 +79,10 @@ def init_project(studio: Studio, slug: str, *, fmt: str, fps: int, res: str, bud
     if not readme.exists():
         readme.write_text(INPUTS_README, encoding="utf-8")
     settings = link_claude_settings(project_dir)
+    from backlot.handoff import render as render_handoff
+    from backlot.project import load_project_dir
+
+    render_handoff(load_project_dir(project_dir))
     git = _git_init(project_dir)
     return {"slug": slug, "vault_project": str(vault_project), "project_dir": str(project_dir), "files": len(written), "git": git, "claude_settings": str(settings) if settings else None}
 
@@ -84,14 +90,29 @@ def init_project(studio: Studio, slug: str, *, fmt: str, fps: int, res: str, bud
 def link_claude_settings(project_dir: Path, source: Path = CLAUDE_SETTINGS) -> Path | None:
     """Symlink the toolkit's Claude settings (spend-confirmation hook) into <project>/.claude/;
     Claude Code does not inherit settings from parent directories."""
-    if not source.is_file():
-        return None
+    validate_hook_settings(source)
     target = project_dir / ".claude" / "settings.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.is_symlink() or target.exists():
+        validate_hook_settings(target)
         return target
     target.symlink_to(source)
     return target
+
+
+def validate_hook_settings(path: Path) -> None:
+    """Catch missing project hooks; CLI authority remains the actual spend guard."""
+    if not path.is_file():
+        raise BacklotError(f"spend hook settings missing: {path}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        entries = data["hooks"]["PreToolUse"]
+        bash = next(x for x in entries if x.get("matcher") == "Bash")
+        commands = [x.get("command", "") for x in bash.get("hooks", [])]
+        if not any("confirm-spend.sh" in command for command in commands):
+            raise ValueError("confirm-spend.sh not configured")
+    except (KeyError, StopIteration, ValueError, json.JSONDecodeError) as exc:
+        raise BacklotError(f"spend hook settings invalid: {path}: {exc}") from exc
 
 
 def _git_init(project_dir: Path) -> str:

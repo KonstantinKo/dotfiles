@@ -1,0 +1,35 @@
+schema_version: 1
+references:
+  - id: ref-001
+    identity: "<source or subject identity>"
+    purpose: "<the concrete question this reference helps answer>"
+    authorities:
+      - appearance # appearance, identity, layout, motion, lighting
+    proves:
+      - "<visible fact this source supports>"
+    exclude:
+      - "<specific trait, object, or choice that must not be copied>"
+    approval_scope: "<approved use and boundary, or pending>"
+    approval_ref: null # decision ID or source message reference, if approved
+    limitations:
+      - "<unseen, ambiguous, synthetic, or otherwise unsupported detail>"
+    canonical_version: "<stable source revision or capture date>"
+    sha256: "<64-character lowercase SHA-256 of the canonical file>"
+    provenance:
+      source: "<user supplied, locally captured, generated, or third-party source>"
+      acquired_at: "YYYY-MM-DD"
+      method: "<how the file or frame was obtained>"
+    source_file: "inputs/<project-relative-file>"
+    search:
+      semantic_features:
+        - "<visible action or feature to search for>"
+      nearby_frame_context:
+        before: "<what is visible immediately before the useful frame>"
+        after: "<what is visible immediately after the useful frame>"
+      verified_locator: null # add a timecode/page only after inspecting the selected source
+    view_zone: null # optional: named area or crop within the source
+    light_orientation: null # optional: direction and quality visible in this view
+
+# Keep records in stable order. Use the semantic feature and nearby context to find
+# a useful frame, then verify its locator by inspection. A guessed timestamp alone
+# does not select a frame. Add only references relevant to the current request.

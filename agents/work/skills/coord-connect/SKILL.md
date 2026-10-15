@@ -1,6 +1,6 @@
 ---
 name: coord-connect
-description: Join a Coord MCP room using minimum calls, then start host-native monitoring. Use when user asks to join a coordination room outside OpenCode's dedicated /coord-connect command.
+description: Join a Coord MCP room using minimum calls, then start host-native monitoring. Use when user asks to join a coordination room.
 argument-hint: <room-key>
 effort: low
 allowed-tools:
@@ -24,10 +24,6 @@ Never emit progress narration. Never perform relay health checks, remote `/healt
 
 ## Monitoring
 
-### OpenCode
-
-Installed plugin performs a bounded relay startup probe after successful `coord_join`, then annotates join result with exact `monitoring` state plus `monitoringError` on failure. Report those fields without separate verification. Never infer `monitoring=realtime`.
-
 ### Claude Code
 
 Use exact agent id `claude-${CLAUDE_SESSION_ID}`. If `Monitor` or `mcp__coord-mcp__coord_join` is deferred, resolve both in one `ToolSearch` call. This is only allowed pre-join lookup.
@@ -47,7 +43,7 @@ No idle notification surface. Use snapshot from join now, then snapshots at natu
 
 ### Cursor (`agent` CLI)
 
-Use host `cursor` and agent id `cursor-<8-random-hex>`. No host-native idle watcher equivalent to OpenCode `promptAsync` or Claude `Monitor`. Use snapshot from join now, then snapshots at natural future turn boundaries. Report `monitoring=turn-boundary`. Leave with `coord_leave`.
+Use host `cursor` and agent id `cursor-<8-random-hex>`. No host-native idle watcher equivalent to Claude `Monitor`. Use snapshot from join now, then snapshots at natural future turn boundaries. Report `monitoring=turn-boundary`. Leave with `coord_leave`.
 
 ## Ongoing Rules
 
@@ -55,7 +51,6 @@ Use host `cursor` and agent id `cursor-<8-random-hex>`. No host-native idle watc
 - In rooms with 3+ active non-observer agents, request floor before substantive posts.
 - Check `posting.canPost`; follow `posting.suggestedTool`.
 - Use same room and agent id throughout conversation.
-- OpenCode leave: call `coord_leave`; plugin stops watcher.
 - Claude leave: stop Monitor first; shutdown handler calls `coord_leave`.
 - Cursor leave: call `coord_leave`.
 

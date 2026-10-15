@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Run Godot (or an exported macOS game) with the real GPU renderer and no visible window.
+# Usage: godot-quiet [--app <Game.app>] [--timeout <seconds>] <godot arguments...>
+set -euo pipefail
+
+here="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+binary="${GODOT_QUIET_BIN:-/Applications/Godot.app/Contents/MacOS/Godot}"
+timeout="${GODOT_QUIET_TIMEOUT:-900}"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --app)
+      binary="$2/Contents/MacOS/$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$2/Contents/Info.plist")"
+      shift 2 ;;
+    --timeout) timeout="$2"; shift 2 ;;
+    *) break ;;
+  esac
+done
+[ -x "$binary" ] || { echo "godot-quiet: no executable at $binary" >&2; exit 127; }
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/godot-quiet"
+shim="$cache/libgodotquiet.dylib"
+if [ ! -f "$shim" ] || [ "$here/quiet.m" -nt "$shim" ]; then
+  mkdir -p "$cache"
+  build="$(mktemp "$cache/build.XXXXXX")"
+  clang -dynamiclib -fobjc-arc -O2 -arch arm64 -arch x86_64 \
+    -framework AppKit -framework CoreGraphics "$here/quiet.m" -o "$build"
+  mv -f "$build" "$shim"
+fi
+
+args=("$@")
+case " $* " in
+  *" --audio-driver "*) ;;
+  *) args=(--audio-driver Dummy "${args[@]}") ;;
+esac
+
+# perl keeps the process a direct child (exit code, stdout and signals pass through) and
+# arms the watchdog; the shim variable is set after perl starts because macOS strips
+# DYLD_* from system binaries.
+exec /usr/bin/perl -e '
+  my ($limit, $shim, @command) = @ARGV;
+  alarm $limit if $limit > 0;
+  $ENV{DYLD_INSERT_LIBRARIES} = $shim;
+  exec { $command[0] } @command or die "godot-quiet: cannot run $command[0]: $!\n";
+' "$timeout" "$shim" "$binary" "${args[@]}"

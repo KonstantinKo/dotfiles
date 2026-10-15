@@ -26,7 +26,7 @@ Turn a one-sentence idea into a scaffolded project (vault + project dir) with a 
 4. `cd ~/projects/video/backlot/<slug>`.
 5. Fill `Projects/<slug>/Brief.md` from the interview using the `brief` skill's layout. Leave unknowns as open questions at the bottom.
 6. If the user handed over material (PDF, deck, URL, footage), run the `ingest` skill now.
-7. `backlot status`. Report: slug, vault path, budget, the open questions.
+7. Keep the scaffolded base `project.yaml workflow` and name the requested scenes and deliverables; add optional requirements only from the Brief. Run read-only `backlot status`. Report the slug, vault path, budget and open questions.
 
 ## Outputs
 - Vault `Projects/<slug>/` from templates, `Brief.md` filled

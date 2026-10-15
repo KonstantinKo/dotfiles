@@ -1,0 +1,63 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Models come from the OpenCode Go subscription: `/connect` → OpenCode Go.
+  // No default model and no per-agent models: subagents inherit the session model.
+  "autoupdate": true,
+  "subagent_depth": 2,
+
+  // Yolo mode: no approval prompts. Private hobby projects only.
+  "permission": {
+    "external_directory": "allow",
+    "read": "allow",
+    "doom_loop": "allow"
+  },
+
+  "mcp": {
+    // Needs Blender open with the "MCP for Blender" add-on server started (N panel).
+    // Pinned to match the add-on installed by `uvx blender-mcp@<version> install-addon`.
+    "blender": {
+      "type": "local",
+      "command": ["uvx", "blender-mcp==1.9.1"],
+      "environment": { "DISABLE_TELEMETRY": "true" },
+      "timeout": 60000
+    },
+    // Up-to-date Unity/Godot/library API docs.
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"],
+      "timeout": 60000
+    },
+    // Engine MCPs connect once their editor is open with the add-on installed.
+    "godot": {
+      "type": "local",
+      "command": ["uvx", "godot-ai==4.0.4", "attach", "--disable-telemetry"],
+      "environment": { "GODOT_AI_DISABLE_TELEMETRY": "true" },
+      "timeout": 60000
+    },
+    "unity_coplay": {
+      "type": "local",
+      "command": ["uvx", "--from", "mcpforunityserver==10.2.0", "mcp-for-unity", "--transport", "stdio"],
+      "environment": {
+        "UNITY_MCP_DISABLE_TELEMETRY": "true",
+        "UNITY_MCP_SKIP_STARTUP_CONNECT": "1",
+        "FASTMCP_SHOW_SERVER_BANNER": "false",
+        "FASTMCP_CHECK_FOR_UPDATES": "off"
+      },
+      "timeout": 60000
+    },
+    // Swap `enabled` with unity_coplay to A/B test AnkleBreaker.
+    "unity_anklebreaker": {
+      "type": "local",
+      "command": ["npx", "-y", "anklebreaker-unity-mcp@2.35.6"],
+      "environment": { "UNITY_MCP_COMPACT_TOOLS": "1" },
+      "timeout": 60000,
+      "enabled": false
+    },
+    // Pay-per-use Fal.ai asset generation; the wrapper reads the key from macOS Keychain.
+    "fal": {
+      "type": "local",
+      "command": ["/Users/konstantin/.local/bin/fal-mcp-codg"],
+      "timeout": 60000
+    }
+  }
+}

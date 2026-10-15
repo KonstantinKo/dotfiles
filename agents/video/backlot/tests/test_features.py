@@ -11,12 +11,12 @@ import yaml
 from backlot import frontmatter
 from backlot.config import load_studio
 from backlot.errors import EXIT_BUDGET, EXIT_CONFIRM, BacklotError
-from backlot.gen import GenOptions, execute
+from backlot.gen import GenOptions, execute, plan
 from backlot.models import ModelSpec
 from backlot.project import load_project_dir
 from backlot.providers.base import GenRequest, ProviderError, build_arguments
 from backlot.stages import STAGES
-from tests.conftest import FFMPEG, FakeProvider, run_cli, run_json
+from tests.conftest import FFMPEG, FakeProvider, mock_authorization, run_cli, run_json
 
 MULTI_NOTE = """---
 id: fake-multi
@@ -74,7 +74,9 @@ def test_parallel_reservations_get_distinct_ids_and_share_budget(project, monkey
             seen.append(",".join(sorted(t["take"] for t in pending)))
             if Nested.depth == 0:
                 Nested.depth += 1
-                inner = execute(studio, proj, GenOptions(kind="img", model_id="fake-image", prompt="inner", yes=True))
+                inner_opts = GenOptions(kind="img", model_id="fake-image", prompt="inner", yes=True)
+                inner_opts.authorizations = [mock_authorization(proj, plan(studio, proj, inner_opts).quote)]
+                inner = execute(studio, proj, inner_opts)
                 assert inner.takes[0].take == "img-002"
                 with pytest.raises(BacklotError) as exc:
                     execute(studio, proj, GenOptions(kind="img", model_id="fake-image", prompt="over", yes=True, n=3))
@@ -82,7 +84,9 @@ def test_parallel_reservations_get_distinct_ids_and_share_budget(project, monkey
             return super().run(model, req)
 
     monkeypatch.setattr("backlot.gen.get_provider", lambda name, cfg=None: Nested(cfg))
-    outcome = execute(studio, proj, GenOptions(kind="img", model_id="fake-image", prompt="outer", yes=True))
+    outer_opts = GenOptions(kind="img", model_id="fake-image", prompt="outer", yes=True)
+    outer_opts.authorizations = [mock_authorization(proj, plan(studio, proj, outer_opts).quote)]
+    outcome = execute(studio, proj, outer_opts)
     assert outcome.takes[0].take == "img-001"
     assert seen == ["img-001", "img-001,img-002"]
     ids = sorted(t["take"] for t in _takes(proj))
@@ -105,7 +109,9 @@ def test_threads_allocate_distinct_ids(project, monkeypatch):
 
     def worker():
         try:
-            results.append(execute(studio, proj, GenOptions(kind="img", model_id="fake-image", prompt="t", yes=True)).takes[0].take)
+            opts = GenOptions(kind="img", model_id="fake-image", prompt="t", yes=True)
+            opts.authorizations = [mock_authorization(proj, plan(studio, proj, opts).quote)]
+            results.append(execute(studio, proj, opts).takes[0].take)
         except BaseException as exc:  # noqa: BLE001
             errors.append(exc)
 
@@ -230,7 +236,9 @@ def test_failed_download_keeps_take_failed_and_recover_completes_it(project, mon
 
     monkeypatch.setattr("backlot.gen.get_provider", lambda name, cfg=None: NeverReached(cfg))
     code, data = run_json("gen", "img", "--model", "fake-image", "--prompt", "p", "--yes")
-    assert code == 1 and not (project["root"] / "takes" / "img-002").exists()
+    assert code == 1 and (project["root"] / "takes" / "img-002" / "meta.yaml").exists()
+    uncertain = yaml.safe_load((project["root"] / "takes" / "img-002" / "meta.yaml").read_text())
+    assert uncertain["status"] == "failed" and uncertain["request_id"] == ""
 
     monkeypatch.setattr("backlot.gen.get_provider", lambda name, cfg=None: Flaky(cfg))
     code, data = run_json("recover", "img-001")
@@ -406,6 +414,8 @@ def test_thresholds_from_project_and_studio(project, studio):
     assert code == 0 and data[0]["cost_eur"] == pytest.approx(1.05)
     _set_project(project["root"], confirm_over_eur=0.6)
     code, data = run_json("gen", "img", "--model", "fake-image", "--prompt", "p")
+    assert code == EXIT_CONFIRM and data["needs_confirmation"]
+    code, data = run_json("gen", "img", "--model", "fake-image", "--prompt", "p", "--yes")
     assert code == 0 and data[0]["take"] == "img-002"
     code, data = run_json("gen", "img", "--model", "fake-image", "--prompt", "p", "--n", "2")
     assert code == EXIT_CONFIRM
@@ -415,7 +425,7 @@ def test_thresholds_from_project_and_studio(project, studio):
     _set_project(project["root"], max_call_eur=None, escalate_pct=None)
     code, data = run_json("gen", "img", "--model", "fake-image", "--prompt", "p", "--yes")
     assert code == EXIT_BUDGET and data["max_call_eur"] == 0.2
-    code, data = run_json("status")
+    code, data = run_json("status", "--refresh")
     assert "ESCALATE: budget at 41%" in data["status"] and "threshold 40%" in data["status"]
     assert frontmatter.read(project["vault_project"] / "Status.md")[0]["escalation"] is True
     _set_project(project["root"], escalate_pct=90)

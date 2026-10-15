@@ -4,10 +4,10 @@
 #
 # Layout under agents/: the folder tells you where something ends up.
 #   shared/   every agent home (work and games)
-#   work/     day-job homes: ~/.claude, ~/.claude-di, ~/.codex, ~/.codex-di, OpenCode, Cursor
+#   work/     day-job homes: ~/.claude, ~/.claude-di, ~/.codex, ~/.codex-di, Cursor
 #   work/di/  company-account homes only (~/.claude-di, ~/.codex-di)
-#   work/<tool>/  one harness only (claude | codex | opencode | cursor)
-#   games/    game-dev homes: ~/.codex-games, ~/.claude-games
+#   work/<tool>/  one harness only (claude | codex | cursor)
+#   games/    game-dev homes: ~/.codex-games, ~/.claude-games, OpenCode
 #   creative/ Blender skills for game homes and video projects
 #   video/    general video skills; video/backlot/ adds the optional Backlot workflow
 set -euo pipefail
@@ -125,11 +125,16 @@ for work_home in "${CLAUDE_HOMES[@]}"; do
   safe_symlink "$A/work/CLAUDE.md" "$work_home/CLAUDE.md"
 done
 for work_home in "${CODEX_HOMES[@]}"; do safe_symlink "$A/work/AGENTS.md" "$work_home/AGENTS.md"; done
-safe_symlink "$A/work/AGENTS.md" "$OPENCODE/AGENTS.md"
 safe_symlink "$A/work/AGENTS.md" "$CURSOR/AGENTS.md"
 safe_symlink "$A/games/AGENTS.md" "$CODEX_GAMES_HOME/AGENTS.md"
 safe_symlink "$A/games/AGENTS.md" "$CLAUDE_GAMES_HOME/AGENTS.md"
 safe_symlink "$A/games/CLAUDE.md" "$CLAUDE_GAMES_HOME/CLAUDE.md"
+# OpenCode gets games/AGENTS.md with its closing "## Models" section (Codex model
+# tiers) replaced by games/opencode/MODELS.md.
+[ -L "$OPENCODE/AGENTS.md" ] && rm "$OPENCODE/AGENTS.md"
+mkdir -p "$OPENCODE"
+{ sed '/^## Models$/,$d' "$A/games/AGENTS.md"; cat "$A/games/opencode/MODELS.md"; } > "$OPENCODE/AGENTS.md"
+echo "wrote   $OPENCODE/AGENTS.md"
 
 # --- claude (all homes share settings; auth/plugins/sessions stay per home) ---
 for home in "${CLAUDE_HOMES[@]}"; do
@@ -151,6 +156,7 @@ seed_once() {
 seed_once "$A/work/codex/config.di.toml" "$HOME/.codex-di/config.toml"
 seed_once "$A/games/codex/config.toml"   "$CODEX_GAMES_HOME/config.toml"
 safe_symlink "$A/games/bin/fal-mcp-codg" "$HOME/.local/bin/fal-mcp-codg"
+safe_symlink "$A/games/skills/godot-quiet/godot-quiet" "$HOME/.local/bin/godot-quiet"
 
 # Codex loads a repository's .codex/config.toml only when that exact project
 # is trusted. Trust video repositories in both Codex homes for their local MCP.
@@ -167,32 +173,34 @@ trust_video_project() {
   done
 }
 
-# --- opencode ---
-for f in opencode.jsonc opencode-notifier.json package.json; do
-  safe_symlink "$A/work/opencode/$f" "$OPENCODE/$f"
+# --- opencode: games home on the OpenCode Go subscription ---
+safe_symlink "$A/games/opencode/opencode.jsonc" "$OPENCODE/opencode.jsonc"
+[ -x "$HOME/.opencode/bin/opencode" ] && safe_symlink "$HOME/.opencode/bin/opencode" "$HOME/.local/bin/opencode"
+# Retire links from the former work setup.
+for link in "$OPENCODE"/* "$OPENCODE"/skills/* "$OPENCODE"/commands/*; do
+  [ -L "$link" ] || continue
+  case "$(readlink "$link")" in "$A/work"/*) rm "$link"; echo "retired $link" ;; esac
 done
-safe_symlink "$A/work/opencode/plugins" "$OPENCODE/plugins"
-safe_symlink "$A/work/opencode/agents"  "$OPENCODE/agents"
 
 # --- cursor ---
 safe_symlink "$A/work/cursor/mcp.json" "$CURSOR/mcp.json"
 
 # --- skills ---
-# Claude reads only <home>/skills. Codex reads <home>/skills. OpenCode and Cursor
-# read their own dir plus ~/.claude/skills and ~/.codex/skills, so work skills
-# reach them without extra links.
+# Claude reads only <home>/skills. Codex reads <home>/skills. Cursor reads its own
+# dir plus ~/.claude/skills and ~/.codex/skills, so work skills reach it without
+# extra links.
 SKILL_DIRS=("${CLAUDE_HOMES[@]/%//skills}" "${CODEX_HOMES[@]/%//skills}" "$CODEX_GAMES_HOME/skills" "$CLAUDE_GAMES_HOME/skills" "$OPENCODE/skills" "$CURSOR/skills")
 for d in "${SKILL_DIRS[@]}"; do clean_stale_links "$d"; done
 
 link_children "$A/shared/skills"        "${SKILL_DIRS[@]}"
-link_children "$A/work/skills"          "${CLAUDE_HOMES[@]/%//skills}" "${CODEX_HOMES[@]/%//skills}"
+link_children "$A/work/skills"          "${CLAUDE_HOMES[@]/%//skills}" "${CODEX_HOMES[@]/%//skills}" "$CURSOR/skills"
 link_children "$A/work/di/skills"       "${DI_HOMES[@]/%//skills}"
-link_children "$A/work/opencode/skills" "$OPENCODE/skills"
 [ -d "$A/work/cursor/skills" ] && link_children "$A/work/cursor/skills" "$CURSOR/skills"
-link_children "$A/games/skills"         "$CODEX_GAMES_HOME/skills" "$CLAUDE_GAMES_HOME/skills"
-link_children "$A/creative/skills"      "$CODEX_GAMES_HOME/skills" "$CLAUDE_GAMES_HOME/skills"
+GAMES_SKILL_DIRS=("$CODEX_GAMES_HOME/skills" "$CLAUDE_GAMES_HOME/skills" "$OPENCODE/skills")
+link_children "$A/games/skills"         "${GAMES_SKILL_DIRS[@]}"
+link_children "$A/creative/skills"      "${GAMES_SKILL_DIRS[@]}"
 
-# third-party skills for the games home (agents/games/vendor.txt: "<owner/repo> <path>")
+# third-party skills for the games homes (agents/games/vendor.txt: "<owner/repo> <path>")
 while read -r repo path; do
   case "$repo" in ''|\#*) continue ;; esac
   cache="$VENDOR_CACHE/${repo//\//-}"
@@ -201,20 +209,31 @@ while read -r repo path; do
     git clone -q --depth 1 "https://github.com/$repo.git" "$cache" || { echo "warning could not clone $repo (offline?)"; continue; }
   fi
   [ -d "$cache/$path" ] || { echo "warning $repo has no $path"; continue; }
-  safe_symlink "$cache/$path" "$CODEX_GAMES_HOME/skills/$(basename "$path")"
-  safe_symlink "$cache/$path" "$CLAUDE_GAMES_HOME/skills/$(basename "$path")"
+  for d in "${GAMES_SKILL_DIRS[@]}"; do safe_symlink "$cache/$path" "$d/$(basename "$path")"; done
 done < "$A/games/vendor.txt"
+
+# OpenCode always scans ~/.claude/skills too, which holds the work skills. Deny
+# every skill except the ones linked into its own dir.
+{
+  printf '{\n  "$schema": "https://opencode.ai/config.json",\n  "permission": {\n    "skill": {\n'
+  printf '      "*": "deny"'
+  for skill in "$OPENCODE/skills"/*/; do
+    [ "$(basename "$skill")" = "*" ] && continue
+    printf ',\n      "%s": "allow"' "$(basename "$skill")"
+  done
+  printf '\n    }\n  }\n}\n'
+} > "$OPENCODE/opencode.json"
+echo "wrote   $OPENCODE/opencode.json"
 
 # --- commands / prompts ---
 COMMAND_DIRS=("${CLAUDE_HOMES[@]/%//commands}" "${CODEX_HOMES[@]/%//prompts}" "$OPENCODE/commands" "$CURSOR/commands" "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands")
 for d in "${COMMAND_DIRS[@]}"; do clean_stale_links "$d"; done
 
-link_files "$A/work/commands"          "${CLAUDE_HOMES[@]/%//commands}" "$OPENCODE/commands"
+link_files "$A/work/commands"          "${CLAUDE_HOMES[@]/%//commands}"
 link_files "$A/work/claude/commands"   "${CLAUDE_HOMES[@]/%//commands}"
 link_files "$A/work/codex/prompts"     "${CODEX_HOMES[@]/%//prompts}"
-link_files "$A/work/opencode/commands" "$OPENCODE/commands"
 link_files "$A/work/cursor/commands"   "$CURSOR/commands"
-link_files "$A/games/prompts"          "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands"
+link_files "$A/games/prompts"          "$CODEX_GAMES_HOME/prompts" "$CLAUDE_GAMES_HOME/commands" "$OPENCODE/commands"
 
 # --- video projects: general tools at the root, Backlot tools only under backlot/ ---
 safe_symlink "$A/video/AGENTS.md" "$VIDEO_ROOT/AGENTS.md"

@@ -1,39 +1,27 @@
 ---
 name: deliver
-description: Deliver a Backlot project: final renders per preset, 9:16 reframes, localisation hook, final status, commits. Use for "export the final", "deliver", "make the shorts version", "render for youtube", "localise to German", or when Status.md shows stage deliver.
+description: Verify and record the named final output versions of a Backlot project, using a native, external or custom assembly. Use for "export the final", "deliver", "make the shorts version", "render for youtube", or "localise to German".
 ---
 
 # Deliver
 
 ## Purpose
-Produce every deliverable named in the Brief, record the state, and commit both repos.
+Produce and verify the deliverables declared in `project.yaml workflow`, then preserve their exact sources and scoped approvals.
 
 ## Inputs
-- `Projects/<slug>/Brief.md` (deliverables, languages), `<slug>.md` frontmatter (`deliverables[]`)
-- `edit/timeline*.yaml`, `Review.md` (no open block flags)
-- `Studio/Workflows/Reframing.md`, `Studio/Workflows/Localisation.md`
-- `backlot models --kind upscale` when the Brief asks for above-native resolution
+- The agreed Brief and `project.yaml workflow` named scenes and deliverables
+- Registered M2 media artifacts and `edit/assemblies/<id>.yaml` source maps
+- User decisions in `Records/decisions/`; optional typed reviews in `Records/reviews/`
+- [Workflow requirements](../studio/references/workflow-gates.md) and [Finishing checks](../studio/references/finishing-checks.md)
 
 ## Steps
-1. Confirm the deliverables list from the Brief in one message: name, preset, aspect, captions, language. Ask only if the Brief is silent.
-2. Upscale, if required, approved takes only: stills with `backlot gen up --model fal-topaz-upscale-image --image <take> --shot S###`, video takes with `backlot gen up --model fal-topaz-upscale-video --video <take> --shot S###`, one call per take, estimate first; swap the `src` in a copy of the timeline (`edit/timeline-final.yaml`).
-3. Master: `backlot render edit/timeline-final.yaml --preset youtube -o renders/<slug>-master-16x9.mp4`. Watch the result end to end or check frames at every cut.
-4. Vertical: follow `Workflows/Reframing.md`. `backlot reframe renders/<slug>-master-16x9.mp4 --to 9:16 --focus auto`, then check every shot with a face for framing; rerun single shots with `--focus left|right` and rebuild via a 9:16 timeline if the auto crop cuts a subject. Render with `--preset shorts`.
-5. Localisation, when languages are listed: follow `Workflows/Localisation.md`: translate VO lines in a `Script.<lang>.md`, run the `voice` skill with the same Cast voice or the language variant from `Studio/Voices/`, captions per language, one timeline per language, render each.
-6. Verify each file with `ffprobe` (duration, resolution, fps, audio present). List paths with sizes.
-7. `backlot cost` then `backlot status`; set `status: delivered` and `deliverables[]` in `<slug>.md` to the rendered file names.
-8. Commit: in `~/projects/video/backlot/<slug>/` `git add -A && git commit -m "deliver: <names>"` (media is ignored; timelines, meta and manifest are tracked). In the vault `git add Projects/<slug> Studio && git commit -m "<slug>: delivered"`.
-9. Write a short retro into `Studio/Lessons/<date>-<slug>.md`: what cost more than expected, which model held identity best, what to promote into a Playbook.
-
-## Outputs
-- `renders/<slug>-*.mp4` per deliverable
-- `Status.md` at delivered, `Costs.md` final, `Lessons` note
-- Two commits
+1. Resolve the current named deliverables from the Brief and `project.yaml`. Clarify only an actual conflict or omission. Select the native Backlot renderer, an external editor, or a custom recipe based on the work. A new aspect, language, score or caption variant gets its own named output.
+2. Produce requested versions. Use `backlot render` for a native timeline; use the selected external/custom assembly recipe for another route. Upscale, reframe, localise or add sound only when requested. Paid calls follow [Decision and spend](../studio/references/decision-and-spend.md).
+3. Register exact source media and final output with `backlot register`. Record the ordered source/output frame map, output artifact, actual probe, and hashed recipe using `backlot assembly <spec.json>`. `backlot deliverable <spec.json>` binds the named output to that assembly, its SHA-256 and the required approval scope. A different version gets a different record ID.
+4. Check the rendered media itself. Inspect frame count, format, cuts, exact graphics when declared, and audio/caption timing when present. Keep technical decode, visual review, listening, user acceptance and unsupported checks distinct. A rejected raw take remains rejected when an accepted local derivative uses selected material from it.
+5. Record the user's exact decision on the output hash with `backlot decision approve picture|scored|share <deliverable-id> --version <sha256> --scope <declared-scope> --source-kind user --source-message <original-text> --source-ref <message-ref>`. Include `--source-at` when the original timestamp is known. For an archived approved final, use `backlot historical-import <spec.json>` to bind the original approval JSON, user decision, registered artifact and assembly recipe once; reference its ID as `historical_acceptance_id` in the deliverable. A share request approves sharing only; it does not replace an earlier picture-master decision.
+6. Run read-only `backlot delivery --json` and `backlot stage --json`. Resolve actual blockers. Once all declared checks pass, `backlot stage --advance`, then refresh the derived `Deliverables.md`, `Status.md`, `Costs.md` and `Handoff.md` as needed with `--refresh`. Preserve the hand-written `Delivery.md` narrative.
+7. Archive requested media with `backlot archive create`, inspect with `backlot archive check`, and bundle when needed. A checked local bundle is not proof of an off-machine backup. Commit project and vault records at a useful checkpoint.
 
 ## Gate
-Every Brief deliverable exists in `renders/`, verified, and both repos are committed.
-
-## Example phrases
-- "export the final and the shorts version"
-- "deliver it"
-- "we also need a German version"
+Every required or scene-referenced named deliverable has existing output bytes, a matching registered hash/probe, complete exact source coverage, and a scoped user approval of that output version. Every declared scene has a verified picture range. Each additional declared scene requirement has its own evidence or an imported exact historical acceptance.

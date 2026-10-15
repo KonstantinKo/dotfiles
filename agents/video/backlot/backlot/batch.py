@@ -62,20 +62,24 @@ def cost_table(planned: list[tuple[GenOptions, Planned]]) -> list[str]:
     return rows
 
 
-def run_batch(studio: Studio, project: Project, path: Path, *, yes: bool, dry_run: bool = False, force: bool = False) -> dict[str, Any]:
-    """Plan every request first (all validation errors surface before any spend), then guard the
-    whole batch once: one table, one `--yes`, one budget check. Runs stop at the first provider error."""
+def run_batch(studio: Studio, project: Project, path: Path, *, yes: bool, dry_run: bool = False,
+              force: bool = False, authorizations: list[str] | None = None) -> dict[str, Any]:
+    """Plan every request first; each paid provider call needs its own authorization."""
     requests = load_plan(path, project)
+    for request in requests:
+        request.force = force
     planned = [(o, plan(studio, project, o)) for o in requests]
     table = cost_table(planned)
     total = round(sum(p.total for _, p in planned), 4)
     spent = takes_mod.spent_eur(project)
     budget = project.budget_eur
-    info = {"plan": str(path), "requests": len(planned), "estimate_eur": total, "spent_eur": spent, "budget_eur": budget, "table": table}
+    info = {"plan": str(path), "requests": len(planned), "estimate_eur": total,
+            "spent_eur": spent, "budget_eur": budget, "table": table,
+            "quotes": [p.quote for o, p in planned for _ in range(max(o.n, 1))]}
     text = "\n".join(table)
     if dry_run:
         raise BacklotError(f"{text}\ndry-run batch: ~{total:.3f} EUR (spent {spent:.3f} / {budget:.2f})", code=0, data={"dry_run": True, **info})
-    if budget <= 0:
+    if total > 0 and budget <= 0:
         raise BacklotError("budget_eur is 0 or missing in project.yaml; set a positive budget before generating", code=EXIT_BUDGET, data={"budget_exceeded": True, **info})
     max_call = project.threshold("max_call_eur", studio)
     over = [f"#{i}" for i, (_, p) in enumerate(planned, 1) if p.per_run > max_call]
@@ -83,13 +87,20 @@ def run_batch(studio: Studio, project: Project, path: Path, *, yes: bool, dry_ru
         raise BacklotError(f"{text}\nrequests {', '.join(over)} are above max_call_eur {max_call:.2f} per call; re-run with --force", code=EXIT_BUDGET, data={"max_call_exceeded": True, **info})
     if spent + total > budget:
         raise BacklotError(f"{text}\nbudget exceeded: {spent:.3f} + {total:.3f} > {budget:.2f} EUR", code=EXIT_BUDGET, data={"budget_exceeded": True, **info})
-    if project.ask_before_generate and not yes and total > project.threshold("confirm_over_eur", studio):
-        raise BacklotError(f"{text}\nconfirm batch: {len(planned)} requests ~{total:.3f} EUR (spent {spent:.3f} / {budget:.2f}); re-run with --yes", code=EXIT_CONFIRM, data={"needs_confirmation": True, **info})
+    paid_calls = sum(max(o.n, 1) for o, p in planned if p.per_run > 0)
+    supplied = list(authorizations or [])
+    if paid_calls and (not yes or len(supplied) != paid_calls):
+        raise BacklotError(f"{text}\nexact approval required for each paid call ({paid_calls}); provide one --authorization per call with --yes", code=EXIT_CONFIRM, data={"needs_confirmation": True, **info})
     takes: list[str] = []
     error: str | None = None
     failed_at: int | None = None
-    for i, (opts, _) in enumerate(planned, 1):
+    auth_offset = 0
+    for i, (opts, p) in enumerate(planned, 1):
         opts.yes, opts.force, opts.dry_run = True, force, False
+        if p.per_run > 0:
+            count = max(opts.n, 1)
+            opts.authorizations = supplied[auth_offset:auth_offset + count]
+            auth_offset += count
         try:
             outcome = execute(studio, project, opts)
         except BacklotError as exc:

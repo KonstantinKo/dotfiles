@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="backlot",
         description="Agent-driven video production studio: vault notes + project dir + provider plugins.",
-        epilog="Exit codes: 0 ok, 1 error, 2 usage, 3 needs confirmation (re-run with --yes), 4 budget exceeded.",
+        epilog="Exit codes: 0 ok, 1 error, 2 usage, 3 exact paid-call authorization required, 4 budget exceeded.",
         parents=[common],
     )
     p.add_argument("--version", action="version", version=f"backlot {__version__}")
@@ -53,7 +53,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--parent", metavar="TAKE", help="make a variation of this take (id.<n>); must be the same kind")
     s.add_argument("--depends-on", default="", metavar="NOTES", help="comma-separated Context notes, e.g. Cast/Mia,Locations/Bar")
     s.add_argument("--dry-run", action="store_true", help="only print the estimate")
-    s.add_argument("--yes", action="store_true", help="skip the confirmation step")
+    s.add_argument("--yes", action="store_true", help="execute with recorded exact-call authorization")
+    s.add_argument("--authorization", action="append", default=[], help="one recorded authorization ID per paid call")
     s.add_argument("--force", action="store_true", help="allow a single call above max_call_eur")
 
     s = sub.add_parser("tts", parents=[common], help="generate a voice-over take (kind vo)")
@@ -68,12 +69,14 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--depends-on", default="", metavar="NOTES")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--yes", action="store_true")
+    s.add_argument("--authorization", action="append", default=[])
     s.add_argument("--force", action="store_true")
 
-    s = sub.add_parser("batch", parents=[common], help="run a plan.yaml of gen/tts requests with one cost table and one --yes")
+    s = sub.add_parser("batch", parents=[common], help="run gen/tts plan with one recorded authorization per paid call")
     s.add_argument("plan", help="YAML with `requests:` (fields as the gen/tts flags)")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--yes", action="store_true")
+    s.add_argument("--authorization", action="append", default=[])
     s.add_argument("--force", action="store_true")
 
     s = sub.add_parser("recover", parents=[common], help="fetch a failed/pending take's result by its provider request id")
@@ -92,10 +95,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("take")
     s.add_argument("--reason", required=True)
     s.add_argument("--lock", metavar="NOTE", help="lock a Context note to this take, e.g. Cast/Mia")
+    s.add_argument("--source-ref", required=True, help="user message reference for typed approval")
+    s.add_argument("--source-message", required=True, help="user approval text")
+    s.add_argument("--scope", default="provisional production use")
 
     s = sub.add_parser("reject", parents=[common], help="reject a take")
     s.add_argument("take")
     s.add_argument("--reason", required=True)
+    s.add_argument("--source-ref")
+    s.add_argument("--source-message")
+    s.add_argument("--source-kind", choices=["user", "agent", "legacy"], default="agent",
+                   help="reviewer finding by default; use user only for an explicit user rejection")
+    s.add_argument("--scope", default="raw take")
 
     s = sub.add_parser("stale", parents=[common], help="mark takes/shots (and dependent Context notes) depending on a Context note as stale")
     s.add_argument("note", help="Context note name, e.g. Cast/Mia or Mia")
@@ -107,7 +118,56 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--model", help="stt model id (default: first active stt model)")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--yes", action="store_true")
+    s.add_argument("--authorization")
     s.add_argument("--force", action="store_true")
+
+    s = sub.add_parser("authorize", parents=[common], help="record explicit user approval for one exact paid call")
+    s.add_argument("quote_file", help="JSON output from gen/tts/captions --dry-run --json, or one batch quote")
+    s.add_argument("--quote-index", type=int, help="1-based call number in a batch quote")
+    s.add_argument("--source-message", required=True, help="the user's explicit approval text")
+    s.add_argument("--source-ref", required=True, help="transcript/message reference for the approval")
+    s.add_argument("--balance", type=float, required=True, help="observed current account balance")
+    s.add_argument("--balance-unit", required=True, help="balance unit, e.g. EUR or credits")
+    s.add_argument("--balance-source", required=True, help="where and when the balance was observed")
+    s.add_argument("--expires", required=True, help="ISO expiry timestamp with timezone")
+
+    s = sub.add_parser("decision", parents=[common], help="record a scoped approval or rejection")
+    s.add_argument("action", choices=["approve", "reject", "accept-limit"])
+    s.add_argument("subject_type", choices=["take", "reference", "shot", "range", "picture", "scored", "share"])
+    s.add_argument("subject_id")
+    s.add_argument("--version", required=True, help="immutable artifact version or SHA-256")
+    s.add_argument("--scope", required=True, help="exact use/review/share scope")
+    s.add_argument("--reason", required=True)
+    s.add_argument("--source-ref", required=True)
+    s.add_argument("--source-message", required=True)
+    s.add_argument("--source-kind", choices=["user", "agent", "legacy"],
+                   help="defaults to user for approval/accepted limit and agent for rejection")
+    s.add_argument("--source-at", help="original ISO timestamp with timezone, when known")
+    s.add_argument("--coverage", action="append", default=[], metavar="START:END", help="approved inclusive output-frame range; omit for full output")
+
+    s = sub.add_parser("handoff", parents=[common], help="show or refresh current project handoff")
+    s.add_argument("--refresh", action="store_true")
+    s.add_argument("--claim", help="claim a semantic scene for one worker")
+    s.add_argument("--worker", help="worker name for --claim")
+    s.add_argument("--base-revision", type=int, help="observed handoff revision for --claim")
+
+    s = sub.add_parser("register", parents=[common], help="register existing provider, supplied or local media without a provider call")
+    s.add_argument("spec_file", help="JSON spec with origin, kind, media, exact sources/coverage and optional native expense")
+    s.add_argument("--dry-run", action="store_true", help="hash/probe/validate without writing")
+
+    s = sub.add_parser("expense", parents=[common], help="record one existing provider operation in its native unit")
+    s.add_argument("spec_file", help="JSON expense spec; this command never calls a provider")
+
+    s = sub.add_parser("expense-allocation", parents=[common], help="classify registered sunk expense use without changing its charge")
+    s.add_argument("expense_id")
+    s.add_argument("allocation", choices=["current_final", "experiment", "unallocated"])
+    s.add_argument("--source-ref", required=True)
+    s.add_argument("--reason", required=True)
+
+    sub.add_parser("lineage", parents=[common], help="report descendants needing review after source changes")
+    sub.add_parser("manifest", parents=[common], help="rebuild current manifest.jsonl from take metadata")
+    s = sub.add_parser("migrate", parents=[common], help="idempotently tag legacy take metadata with the current schema")
+    s.add_argument("--dry-run", action="store_true")
 
     s = sub.add_parser("sheet", parents=[common], help="contact sheet of a shot's takes -> renders/sheets/<shot>.jpg + shot note `## Candidates`")
     s.add_argument("--shot", required=True)
@@ -115,6 +175,41 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("stage", parents=[common], help="check the gate for the project's current stage")
     s.add_argument("--advance", action="store_true", help="move `status` to the next stage when the gate passes")
+
+    s = sub.add_parser("assembly", parents=[common], help="register an exact native, external or custom assembly manifest")
+    s.add_argument("spec_file", help="JSON assembly spec")
+    s.add_argument("--dry-run", action="store_true")
+
+    s = sub.add_parser("deliverable", parents=[common], help="register a named, versioned deliverable")
+    s.add_argument("spec_file", help="JSON deliverable spec")
+    s.add_argument("--dry-run", action="store_true")
+
+    s = sub.add_parser("historical-import", parents=[common], help="import an original, exact user final approval")
+    s.add_argument("spec_file", help="JSON historical acceptance spec")
+    s.add_argument("--dry-run", action="store_true")
+
+    s = sub.add_parser("delivery", parents=[common], help="inspect declared deliverables and scene gates")
+    s.add_argument("--refresh", action="store_true", help="rewrite derived Deliverables.md index")
+
+    sub.add_parser("requirements", parents=[common], help="show the workflow requirement registry")
+
+    for name, help_text in (("review-record", "record version-bound technical and human review"),
+                            ("repair-plan", "record a no-spend repair plan"),
+                            ("repair-result", "record the observed outcome of a repair"),
+                            ("score-plan", "validate an exact cut-bound score plan without mixing"),
+                            ("score-mix", "mix a planned score into an exact cut")):
+        s = sub.add_parser(name, parents=[common], help=help_text)
+        s.add_argument("spec_file", help="JSON specification")
+
+    s = sub.add_parser("archive", parents=[common], help="create, check or bundle an exact media archive")
+    archive_sub = s.add_subparsers(dest="archive_cmd", required=True)
+    s = archive_sub.add_parser("create", parents=[common])
+    s.add_argument("spec_file", help="JSON file list, manifest_path and optional recipe")
+    s = archive_sub.add_parser("check", parents=[common])
+    s.add_argument("manifest")
+    s = archive_sub.add_parser("bundle", parents=[common])
+    s.add_argument("manifest")
+    s.add_argument("destination")
 
     s = sub.add_parser("render", parents=[common], help="render edit/timeline.yaml with ffmpeg")
     s.add_argument("timeline", nargs="?", help="timeline YAML (default edit/timeline.yaml)")
@@ -129,8 +224,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--focus", default="center", choices=["center", "left", "right", "top", "bottom", "auto"])
     s.add_argument("-o", "--output")
 
-    sub.add_parser("status", parents=[common], help="regenerate Status.md and print it")
-    sub.add_parser("cost", parents=[common], help="regenerate Costs.md and print it")
+    s = sub.add_parser("status", parents=[common], help="show computed status without writing")
+    s.add_argument("--refresh", action="store_true", help="rewrite Status.md and its derived handoff")
+    s = sub.add_parser("cost", parents=[common], help="show computed costs without writing")
+    s.add_argument("--refresh", action="store_true", help="rewrite Costs.md and spent_eur")
     sub.add_parser("thumbs", parents=[common], help="regenerate all thumbnails")
     sub.add_parser("doctor", parents=[common], help="check tools, keys, vault, ComfyUI, model notes")
     return p
@@ -180,6 +277,100 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
         return EXIT_OK
     if cmd == "models":
         return cmd_models(args, out)
+    if cmd == "authorize":
+        import json
+        from backlot.authority import authorize
+
+        payload = json.loads(Path(args.quote_file).read_text(encoding="utf-8"))
+        quotes = payload.get("quotes")
+        if quotes:
+            if args.quote_index is None and len(quotes) != 1:
+                raise BacklotError("batch quote needs --quote-index (1-based paid call number)")
+            index = args.quote_index or 1
+            if index < 1 or index > len(quotes):
+                raise BacklotError("--quote-index is outside the batch quote")
+            quoted = quotes[index - 1]
+        else:
+            quoted = payload.get("quote") or payload
+        record = authorize(_project(args), quoted, source_message=args.source_message,
+                           source_ref=args.source_ref, balance_amount=args.balance,
+                           balance_unit=args.balance_unit, balance_source=args.balance_source,
+                           expires_at=args.expires)
+        out.line(f"authorized {record['id']} for {record['request']['provider']} {record['request']['route']}", record)
+        return EXIT_OK
+    if cmd == "decision":
+        from backlot.decisions import record_decision
+
+        ranges = []
+        for item in args.coverage:
+            try:
+                start, end = (int(part) for part in item.split(":"))
+            except (ValueError, TypeError) as exc:
+                raise BacklotError("--coverage needs START:END") from exc
+            ranges.append([start, end])
+        record = record_decision(_project(args), args.action, args.subject_type, args.subject_id,
+                                 version=args.version, scope=args.scope, reason=args.reason,
+                                 source_ref=args.source_ref, source_message=args.source_message,
+                                 source_kind=args.source_kind or ("agent" if args.action == "reject" else "user"), source_at=args.source_at,
+                                 coverage=ranges or None)
+        out.line(f"recorded {record['id']} {record['action']} {record['subject_type']}:{record['subject_id']}", record)
+        return EXIT_OK
+    if cmd == "handoff":
+        from backlot.handoff import claim, render
+
+        project = _project(args)
+        if args.claim:
+            if not args.worker or args.base_revision is None:
+                raise BacklotError("--claim needs --worker and --base-revision")
+            claim(project, args.claim, args.worker, args.base_revision)
+        path = project.vault_project / "Handoff.md"
+        result = render(project) if args.refresh or args.claim or not path.exists() else path.read_text(encoding="utf-8")
+        out.line(result.rstrip(), {"handoff": result})
+        return EXIT_OK
+    if cmd == "register":
+        import json
+        from backlot.register import register
+
+        spec = json.loads(Path(args.spec_file).read_text(encoding="utf-8"))
+        result = register(_project(args), spec, dry_run=args.dry_run)
+        out.line(f"{'checked' if args.dry_run else 'registered'} {result.get('take') or spec.get('media')}", result)
+        return EXIT_OK
+    if cmd == "expense":
+        import json
+        from backlot import expenses, vault
+
+        project = _project(args)
+        record = expenses.register(project, json.loads(Path(args.spec_file).read_text(encoding="utf-8")))
+        vault.write_costs(project)
+        out.line(f"recorded {record['id']}", record)
+        return EXIT_OK
+    if cmd == "expense-allocation":
+        from backlot import expenses, vault
+
+        project = _project(args)
+        record = expenses.allocate(project, args.expense_id, args.allocation,
+                                   source_ref=args.source_ref, reason=args.reason)
+        vault.write_costs(project)
+        out.line(f"allocated {record['id']} as {record['allocation']}", record)
+        return EXIT_OK
+    if cmd == "lineage":
+        from backlot.lineage import check
+
+        result = check(_project(args))
+        out.line(f"{len(result['needs_review'])} artifacts need source review", result)
+        return EXIT_OK
+    if cmd == "manifest":
+        from backlot.takes import rebuild_manifest
+
+        path = rebuild_manifest(_project(args))
+        out.line(f"rebuilt {path}", {"manifest": str(path)})
+        return EXIT_OK
+    if cmd == "migrate":
+        from backlot.takes import migrate_metadata
+
+        result = migrate_metadata(_project(args), dry_run=args.dry_run)
+        out.line(f"{'would migrate' if args.dry_run else 'migrated'} {len(result['changed'])} take records", result)
+        return EXIT_OK
     if cmd in ("gen", "tts"):
         return cmd_gen(args, out)
     if cmd == "takes":
@@ -189,7 +380,8 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
     if cmd == "approve":
         from backlot.decisions import approve
 
-        info = approve(_project(args), args.take, args.reason, args.lock, _studio())
+        info = approve(_project(args), args.take, args.reason, args.lock, _studio(),
+                       source_ref=args.source_ref, source_message=args.source_message, scope=args.scope)
         out.line(f"approved {info['take']}" + (f" (shot {info['shot']})" if info["shot"] else "") + (f" · locked {args.lock}" if args.lock else "")
                  + (" · model promoted to active" if info.get("model_promoted") else ""), info, "green")
         return EXIT_OK
@@ -197,8 +389,12 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
         return cmd_batch(args, out)
     if cmd == "recover":
         from backlot.gen import recover
+        from backlot.captions import recover_captions
+        from backlot.takes import load_take
 
-        take = recover(_studio(), _project(args), args.take)
+        project = _project(args)
+        take = (recover_captions(_studio(), project, args.take)
+                if load_take(project, args.take).kind == "cap" else recover(_studio(), project, args.take))
         out.line(f"recovered {take.take}  {take.model}  {take.cost_eur:.3f} EUR  {take.file}", take.to_dict(), "green")
         return EXIT_OK
     if cmd == "sheet":
@@ -209,10 +405,84 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
         return EXIT_OK
     if cmd == "stage":
         return cmd_stage(args, out)
+    if cmd in ("assembly", "deliverable", "historical-import"):
+        import json
+        from backlot.delivery import import_historical_acceptance, register_assembly, register_deliverable
+
+        project = _project(args)
+        spec = json.loads(Path(args.spec_file).read_text(encoding="utf-8"))
+        handler = {"assembly": register_assembly, "deliverable": register_deliverable,
+                   "historical-import": import_historical_acceptance}[cmd]
+        result = handler(project, spec, dry_run=args.dry_run)
+        out.line(f"{'checked' if args.dry_run else 'registered'} {cmd} {result['id']}", result)
+        return EXIT_OK
+    if cmd == "delivery":
+        from backlot.delivery import index_markdown
+        from backlot.workflow import evaluate
+
+        project = _project(args)
+        result = evaluate(project)
+        rows = list(result["deliverables"].values())
+        if args.refresh:
+            (project.vault_project / "Deliverables.md").write_text(index_markdown(rows), encoding="utf-8")
+        out.line(f"delivery: {result['readiness']}", result)
+        return EXIT_OK if result["passed"] else EXIT_ERROR
+    if cmd == "requirements":
+        from backlot.workflow import REQUIREMENTS, requirements_markdown
+
+        out.line(requirements_markdown().rstrip(), REQUIREMENTS)
+        return EXIT_OK
+    if cmd in ("review-record", "repair-plan", "repair-result"):
+        import json
+        from backlot.reviews import plan_repair, record_repair_result, register_review
+
+        spec = json.loads(Path(args.spec_file).read_text(encoding="utf-8"))
+        operation = {"review-record": register_review, "repair-plan": plan_repair,
+                     "repair-result": record_repair_result}[cmd]
+        record = operation(_project(args), spec)
+        out.line(f"{cmd} {record['id']} · {record.get('outcome') or record.get('status') or 'recorded'}", record)
+        return EXIT_OK
+    if cmd in ("score-plan", "score-mix"):
+        import json
+        from backlot.finishing import mix_score, plan_score
+
+        project = _project(args)
+        spec = json.loads(Path(args.spec_file).read_text(encoding="utf-8"))
+        def local(value: str) -> Path:
+            path = Path(value).expanduser()
+            return path if path.is_absolute() else project.root / path
+
+        plan = plan_score(local(spec["cut"]), local(spec["score"]), spec["cue_plan"],
+                          title_end_boundary=spec["title_end_boundary"], gain_db=spec["gain_db"],
+                          score_stream=spec.get("score_stream"))
+        result = plan.to_dict() if cmd == "score-plan" else mix_score(plan, local(spec["output"]))
+        out.line(f"{cmd} {'checked' if cmd == 'score-plan' else 'mixed'}", result)
+        return EXIT_OK
+    if cmd == "archive":
+        import json
+        from backlot.archive import bundle_archive, check_archive, create_archive
+
+        project = _project(args)
+        def local(value: str) -> Path:
+            path = Path(value).expanduser()
+            return path if path.is_absolute() else project.root / path
+
+        if args.archive_cmd == "create":
+            spec = json.loads(Path(args.spec_file).read_text(encoding="utf-8"))
+            files = [{**row, "source": str(local(row["source"]))} for row in spec["files"]]
+            result = create_archive(files, local(spec["manifest_path"]), recipe=spec.get("recipe"))
+        elif args.archive_cmd == "check":
+            result = check_archive(local(args.manifest))
+        else:
+            result = bundle_archive(local(args.manifest), local(args.destination))
+        out.line(f"archive {args.archive_cmd}: {'ok' if result.get('ok', True) else 'incomplete'}", result)
+        return EXIT_OK if result.get("ok", True) else EXIT_ERROR
     if cmd == "reject":
         from backlot.decisions import reject
 
-        info = reject(_project(args), args.take, args.reason)
+        info = reject(_project(args), args.take, args.reason,
+                      source_ref=args.source_ref, source_message=args.source_message,
+                      scope=args.scope, source_kind=args.source_kind)
         out.line(f"rejected {info['take']}", info, "yellow")
         return EXIT_OK
     if cmd == "stale":
@@ -225,7 +495,8 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
     if cmd == "captions":
         from backlot.captions import run_captions
 
-        info = run_captions(_studio(), _project(args), args.src, args.model, yes=args.yes, dry_run=args.dry_run, force=args.force)
+        info = run_captions(_studio(), _project(args), args.src, args.model, yes=args.yes,
+                            dry_run=args.dry_run, force=args.force, authorization=args.authorization)
         out.line(f"captions {info['srt']} ({info['cues']} cues, {info['cost_eur']:.3f} EUR)", info, "green")
         return EXIT_OK
     if cmd == "render":
@@ -247,13 +518,13 @@ def _dispatch(args: argparse.Namespace, out: Printer) -> int:
     if cmd == "status":
         from backlot.vault import write_status
 
-        text = write_status(_project(args), _studio())
+        text = write_status(_project(args), _studio(), refresh=args.refresh)
         out.line(text.rstrip(), {"status": text})
         return EXIT_OK
     if cmd == "cost":
         from backlot.vault import write_costs
 
-        text = write_costs(_project(args))
+        text = write_costs(_project(args), refresh=args.refresh)
         out.line(text.rstrip(), {"costs": text})
         return EXIT_OK
     if cmd == "thumbs":
@@ -274,7 +545,7 @@ def cmd_doctor(out: Printer) -> int:
 
 
 def cmd_models(args: argparse.Namespace, out: Printer) -> int:
-    from backlot.models import load_models, normalize_kind
+    from backlot.models import load_models, normalize_kind, validate_price
 
     models, problems = load_models(_studio().vault)
     kind = normalize_kind(args.kind) if args.kind else None
@@ -282,12 +553,23 @@ def cmd_models(args: argparse.Namespace, out: Printer) -> int:
         m for m in models
         if (args.all or m.status != "disabled") and (not kind or m.kind == kind) and (not args.provider or m.provider == args.provider)
     ]
+    def readiness(m):
+        if m.provider in {"higgsfield", "comfyui-cloud"}:
+            return "stub: not callable"
+        if m.provider not in {"fal", "local", "comfyui-local"}:
+            return "unknown provider route"
+        try:
+            validate_price(m)
+        except BacklotError:
+            return "price unverified: not callable"
+        return "configured route; runtime readiness unverified"
+
     lines = [
-        out.color(f"{m.id:28} {m.kind:8} {m.provider:14} {m.tier:5} {m.cost_eur:>7.3f} {m.cost_unit:13} {m.status}", "" if m.status == "active" else "yellow")
+        out.color(f"{m.id:28} {m.kind:8} {m.provider:14} {m.tier:5} {m.cost_eur:>7.3f} {m.cost_unit:13} {m.status} · {readiness(m)} · {m.endpoint}", "" if m.status == "active" else "yellow")
         for m in rows
     ]
     lines += [out.color(f"broken {p.name}: {msg}", "red") for p, msg in problems]
-    out.lines(lines or ["no models"], [m.to_dict() for m in rows])
+    out.lines(lines or ["no models"], [{**m.to_dict(), "readiness": readiness(m)} for m in rows])
     return EXIT_OK
 
 
@@ -317,6 +599,7 @@ def cmd_gen(args: argparse.Namespace, out: Printer) -> int:
         dry_run=args.dry_run,
         yes=args.yes,
         force=args.force,
+        authorizations=args.authorization,
     )
     outcome = execute(_studio(), project, opts)
     rows = [f"created shot {s}" for s in outcome.created_shots]
@@ -328,7 +611,8 @@ def cmd_gen(args: argparse.Namespace, out: Printer) -> int:
 def cmd_batch(args: argparse.Namespace, out: Printer) -> int:
     from backlot.batch import run_batch
 
-    info = run_batch(_studio(), _project(args), Path(args.plan), yes=args.yes, dry_run=args.dry_run, force=args.force)
+    info = run_batch(_studio(), _project(args), Path(args.plan), yes=args.yes, dry_run=args.dry_run,
+                     force=args.force, authorizations=args.authorization)
     rows = list(info["table"]) + [f"takes: {', '.join(info['takes']) or '-'}"]
     if info["error"]:
         rows.append(f"stopped at request #{info['failed_at']}: {info['error']}")

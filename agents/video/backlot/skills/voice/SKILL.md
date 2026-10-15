@@ -15,11 +15,11 @@ Produce an approved `vo` take per VO line, with captions, and confirm each line 
 - `backlot models --kind tts`, `--kind stt`; `Context/Rules.md` for the default tts model
 
 ## Steps
-1. Build the line list: shot, speaker, text, target seconds. Narrator lines belong to a Cast note too (create `Cast/Narrator.md` with a `voice:` if missing; that is a preproduction lock).
-2. Per line: `backlot tts --model <tts> --voice <voice id> --text "<line>" --shot S030 --depends-on Cast/<Name>`. Exit 3: batch the estimate for all lines, ask once, rerun with `--yes`. Local tts (`kokoro`, `edge-tts`) is free; prefer it for drafts.
+1. Build the line list: scene, speaker or narrator, text, target seconds. Create a Cast voice lock only when the declared workflow needs a recurring generated voice identity. Supplied or imported narration can be registered directly with exact provenance.
+2. Per line: `backlot tts --model <tts> --voice <voice id> --text "<line>" --shot S030 --depends-on Cast/<Name>`. For paid calls, follow [Decision and spend](../studio/references/decision-and-spend.md): quote first, record a per-call authorization after explicit approval, and execute with its ID. `--yes` alone is not approval. Local tts (`kokoro`, `edge-tts`) is free and needs no spend authorization; prefer it for drafts.
 3. Timing check: `ffprobe -show_entries format=duration` on each `takes/<id>/out.*`. A line longer than its shot's `duration_s` minus 0.3 s is flagged. Fix order: shorten the line with `screenwriter` (edit `Script.md`, regenerate), then speed param if the model has one, then extend the shot (goes through `revise`).
 4. Listen or, when audio cannot be played, check the transcript with `backlot captions <take> --model <stt>` and diff it against the script text. Mispronunciations get a variation with a phonetic spelling, `--parent <take>`.
-5. Approve one take per line with a reason. Run `backlot captions` on each approved take; `.srt` and word timestamps land next to the media.
+5. Record the user's chosen take per line with its original approval text/reference and reason through `backlot approve`; see [Decision and spend](../studio/references/decision-and-spend.md). Run `backlot captions` on each approved take; `.srt` and word timestamps land next to the media. If captions uses a paid route, quote and authorize it through the same procedure.
 6. `backlot status`. Set `status: score` when every VO line has an approved take.
 
 ## Outputs

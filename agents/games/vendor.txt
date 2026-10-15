@@ -1,4 +1,4 @@
-# Third-party skills linked into ~/.codex-games/skills by install.sh.
+# Third-party skills linked into the games homes by install.sh.
 # Format: <github owner/repo> <path-in-repo>
 Unity-Technologies/skills skills/audio-setup-mixers
 Unity-Technologies/skills skills/initialize-ai-navigation

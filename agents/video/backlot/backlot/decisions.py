@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from datetime import date
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import os
+import uuid
+
+import yaml
 
 from backlot import frontmatter
 from backlot import takes as takes_mod
@@ -14,12 +19,77 @@ from backlot.errors import BacklotError
 from backlot.models import load_models
 from backlot.project import Project
 from backlot.takes import Take
+from backlot.authority import file_hash
 
 
-def approve(project: Project, take_id: str, reason: str, lock: str | None = None, studio: Studio | None = None) -> dict[str, Any]:
+def record_decision(project: Project, action: str, subject_type: str, subject_id: str, *,
+                    version: str, scope: str, reason: str, source_ref: str,
+                    source_message: str, source_kind: str = "user",
+                    source_at: str | None = None,
+                    coverage: list[list[int]] | None = None) -> dict[str, Any]:
+    """Record an explicit, version-bound decision without changing another object's status."""
+    if action not in ("approve", "reject", "accept-limit"):
+        raise BacklotError("invalid decision action")
+    if subject_type not in ("take", "reference", "shot", "range", "picture", "scored", "share"):
+        raise BacklotError("invalid decision subject type")
+    if not all(x and x.strip() for x in (subject_id, version, scope, reason, source_ref, source_message)):
+        raise BacklotError("decision needs a subject version, scope, reason and explicit source message/reference")
+    if source_kind not in ("user", "agent", "legacy"):
+        raise BacklotError("source_kind must be user, agent or legacy")
+    if source_at:
+        try:
+            stamp = datetime.fromisoformat(source_at.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise BacklotError("source_at needs an ISO timestamp with timezone") from exc
+        if stamp.tzinfo is None:
+            raise BacklotError("source_at needs an ISO timestamp with timezone")
+    if coverage is not None and (not coverage or any(
+            not isinstance(r, list) or len(r) != 2 or
+            not all(isinstance(n, int) and n >= 0 for n in r) or r[1] < r[0]
+            for r in coverage)):
+        raise BacklotError("coverage needs nonempty inclusive [start, end] frame ranges")
+    record = {
+        "schema_version": 1, "id": f"dec-{uuid.uuid4().hex}", "action": action,
+        "subject_type": subject_type, "subject_id": subject_id,
+        "version": version, "scope": scope, "reason": reason,
+        "source_ref": source_ref, "source_message": source_message,
+        "source_kind": source_kind, "source_at": source_at,
+        "coverage": coverage,
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+    }
+    folder = project.vault_project / "Records" / "decisions"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{record['id']}.yaml"
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(yaml.safe_dump(record, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    os.replace(tmp, path)
+    vault.prepend_decision(project, action, f"{subject_type}:{subject_id}@{version[:12]}",
+                           reason, extra=f"[{scope}; {record['id']}]")
+    from backlot.handoff import render
+
+    render(project)
+    return record
+
+
+def list_decisions(project: Project) -> list[dict[str, Any]]:
+    folder = project.vault_project / "Records" / "decisions"
+    return sorted((yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+                   for path in folder.glob("dec-*.yaml")) if folder.is_dir() else (),
+                  key=lambda row: row.get("recorded_at", ""))
+
+
+def approve(project: Project, take_id: str, reason: str, lock: str | None = None,
+            studio: Studio | None = None, *, source_ref: str | None = None,
+            source_message: str | None = None, scope: str = "provisional production use") -> dict[str, Any]:
+    if not source_ref or not source_message:
+        raise BacklotError("approval needs the user's explicit --source-ref and --source-message")
     take = takes_mod.load_take(project, take_id)
     if take.status in takes_mod.UNFINISHED:
         raise BacklotError(f"take {take_id} is {take.status}; recover or discard it before approving")
+    version = file_hash(project.root / take.file) if take.file else take.take
+    record_decision(project, "approve", "take", take_id, version=version,
+                    scope=scope, reason=reason, source_ref=source_ref,
+                    source_message=source_message)
     take = takes_mod.set_status(project, take_id, "approved", reason)
     vault.set_take_note_status(project, take_id, "approved", reason)
     vault.record_approval_on_shot(project, take)
@@ -27,7 +97,6 @@ def approve(project: Project, take_id: str, reason: str, lock: str | None = None
     if lock:
         locked = vault.lock_context(project, lock, take_id)
         vault.prepend_decision(project, "lock", lock.split("/")[-1], reason, extra=f"-> {take_id}")
-    vault.prepend_decision(project, "approve", take_id, reason, extra=f"({take.shot})" if take.shot else "")
     promoted = promote_model(studio, take) if studio else None
     vault.write_status(project, studio)
     return {"take": take_id, "status": "approved", "shot": take.shot, "locked": str(locked) if locked else None, "model_promoted": str(promoted) if promoted else None}
@@ -55,10 +124,21 @@ def promote_model(studio: Studio, take: Take) -> Path | None:
     return model.path
 
 
-def reject(project: Project, take_id: str, reason: str) -> dict[str, Any]:
+def reject(project: Project, take_id: str, reason: str, *, source_ref: str | None = None,
+           source_message: str | None = None, scope: str = "raw take",
+           source_kind: str = "agent") -> dict[str, Any]:
+    if bool(source_ref) != bool(source_message):
+        raise BacklotError("rejection source needs both --source-ref and --source-message")
     take = takes_mod.set_status(project, take_id, "rejected", reason)
     vault.set_take_note_status(project, take_id, "rejected", reason)
-    vault.prepend_decision(project, "reject", take_id, reason, extra=f"({take.shot})" if take.shot else "")
+    if source_ref and source_message:
+        version = file_hash(project.root / take.file) if take.file else take.take
+        record_decision(project, "reject", "take", take_id, version=version,
+                        scope=scope, reason=reason, source_ref=source_ref,
+                        source_message=source_message, source_kind=source_kind)
+    else:
+        vault.prepend_decision(project, "reject", take_id, reason,
+                               extra=f"({take.shot}) [legacy scope unverified]" if take.shot else "[legacy scope unverified]")
     vault.write_status(project)
     return {"take": take_id, "status": "rejected", "shot": take.shot}
 

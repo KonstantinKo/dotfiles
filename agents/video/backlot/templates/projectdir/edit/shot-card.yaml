@@ -1,0 +1,63 @@
+schema_version: 1
+shot:
+  id: S010
+  semantic_name: "<short scene or beat name>"
+  prior_beat: "<what leads into this moment>"
+  current_beat: "<what changes in this moment>"
+  next_beat: "<what this moment sets up>"
+  emotional_intent: "<the intended audience feeling or turn>"
+  visible_action: "<one observable action, with its subject>"
+  start_state: "<where people and important objects begin>"
+  end_state: "<where they finish>"
+  geography: "<relevant scene locations and spatial relationships>"
+  subject_states: # optional; use people, objects, groups, or anonymous subjects as needed
+    - subject: "<person, object, group, or anonymous subject>"
+      position_start: "<plain-language starting position or screen area>"
+      position_end: "<plain-language ending position or screen area>"
+      body_facing_start: "<facing direction, if applicable>"
+      body_facing_end: "<facing direction, if applicable>"
+      gaze_start: "<gaze direction, if applicable>"
+      gaze_end: "<gaze direction, if applicable>"
+      travel: "<path between positions, or stationary>"
+  scene_axis: null # optional line of action or eyeline, with plain-language anchors
+  camera: # optional; omit or set null when no camera direction is needed or known
+    side: "<camera side relative to the scene axis or named anchors>"
+    framing: "<shot size and composition>"
+    movement: "<camera movement, or static>"
+  fixed_constraints:
+    - "<only a constraint that must hold for continuity or story>"
+  assumptions:
+    - statement: "<unverified production or world assumption>"
+      confidence: low # low, medium, high
+      basis: "<why this assumption is being used>"
+  approved_deviations:
+    - statement: "<approved departure from a source or prior design>"
+      scope: "<exact shot, asset, or use covered>"
+      approval_ref: "<decision ID or source message reference>"
+  source_facts:
+    - statement: "<fact supported by a source>"
+      reference_id: ref-001
+      locator: "<verified frame, page, or range>"
+  source_refs: # only the references actually sent; list order is submission order
+    - id: ref-001
+      sha256: "<64-character lowercase SHA-256>"
+      role: appearance # appearance, identity, layout, motion, lighting
+      ranges: [] # optional verified source frames or time ranges
+  route:
+    provider: "<exact provider>"
+    model: "<catalog model ID>"
+    version: "<exact version/revision, or unknown if not exposed>"
+    operation: "<endpoint, workflow, or named operation>"
+    effective_controls: {} # resolved defaults plus requested overrides
+    promotion: null # exact applicable promotion/offer, if any; otherwise null
+    applicability: "<why this route supports this shot's requested controls>"
+    estimate:
+      amount: null # null means unknown; use 0 only when zero cost is verified
+      currency: null
+      unit: null
+      source: null # quote or provider source that supports this estimate
+      observed_at: null # YYYY-MM-DD
+      confidence: unknown # high, medium, low, unknown
+
+# Remove unused example rows. Keep provider constraints in route fields, separate
+# from the creative direction above. If no reference is useful, keep source_refs: [].

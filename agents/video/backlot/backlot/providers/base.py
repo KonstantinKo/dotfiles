@@ -13,6 +13,10 @@ class ProviderError(Exception):
     """Provider call failed."""
 
 
+class ProviderPreSubmitError(ProviderError):
+    """The provider definitely received no paid create request."""
+
+
 class ProviderNotConfigured(ProviderError):
     """Provider exists as a stub only; see the vault provider note."""
 
@@ -45,6 +49,7 @@ class GenRequest:
     duration_s: float | None = None
     workdir: Path = Path(".")
     on_submit: Callable[[str], None] | None = None
+    on_before_submit: Callable[[], None] | None = None
 
     def __post_init__(self) -> None:
         for inp in MEDIA_INPUTS:
@@ -99,6 +104,10 @@ class BaseProvider:
     def fetch(self, endpoint: str, request_id: str, workdir: Path) -> GenResult:
         """Re-fetch a finished request's media by id (`backlot recover`). Optional."""
         raise ProviderError(f"provider {self.name} cannot recover results by request id")
+
+    def fetch_json(self, endpoint: str, request_id: str) -> dict[str, Any]:
+        """Read an already accepted non-media result without creating a new job."""
+        raise ProviderError(f"provider {self.name} cannot recover JSON results by request id")
 
 
 def arg_target(model: ModelSpec, inp: str) -> str:

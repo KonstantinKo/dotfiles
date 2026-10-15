@@ -16,10 +16,12 @@ fi
 
 export FAL_KEY
 
-# fal-mcp-server 1.18.0 is incompatible with the newest unconstrained `mcp`
-# package, but its checked-in lockfile uses 1.13.1. Pin both until upstream
-# constrains or updates the dependency.
+# fal-mcp-server 1.18.0 only declares `mcp>=1.6.0` and breaks on the newest
+# `mcp`. Its upstream uv.lock uses mcp 1.13.1 with pydantic 2.11.7, and mcp
+# 1.13.1 imports a private pydantic symbol that later pydantic releases drop.
+# Pin all three to the lockfile versions; pydantic pins its own pydantic-core.
 exec /Users/konstantin/.local/bin/uvx \
   --with mcp==1.13.1 \
+  --with pydantic==2.11.7 \
   --from fal-mcp-server==1.18.0 \
   fal-mcp

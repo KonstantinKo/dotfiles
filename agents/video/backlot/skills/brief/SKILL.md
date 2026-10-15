@@ -28,16 +28,16 @@ Agree in writing what the film is for before anything is written or generated. T
    - Constraints (budget line, no-go content, deadline)
    - References (links into `Context/Inspiration.md` with intent)
    - Open questions
-4. Mirror deliverables and budget into `<slug>.md` frontmatter if they changed.
-5. Read the Brief back in five lines and ask for the go.
+4. Mirror budget into `<slug>.md` and declare each named deliverable and scene in `project.yaml workflow`. Start from the base picture requirement; add only the checks requested by the Brief. If an explicitly required branch is omitted for a scene, record the reason in the Brief or `Context/Rules.md`.
+5. Read the Brief back in five lines and ask for the go. Set `agreed: true` on the Brief when the user agrees.
 
 ## Outputs
 - `Projects/<slug>/Brief.md`
 - `<slug>.md` frontmatter updated (`deliverables`, `budget_eur`)
-- Stage set to `develop` once agreed
+- `project.yaml workflow` with named scenes and deliverables
 
 ## Gate
-The user says the Brief is agreed. Note it in chat and move `status` to `develop`.
+The user says the Brief is agreed. Record the source and mark `Brief.md` agreed; `backlot stage` reports the remaining scene and deliverable work.
 
 ## Example phrases
 - "write the brief for this one"

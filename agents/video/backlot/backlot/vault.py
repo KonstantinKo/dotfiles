@@ -87,6 +87,12 @@ def write_take_note(project: Project, take: Take, thumb: Path | None) -> Path:
         "prompt": take.prompt,
         "params": take.params,
         "created": take.created,
+        "schema_version": take.schema_version,
+        "origin": take.origin,
+        "sha256": take.sha256,
+        "source_refs": take.source_refs,
+        "coverage": take.coverage,
+        "expense_id": take.expense_id,
     }
     if take.voice:
         data["voice"] = take.voice
@@ -98,7 +104,7 @@ def write_take_note(project: Project, take: Take, thumb: Path | None) -> Path:
     if thumb is not None:
         body.append("!" + thumb_link(project, thumb))
         body.append("")
-    body.append(f"**Model:** {take.model} ({take.provider}) · **Shot:** {take.shot or '-'} · **Cost:** {take.cost_eur:.3f} EUR")
+    body.append(f"**Model:** {take.model} ({take.provider}) · **Shot:** {take.shot or '-'} · **Project EUR ledger:** {take.cost_eur:.3f} EUR")
     if take.status == "failed":
         body.append(f"**Failed:** {take.error or 'provider error'} · request `{take.request_id}` · `backlot recover {take.take}`")
     if take.shot:
@@ -317,7 +323,9 @@ def sync_spent(project: Project) -> float:
     return spent
 
 
-def write_costs(project: Project) -> str:
+def write_costs(project: Project, *, refresh: bool = True) -> str:
+    from backlot.expenses import list_expenses, summary
+
     takes = list_takes(project)
     total = round(sum(t.cost_eur for t in takes), 4)
     by_model: dict[str, float] = defaultdict(float)
@@ -333,14 +341,67 @@ def write_costs(project: Project) -> str:
               "| Model | Takes | EUR |", "|---|---:|---:|"]
     for model, eur in sorted(by_model.items(), key=lambda kv: -kv[1]):
         lines.append(f"| {model} | {counts[model]} | {eur:.3f} |")
+    expense_rows = list_expenses(project)
+    if expense_rows:
+        native = summary(project)
+        lines += ["", "## Native provider operations", "",
+                  "One row per registered operation. Actual charges, estimates and EUR project ledger entries are separate evidence; do not add these columns or convert credits without a documented basis.", "",
+                  "| Operation | Provider | Estimate | Actual charge | Allocation | Project ledger | Evidence |",
+                  "|---|---|---|---|---|---|---|"]
+        for record in expense_rows:
+            estimate = record.get("estimate") or {}
+            charge = record.get("charge") or {}
+            ledger = record.get("project_ledger") or {}
+            fmt = lambda value: f"{value['amount']} {value['unit']}" if value else "unknown"
+            actual = fmt(charge) if record.get("charge_status") != "unknown" else "unknown"
+            lines.append(f"| {record.get('operation_id') or record.get('evidence_key') or record['id']} | {record['provider']} | {fmt(estimate)} | {actual} | {record.get('allocation', 'unallocated')} | {fmt(ledger)} | {record.get('source_kind', '')} |")
+        lines += ["", f"Registered native charges: {native['native_charged']}; current-final allocation within those charges: {native['current_final_native_allocation']}; actual charge unknown for {native['unknown_actual_charges']} operation(s).",
+                  "Coverage: registered operations only; unregistered jobs and shared-account use are excluded."]
     body = "\n".join(lines) + "\n"
     path = project.vault_project / "Costs.md"
-    frontmatter.write(path, {"type": "costs", "generated": _now(), "total_eur": total}, body)
-    update_home(project, spent_eur=total)
-    return path.read_text(encoding="utf-8")
+    result = frontmatter.join({"type": "costs", "generated": _now(), "total_eur": total}, body)
+    if refresh:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(result, encoding="utf-8")
+        update_home(project, spent_eur=total)
+    return result
 
 
-def write_status(project: Project, studio: Studio | None = None) -> str:
+def write_status(project: Project, studio: Studio | None = None, *, refresh: bool = True) -> str:
+    from backlot.workflow import declaration, evaluate
+
+    declared = declaration(project)
+    if declared is not None and declared.get("preset") != "legacy":
+        state = evaluate(project)
+        home = home_data(project)
+        spent = round(sum(t.cost_eur for t in list_takes(project)), 4)
+        lines = ["# Status", "", "Derived from declared scene and deliverable requirements.", "",
+                 f"Legacy stage: {home.get('status') or 'idea'}", f"Readiness: {state['readiness']}", "",
+                 "## Deliverables", ""]
+        for item in state["deliverables"].values():
+            version = (item.get("output") or {}).get("sha256") or "missing"
+            lines.append(f"- {item['id']} @ `{version}`: {'ready' if item['passed'] else 'blocked'}")
+            lines += [f"  - {issue}" for issue in item["blockers"]]
+        lines += ["", "## Scenes", ""]
+        for name, item in state["scenes"].items():
+            lines.append(f"- {item['name']} (`{name}`): {'ready' if item['passed'] else 'blocked'}")
+            lines += [f"  - {issue}" for issue in item["blockers"]]
+        if state["blockers"]:
+            lines += ["", "## Blockers", "", *[f"- {issue}" for issue in state["blockers"]]]
+        lines += ["", "## Spend", "", f"{spent:.4f} / {project.budget_eur:.2f} EUR project ledger.",
+                  "Native provider charges are reported separately in Costs.md.", ""]
+        result = frontmatter.join({"type": "status", "generated": _now(),
+                                   "stage": home.get("status") or "idea", "readiness": state["readiness"],
+                                   "spent_eur": spent}, "\n".join(lines))
+        if refresh:
+            path = project.vault_project / "Status.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(result, encoding="utf-8")
+            update_home(project, spent_eur=spent)
+            from backlot.handoff import render as render_handoff
+
+            render_handoff(project)
+        return result
     home = home_data(project)
     shots = load_shots(project)
     takes = list_takes(project)
@@ -387,6 +448,13 @@ def write_status(project: Project, studio: Studio | None = None) -> str:
     lines += [f"- {a}" for a in actions[:12]] or ["- nothing pending"]
     body = "\n".join(lines) + "\n"
     path = project.vault_project / "Status.md"
-    frontmatter.write(path, {"type": "status", "generated": _now(), "stage": stage, "spent_eur": spent, "stale": len(stale_takes) + len(stale_shots), "escalation": escalation}, body)
-    update_home(project, spent_eur=spent)
-    return path.read_text(encoding="utf-8")
+    result = frontmatter.join({"type": "status", "generated": _now(), "stage": stage, "spent_eur": spent,
+                               "stale": len(stale_takes) + len(stale_shots), "escalation": escalation}, body)
+    if refresh:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(result, encoding="utf-8")
+        update_home(project, spent_eur=spent)
+        from backlot.handoff import render as render_handoff
+
+        render_handoff(project)
+    return result

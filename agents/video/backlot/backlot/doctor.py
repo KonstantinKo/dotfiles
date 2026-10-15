@@ -39,6 +39,22 @@ def run_checks() -> list[Check]:
         return checks
     checks.append(Check("vault", studio.vault.is_dir(), str(studio.vault)))
     checks.append(Check("projects_root", studio.projects_root.is_dir(), str(studio.projects_root), warn=True))
+    from backlot.scaffold import CLAUDE_SETTINGS, validate_hook_settings
+
+    try:
+        validate_hook_settings(CLAUDE_SETTINGS)
+        checks.append(Check("spend hook source", True, str(CLAUDE_SETTINGS)))
+    except BacklotError as exc:
+        checks.append(Check("spend hook source", False, str(exc)))
+    for parent in (Path.cwd(), *Path.cwd().parents):
+        if (parent / "project.yaml").is_file():
+            settings = parent / ".claude" / "settings.json"
+            try:
+                validate_hook_settings(settings)
+                checks.append(Check("project spend hook", True, str(settings)))
+            except BacklotError as exc:
+                checks.append(Check("project spend hook", False, str(exc)))
+            break
     checks += _provider_checks(studio)
     models, problems = load_models(studio.vault)
     checks.append(Check("model notes", not problems, f"{len(models)} ok" + (f", {len(problems)} broken: " + "; ".join(f"{p.name}: {m}" for p, m in problems) if problems else "")))

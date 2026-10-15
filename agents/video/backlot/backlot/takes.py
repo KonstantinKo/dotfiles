@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import fcntl
 import json
+import os
 import shutil
+import uuid
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -20,12 +22,13 @@ from backlot.project import Project
 
 STATUSES = ("pending", "failed", "new", "approved", "rejected", "stale")
 UNFINISHED = ("pending", "failed")
+SCHEMA_VERSION = 2
 
 
 @dataclass
 class Take:
     take: str
-    kind: str  # img|vid|vo|mus|sfx|up
+    kind: str  # img|vid|vo|mus|sfx|up|cap
     model: str
     provider: str
     shot: str | None = None
@@ -39,18 +42,35 @@ class Take:
     created: str = ""
     voice: str | None = None
     request_id: str = ""
+    authorization_id: str | None = None
     endpoint: str = ""
     seconds: float = 0.0
     reason: str | None = None
     error: str | None = None
+    schema_version: int = 2
+    origin: str = "generated"
+    sha256: str = ""
+    probe: dict[str, Any] = field(default_factory=dict)
+    source_refs: list[dict[str, Any]] = field(default_factory=list)
+    coverage: list[dict[str, Any]] = field(default_factory=list)
+    original_request: dict[str, Any] = field(default_factory=dict)
+    effective_request: dict[str, Any] = field(default_factory=dict)
+    review_scope: str = ""
+    expense_id: str = ""
+    import_key: str = ""
+    extra: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        extra = data.pop("extra")
+        return {**extra, **data}
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Take":
         fields = {f for f in cls.__dataclass_fields__}
-        return cls(**{k: v for k, v in data.items() if k in fields})
+        known = {k: v for k, v in data.items() if k in fields and k != "extra"}
+        known["extra"] = {**(data.get("extra") or {}), **{k: v for k, v in data.items() if k not in fields}}
+        return cls(**known)
 
 
 def parse_id(take_id: str) -> tuple[str, int, int | None]:
@@ -141,35 +161,87 @@ def save_take(project: Project, take: Take, media: Path, raw: Any = None) -> Tak
     if media.resolve() != target.resolve():
         shutil.move(str(media), str(target))
     take.file = str(target.relative_to(project.root))
+    from backlot.authority import file_hash
+    from backlot.ffmpeg import probe
+
+    take.sha256 = file_hash(target)
+    take.probe = probe(target)
     take.status = "new" if take.status in UNFINISHED else take.status
     take.error = None
     take.created = take.created or datetime.now(timezone.utc).isoformat(timespec="seconds")
     (folder / "prompt.txt").write_text(take.prompt or take.params.get("text", "") or "", encoding="utf-8")
     write_meta(project, take, raw)
-    project.manifest.parent.mkdir(parents=True, exist_ok=True)
-    with project.manifest.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(take.to_dict(), ensure_ascii=False) + "\n")
     return take
 
 
 def write_meta(project: Project, take: Take, raw: Any = None) -> None:
     data = take.to_dict()
+    path = meta_path(project, take.take)
+    if path.exists():
+        old = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        if isinstance(old, dict):
+            for key, value in old.items():
+                if key not in data:
+                    data[key] = value
     if raw is not None:
         data["response"] = _jsonable(raw)
-    meta_path(project, take.take).write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    _write_yaml(path, data)
+    rebuild_manifest(project)
+
+
+def rebuild_manifest(project: Project) -> Path:
+    """Current take projection; meta.yaml is authoritative and this file is rebuildable."""
+    project.manifest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = project.manifest.with_name(f".{project.manifest.name}.{uuid.uuid4().hex}.tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
+        for take in list_takes(project):
+            fh.write(json.dumps(take.to_dict(), ensure_ascii=False) + "\n")
+    os.replace(tmp, project.manifest)
+    return project.manifest
+
+
+def migrate_metadata(project: Project, *, dry_run: bool = False) -> dict[str, Any]:
+    """Idempotent in-place schema tag migration; legacy fields and media are untouched."""
+    changed = []
+    with locked(project):
+        for take_id in existing_ids(project):
+            path = meta_path(project, take_id)
+            if not path.exists():
+                continue
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            version = int(data.get("schema_version") or 1)
+            if version > SCHEMA_VERSION:
+                raise BacklotError(f"{take_id} has future schema version {version}")
+            if version < SCHEMA_VERSION:
+                changed.append(take_id)
+                if not dry_run:
+                    data["schema_version"] = SCHEMA_VERSION
+                    _write_yaml(path, data)
+        if not dry_run:
+            rebuild_manifest(project)
+    return {"schema_version": SCHEMA_VERSION, "changed": changed, "dry_run": dry_run}
+
+
+def _write_yaml(path: Path, data: dict[str, Any]) -> None:
+    """Readers must never see a half-written take during concurrent reservations."""
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    tmp.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def set_status(project: Project, take_id: str, status: str, reason: str | None = None) -> Take:
     if status not in STATUSES:
         raise BacklotError(f"invalid status {status!r}")
-    path = meta_path(project, take_id)
-    if not path.exists():
-        raise BacklotError(f"take {take_id!r} not found")
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    data["status"] = status
-    if reason is not None:
-        data["reason"] = reason
-    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    with locked(project):
+        path = meta_path(project, take_id)
+        if not path.exists():
+            raise BacklotError(f"take {take_id!r} not found")
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        data["status"] = status
+        if reason is not None:
+            data["reason"] = reason
+        _write_yaml(path, data)
+        rebuild_manifest(project)
     return Take.from_dict(data)
 
 

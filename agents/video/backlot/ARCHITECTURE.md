@@ -7,9 +7,10 @@ Workflows, Playbooks), rebuilt around three principles they don't have:
 
 1. **Plain files are the product.** Every decision, lock, take and cost lives in Markdown
    or YAML that Obsidian renders and git versions. Nothing is trapped in a UI.
-2. **Nothing is generated without a reason and a budget.** The agent knows what it is
-   about to spend, says so, and by default asks first. Runaway generation is impossible
-   by construction (per-project budget in `project.yaml`, enforced by the CLI).
+2. **Nothing is generated without a reason and a budget.** Before every paid provider
+   call, quote its exact inputs, settings, route and estimated cost, show the observed
+   provider balance, and record the user's explicit approval for that call. The CLI
+   enforces one-use authorization and the per-project budget in `project.yaml`.
 3. **Providers are plugins.** fal.ai and the local ComfyUI Desktop are the first two.
    ComfyUI Cloud, Higgsfield or anything else is one adapter file plus model notes,
    with no change to skills or vault layout.
@@ -101,13 +102,16 @@ Take IDs: `<kind>-<seq>` (`img-014`), variations `<id>.<n>` (`img-014.2`), where
 │                    #   ask_before_generate, default models per kind
 ├── inputs/          # user-supplied: treatment PDFs, decks, footage, reference images
 ├── takes/
-│   ├── manifest.jsonl          # append-only, one line per take (same fields as vault note)
+│   ├── manifest.jsonl          # rebuildable current projection, one line per take
 │   └── <id>/                   # e.g. img-014/
 │       ├── meta.yaml           # request, response, timing, cost, provider job id
 │       ├── prompt.txt
 │       └── out.<ext>           # the media
 ├── edit/
-│   └── timeline.yaml           # the "Slate" substitute (see below)
+│   ├── timeline.yaml           # native renderer input when that route is selected
+│   └── assemblies/<id>.yaml   # exact source ranges, recipe hash and output probe
+├── deliverables/<id>.yaml      # named output version and approval scope
+├── deliverables/historical-acceptances/<id>.yaml # imported original approval for one artifact/recipe
 ├── renders/
 └── .gitignore                  # takes/**/out.* renders/ inputs/**/*.{mp4,mov,wav} …
 ```
@@ -126,34 +130,42 @@ Commands (all print terse one-line results; `--json` for machine output):
   the vault (untested marked); `--all` includes disabled ones.
 - `backlot gen <kind> --model <id> --prompt "..." [--image <path|take>]... [--audio <path|take>]...
   [--video <path|take>]... [--end-image <path|take>] [--shot S010] [--n 2] [--param k=v]...
-  [--parent <take>] [--depends-on Cast/Mia,...] [--dry-run] [--yes] [--force]`
+  [--parent <take>] [--depends-on Cast/Mia,...] [--dry-run] [--yes --authorization auth-...] [--force]`
   Validates ids, required inputs and `--depends-on` notes, then estimates cost (from the
-  model note). Spend guard, shared by `gen`, `tts`, `batch` and `captions`: budget 0,
-  missing or exceeded → exit 4; a single provider call above `max_call_eur` → exit 4 unless
-  `--force`; `ask_before_generate` with an estimate above `confirm_over_eur` → prints the
-  estimate and exits 3 (the agent asks the user, then re-runs with `--yes`). Then, under an
+  model note). `--dry-run --json` produces the normalized quote. After the user approves
+  that exact call, `backlot authorize <quote.json>` records the original approval text
+  and message reference, observed balance with its native unit and source, and expiry.
+  Execute with `--yes --authorization <id>`; `--yes` alone is never approval. Each accepted
+  paid call consumes one authorization. A changed request or paid retry needs a new quote
+  and approval. Free local calls need no spend authorization. The spend guard, shared by
+  `gen`, `tts`, `batch` and `captions`, rejects missing/mismatched approval with exit 3;
+  budget 0, missing or exceeded → exit 4; a single provider call above `max_call_eur` →
+  exit 4 unless `--force`. Then, under an
   `fcntl` lock on `<project>/takes/.lock`: re-check the budget counting `pending` and
   `failed` takes as spent, allocate the id, write `takes/<id>/meta.yaml` with
   `status: pending`. Provider runs outside the lock (fal records `request_id` into the
   meta before waiting; `providers.fal.timeout_s`, default 900 s). Save (again under the
-  lock): take, thumbnail, vault note, manifest line, `spent_eur`. A failure after the
+  lock): take, thumbnail, vault note, manifest projection, `spent_eur`. A failure after the
   request was submitted keeps the take as `failed` with `request_id` and cost; a failure
   before submission drops the reservation. `--image/--audio/--video` repeat when the
   model's `arg_map` target ends in `s` (list argument); a singular target refuses more
   than one. `--end-image` maps via `arg_map.end_image` (default `end_image_url`) and needs
   `end_image` in the model's `inputs`. `--parent` must be a take of the same kind.
 - `backlot tts --model <id> --voice <id> (--text "..."|--file f) [--shot] ...` same as gen with kind `vo`.
-- `backlot batch <plan.yaml> [--dry-run] [--yes] [--force]` plans a list of gen/tts requests
+- `backlot batch <plan.yaml> [--dry-run] [--yes --authorization auth-...]... [--force]` plans a list of gen/tts requests
   (`requests:` or a top-level list; fields as the CLI flags: `kind, model, prompt, text|file,
   voice, image|audio|video (string or list), end_image, shot, n, params {}, parent,
-  depends_on []`), prints one cost table, needs a single `--yes` (exit 3 otherwise), applies
+  depends_on []`), prints ordered quotes; each paid call needs its own authorization in
+  request order. It applies
   the same budget/max-call rules to the whole batch, runs sequentially, stops at the first
   provider error (exit 1) and prints the take ids produced.
 - `backlot recover <take>` re-fetches a `failed`/`pending` take's result by its
   `request_id` (`fal_client.status` + `result`) and completes it (media, thumb, note).
 - `backlot takes [--shot S010] [--kind] [--status new|approved|rejected|stale|pending|failed] [--stale]`, `backlot show <take>`.
-- `backlot approve <take> [--lock Cast/Mia] --reason "..."`, `backlot reject <take> --reason "..."`
-  update take + shot notes and append to `Decisions.md`; `--lock` sets `locked: true`
+- `backlot approve <take> [--lock Cast/Mia] --reason "..." --source-message "..." --source-ref <message-id>`,
+  `backlot reject <take> --reason "..." [--source-message "..."] [--source-ref <evidence>]`
+  record scoped decisions with their source, update take + shot notes and refresh
+  `Decisions.md`; `--lock` sets `locked: true`
   and `locked_take` on a Context note. Approving a take of a model whose note is
   `status: untested` sets it `active` and appends a `## Observed` line (date, take,
   seconds, cost) to the note body.
@@ -162,29 +174,34 @@ Commands (all print terse one-line results; `--json` for machine output):
   Transitive: Context notes whose frontmatter `depends_on` lists a marked note are marked
   too (`stale: true`, `stale_reason`), recursively and cycle-safe, and their dependants
   follow. `--dry-run` prints what would be marked without writing.
-- `backlot captions <take|audio> --model <stt-id> [--dry-run] [--yes] [--force]` → `.srt` +
-  word timestamps JSON; goes through the same spend guard as `gen`.
+- `backlot captions <take|audio> --model <stt-id> [--dry-run] [--yes --authorization auth-...] [--force]`
+  → `.srt` + word timestamps JSON; goes through the same spend guard as `gen`.
 - `backlot sheet --shot S010 [--kind img|vid]` writes a labelled contact sheet (≤ 1600 px
   wide) to `<project>/renders/sheets/S010.jpg`, a ≤ 512 px copy to `_thumbs/sheet-S010.jpg`,
   and replaces the `## Candidates` section of the shot note with the embed + take links.
-- `backlot stage [--advance]` evaluates the gate of the home note's current `status`
-  (ordered list in `backlot/stages.py`: idea, brief, develop, preproduction, boards, shots,
-  voice, score, assemble, review, deliver, delivered) and prints pass/fail with the missing
-  items (exit 1 on fail). Gates: brief = `Brief.md` differs from the template; develop =
-  `Script.md` has a `## Beats` section with ≥ 1 table row or bullet; preproduction = every
-  Cast/Locations note `locked: true`; boards = every shot's `board_take` approved; shots =
-  every shot has `video_take`; voice = every shot has `vo_take` or `vo: false`; score =
-  timeline has a music/sfx track or the home note says `score: false`; assemble = a render
-  of `timeline.yaml` exists; review = `Review.md` exists; deliver = renders present.
-  `--advance` writes the next `status` to the home note only when the gate passes.
+- `project.yaml workflow` declares named scenes, deliverables and a short requirement
+  vocabulary. `backlot stage --json` checks each scene and exact output version without
+  writing. The base path needs an agreed Brief, registered output, complete ordered
+  source coverage, actual media hash/probe and a version/scoped user decision. Optional
+  board, identity, world, spatial/Blender, voice, caption, score, graphic, review and
+  share checks activate only when declared. A required scene or deliverable missing
+  entirely fails. `--advance` updates the project home summary only after a pass.
+  Projects explicitly marked `workflow.preset: legacy` retain the older stage gates.
+- `backlot assembly <spec.json>` registers a native, external or custom edit recipe,
+  exact source/output frame map, actual output probe and content hashes. Its output is
+  an M2 registered artifact whose `source_refs` cover every used source. `backlot
+  deliverable <spec.json>` records a named immutable output version and its approval
+  scope. `backlot delivery` verifies the output, recipe, source lineage, frame coverage
+  and matching typed user approval. `--refresh` writes only derived `Deliverables.md`;
+  the hand-written `Delivery.md` remains a narrative record.
 - `backlot render [edit/timeline.yaml] [-o renders/name.mp4] [--preset youtube|shorts|draft]
   [--allow-stale]` ffmpeg assembly (see timeline); refuses rejected or stale take sources
   unless `--allow-stale`. Writes the merged captions as `renders/<name>.srt` next to the
   render whenever the timeline has a `captions:` block, burned or not.
 - `backlot reframe <take|render> --to 9:16 [--focus center|left|right|auto]`.
-- `backlot status` rewrites `Status.md` (stage, shots by status, stale count, spend, next
-  actions; an `ESCALATE` line once spend ≥ `escalate_pct` % of the budget) and returns it;
-  `backlot cost` rewrites `Costs.md`.
+- `backlot status` and `backlot cost` compute read-only views by default. Their
+  `--refresh` flags rewrite the derived `Status.md` or `Costs.md` projections and the
+  EUR home-note projection. The native charge ledger remains separate from EUR.
 - `backlot thumbs` regenerates thumbnails (always JPEG, `_thumbs/<id>.jpg`, waveform for
   audio); `backlot doctor` checks keys, ffmpeg, ComfyUI reachability, vault path, model
   notes parse.
@@ -243,29 +260,21 @@ to a real NLE later is a separate exporter, not part of v1.
 
 ## Skills (`agents/video/backlot/skills/<name>/SKILL.md`, harness-neutral)
 
-The lead agent runs the production; role sub-agents do bounded work; every skill reads
-the vault before acting and writes results back. Stages and their gates:
-
-| Stage | Skill | Gate to pass |
-|---|---|---|
-| brief | `brief` | `Brief.md` agreed by user |
-| develop | `develop` | `Script.md` locked (beats, VO lines, durations) |
-| preproduction | `preproduction` | four locks: cast, locations/props, visual language, format & deliverables (invideo's "four locks", plus voice per cast member) |
-| boards | `storyboard` | every shot has an approved `board_take` |
-| shots | `generate` | every shot has an approved `video_take` |
-| voice / score | `voice`, `score` | vo takes approved, music/sfx placed |
-| assemble | `assemble` | `timeline.yaml` renders a draft |
-| review | `review` | continuity + brief compliance pass, or a flagged list |
-| deliver | `deliver` | exports in `renders/`, `Status.md` says delivered |
+The lead agent runs the production; role sub-agents do bounded work. Skills are
+selected for the declared scene or deliverable requirement. The requirement table is
+generated from `backlot.workflow.REQUIREMENTS` in
+`skills/studio/references/workflow-gates.md`. The project home stage is a summary;
+`backlot stage --json` reports actual blockers by scene and deliverable.
 
 Cross-cutting skills: `studio` (operating manual + lead-agent behaviour, role crew,
 "what's the update"), `project-init`, `revise` (context change → `backlot stale` →
 regeneration plan), `ingest` (PDF/deck/URL/footage → `Context/Knowledge.md` +
 `Inspiration.md`), `models` (how to read/extend the catalog and add providers).
 
-Playbook defaults every skill honours: ask before generating (show estimate); prefer
-`lite` tier for exploration and `pro|ultra` only for locked shots; generate boards before
-video; 2–4 options per unlocked element, 1 for locked; never overwrite a take (new
+Playbook defaults every skill honours: obtain exact-call approval before paid provider
+submission; prefer
+`lite` tier for exploration and `pro|ultra` only for locked inputs; generate boards before
+video when declared; 2–4 options per unlocked element, 1 for locked; never overwrite a take (new
 variation instead); every generated asset lists its `depends_on` Context notes; every
 approval/rejection has a reason in `Decisions.md`.
 

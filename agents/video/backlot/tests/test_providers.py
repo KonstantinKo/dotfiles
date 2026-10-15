@@ -82,6 +82,27 @@ def test_apply_param_types_and_min_duration_estimate():
     assert estimate_cost(model, duration_s=2) == 5.0 and estimate_cost(model, duration_s=8) == 8.0
 
 
+def test_rounded_minute_estimate_boundaries_and_composition_plan_duration():
+    from backlot.gen import _duration
+    from backlot.models import estimate_cost
+
+    model = ModelSpec(id="music", provider="fal", kind="music", cost_unit="per_minute_ceil", cost_eur=0.552, max_duration_s=600)
+    assert estimate_cost(model, duration_s=60) == 0.552
+    assert estimate_cost(model, duration_s=60.001) == 1.104
+    assert estimate_cost(model, duration_s=150.417) == 1.656
+    assert estimate_cost(model) == 5.52
+    params = {"composition_plan": {"chunks": [{"duration_ms": 26417}, {"duration_ms": 19000}, {"duration_ms": 35083}, {"duration_ms": 16042}, {"duration_ms": 12000}, {"duration_ms": 14791}, {"duration_ms": 27084}]}}
+    assert _duration(model, params) == 150.417
+    assert estimate_cost(model, duration_s=_duration(model, params)) == 1.656
+
+
+def test_composition_plan_build_arguments_omits_empty_prompt():
+    plan = {"chunks": [{"text": "[A]", "duration_ms": 3000, "positive_styles": ["instrumental"]}]}
+    model = ModelSpec(id="music", provider="fal", kind="music", inputs=["prompt"])
+    args = build_arguments(model, GenRequest(params={"composition_plan": plan, "output_format": "mp3_48000_320"}), lambda p: "unused")
+    assert args == {"composition_plan": plan, "output_format": "mp3_48000_320"}
+
+
 def test_fal_errors_are_provider_errors(tmp_path, monkeypatch):
     from backlot.providers.fal import FalProvider
 

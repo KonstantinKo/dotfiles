@@ -172,9 +172,18 @@ GATES: dict[str, Callable[[Project], list[str]]] = {
 
 
 def check(project: Project) -> dict[str, Any]:
+    from backlot.workflow import declaration, evaluate
+
     stage = str(vault.home_data(project).get("status") or "idea")
     if stage not in STAGES:
         raise BacklotError(f"project status {stage!r} is not a stage; expected one of {', '.join(STAGES)}")
+    declared = declaration(project)
+    if declared is not None and declared.get("preset") != "legacy":
+        readiness = evaluate(project)
+        return {"stage": stage, "passed": readiness["passed"],
+                "missing": readiness["blockers"], "next": "delivered" if stage != "delivered" else None,
+                "readiness": readiness["readiness"], "scenes": readiness["scenes"],
+                "deliverables": readiness["deliverables"]}
     missing = GATES[stage](project)
     return {"stage": stage, "passed": not missing, "missing": missing, "next": next_stage(stage)}
 
